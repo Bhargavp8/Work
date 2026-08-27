@@ -1,0 +1,454 @@
+Screens:
+  scrBuyerQueue:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varBqDenied, false);
+        Set(varBqDenied, varRole <> "Buyer" && varRole <> "Admin");
+        If(
+            varBqDenied,
+            Notify("Buyer access only. Taking you back to the home screen.", NotificationType.Error, 4000),
+            Refresh(RFQ);
+            ClearCollect(colBuyerRFQs, RFQ);
+            Set(varConfirmAction, Blank());
+            Set(varSaving, false);
+            Reset(txtBqSearch);
+            Reset(tglBqShowClosed)
+        )
+    Children:
+      - recBqTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnBqBack:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrHome, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Back"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblBqTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: ="Buyer Queue"
+            Width: =400
+            X: =242
+      - lblBqCounts:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(206, 216, 236, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            Size: =11
+            Text: |-
+              ="Waiting on you: " & CountRows(Filter(colBuyerRFQs, AwaitingAction.Value = "Buyer")) &
+              "     ·     Out with vendors: " & CountRows(Filter(colBuyerRFQs, RFQstatus.Value = "RFQ sent out")) &
+              "     ·     Overdue: " & CountRows(Filter(colBuyerRFQs, RFQduedate < Today(), !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"])))
+            Width: =760
+            X: =570
+      - txtBqSearch:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =44
+            HintText: ="Search RFQ number or description"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =420
+            X: =24
+            Y: =88
+      - lblBqShowClosed:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            Size: =12
+            Text: ="Include closed and cancelled"
+            Width: =230
+            X: =464
+            Y: =88
+      - tglBqShowClosed:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =96
+            X: =700
+            Y: =96
+      - btnBqRefresh:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Refresh(RFQ);
+              ClearCollect(colBuyerRFQs, RFQ);
+              Notify("Queue refreshed.", NotificationType.Success, 2000)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Refresh"
+            Width: =120
+            X: =1222
+            Y: =88
+      - recBqHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =36
+            Width: =1318
+            X: =24
+            Y: =152
+      - lblBqH1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="RFQ NUMBER"
+            Width: =160
+            X: =24
+            Y: =152
+      - lblBqH2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="DUE DATE"
+            Width: =130
+            X: =184
+            Y: =152
+      - lblBqH3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="STATUS"
+            Width: =170
+            X: =314
+            Y: =152
+      - lblBqH4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="AWAITING"
+            Width: =140
+            X: =484
+            Y: =152
+      - lblBqH5:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="URGENCY"
+            Width: =110
+            X: =624
+            Y: =152
+      - lblBqH6:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="DESCRIPTION"
+            Width: =280
+            X: =734
+            Y: =152
+      - galBqQueue:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =552
+            Items: |-
+              =Sort(
+                  Filter(
+                      colBuyerRFQs,
+                      (IsBlank(txtBqSearch.Text)
+                          || StartsWith(Title, txtBqSearch.Text)
+                          || txtBqSearch.Text in Description),
+                      (tglBqShowClosed.Value || !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"]))
+                  ),
+                  RFQduedate,
+                  SortOrder.Ascending
+              )
+            OnSelect: |-
+              =Set(varSelectedRFQ, LookUp(RFQ, ID = ThisItem.ID));
+              Set(varChecklist, LookUp(RFQ_Checklist, RFQID = ThisItem.ID));
+              Navigate(
+                  If(IsBlank(LookUp(RFQ_Checklist, RFQID = ThisItem.ID).Vendor1Name), scrSendRFQ, scrChecklist),
+                  ScreenTransition.Fade
+              )
+            TemplateFill: =If(ThisItem.IsSelected, RGBA(233, 239, 250, 1), RGBA(255, 255, 255, 1))
+            TemplatePadding: =0
+            TemplateSize: =46
+            Width: =1318
+            X: =24
+            Y: =192
+          Children:
+            - recBqRowAccent:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Fill: |-
+                    =If(
+                        ThisItem.AwaitingAction.Value = "Buyer", RGBA(255, 191, 0, 1),
+                        ThisItem.RFQstatus.Value = "RFQ sent out", RGBA(24, 95, 165, 1),
+                        RGBA(255, 255, 255, 0)
+                    )
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  Width: =4
+            - lblBqRowTitle:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(24, 34, 56, 1)
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =12
+                  Text: =ThisItem.Title
+                  Width: =160
+            - lblBqRowDue:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: |-
+                    =If(
+                        ThisItem.RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
+                        ThisItem.RFQduedate < Today(), ColorValue("#A32D2D"),
+                        ThisItem.RFQduedate <= Today() + 2, ColorValue("#854F0B"),
+                        ColorValue("#3B6D11")
+                    )
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =Text(ThisItem.RFQduedate, "dd mmm yyyy")
+                  Width: =130
+                  X: =160
+            - lblBqRowStatus:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: |-
+                    =Switch(
+                        ThisItem.RFQstatus.Value,
+                        "RFQ pending", ColorValue("#854F0B"),
+                        "RFQ sent out", ColorValue("#185FA5"),
+                        "Re-RFQ", ColorValue("#993C1D"),
+                        "RFQ closed/completed", ColorValue("#3B6D11"),
+                        "RFQ cancelled", ColorValue("#A32D2D"),
+                        ColorValue("#444441")
+                    )
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =Switch(ThisItem.RFQstatus.Value, "Re-RFQ", "Re quote requested", ThisItem.RFQstatus.Value)
+                  Width: =170
+                  X: =290
+            - lblBqRowAwaiting:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =If(ThisItem.AwaitingAction.Value = "Buyer", ColorValue("#854F0B"), RGBA(96, 106, 126, 1))
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =Coalesce(ThisItem.AwaitingAction.Value, ",")
+                  Width: =140
+                  X: =460
+            - lblBqRowUrgency:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =If(ThisItem.Urgency.Value = "Urgent", ColorValue("#A32D2D"), RGBA(96, 106, 126, 1))
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =ThisItem.Urgency.Value
+                  Width: =110
+                  X: =600
+            - lblBqRowDesc:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(43, 54, 78, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =Left(ThisItem.Description, 60) & If(Len(ThisItem.Description) > 60, "...", "")
+                  Width: =280
+                  X: =710
+            - lblBqRowRequestor:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(96, 106, 126, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =Coalesce(ThisItem.RequestorName, ThisItem.Author.DisplayName, "Unknown")
+                  Width: =160
+                  X: =990
+            - btnBqRowVendors:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Fill: =RGBA(255, 255, 255, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =28
+                  HoverColor: =RGBA(56, 96, 178, 1)
+                  HoverFill: =RGBA(240, 244, 251, 1)
+                  OnSelect: |-
+                    =Set(varSelectedRFQ, LookUp(RFQ, ID = ThisItem.ID));
+                    Set(varChecklist, LookUp(RFQ_Checklist, RFQID = ThisItem.ID));
+                    Navigate(scrSendRFQ, ScreenTransition.Fade)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(56, 96, 178, 1)
+                  Size: =10
+                  Text: ="Vendors"
+                  Width: =100
+                  X: =1156
+                  Y: =9
+            - icoBqRowGo:
+                Control: Classic/Icon@2.5.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Height: =46
+                  Icon: =Icon.ChevronRight
+                  OnSelect: =Select(Parent)
+                  PaddingBottom: =15
+                  PaddingLeft: =15
+                  PaddingRight: =15
+                  PaddingTop: =15
+                  Tooltip: ="Open this RFQ"
+                  Width: =44
+                  X: =1266
+            - recBqRowLine:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Fill: =RGBA(230, 235, 243, 1)
+                  Height: =1
+                  OnSelect: =Select(Parent)
+                  Width: =1318
+                  Y: =45
+      - lblBqEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =80
+            Text: ="Nothing in the queue matches your filters."
+            Visible: =CountRows(galBqQueue.AllItems) = 0
+            Width: =1318
+            X: =24
+            Y: =300
+      - lblBqH7:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="RAISED BY"
+            Width: =160
+            X: =1014
+            Y: =152
+      - tmrBqRedirect:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =1
+            Height: =20
+            OnTimerEnd: =Navigate(scrHome, ScreenTransition.Fade)
+            Start: =varBqDenied
+            Visible: =false
+            Width: =20
+      - Image1_3:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =146

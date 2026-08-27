@@ -1,0 +1,1215 @@
+Screens:
+  scrChecklist:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+        Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+        Set(varCheapestVendor, Blank());
+        Set(varSaving, false);
+        Reset(cboCkV1Cur); Reset(txtCkV1Unit); Reset(txtCkV1Total); Reset(txtCkV1Lead);
+        Reset(cboCkV2Cur); Reset(txtCkV2Unit); Reset(txtCkV2Total); Reset(txtCkV2Lead);
+        Reset(cboCkV3Cur); Reset(txtCkV3Unit); Reset(txtCkV3Total); Reset(txtCkV3Lead);
+        Reset(cboCkV4Cur); Reset(txtCkV4Unit); Reset(txtCkV4Total); Reset(txtCkV4Lead);
+        Reset(cboCkV1Resp); Reset(cboCkV2Resp); Reset(cboCkV3Resp); Reset(cboCkV4Resp);
+        Reset(cboCkAward); Reset(txtCkNotes)
+    Children:
+      - recCkTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnCkBack:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Back"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblCkTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: =varSelectedRFQ.Title & "   ·   Buyer checklist"
+            Width: =560
+            X: =256
+      - btnCkEditVendors:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: =Navigate(scrSendRFQ, ScreenTransition.Fade)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =12
+            Text: ="Add or remove vendors"
+            Width: =212
+            X: =1130
+            Y: =14
+      - recCkSummary:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =60
+            Width: =1318
+            X: =24
+            Y: =88
+      - lblCkSummary:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            PaddingLeft: =16
+            PaddingRight: =16
+            Size: =11
+            Text: |-
+              =PlainText(Coalesce(varSelectedRFQ.Description, "")) & Char(10) &
+              varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
+              "     ·     Requested by " & varSelectedRFQ.RequestorEmail &
+              "     ·     " & varSelectedRFQ.Urgency.Value &
+              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
+              "     ·     Sent " & If(IsBlank(varChecklist.RFQSentDate), "not recorded", Text(varChecklist.RFQSentDate, "dd mmm yyyy"))
+            Width: =1318
+            X: =24
+            Y: =88
+      - recCkTableHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =36
+            Width: =1318
+            X: =24
+            Y: =168
+      - lblCkH1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="VENDOR"
+            Width: =232
+            X: =24
+            Y: =168
+      - lblCkH2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            Size: =11
+            Text: ="CURRENCY"
+            Width: =120
+            X: =394
+            Y: =168
+      - lblCkH3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            Size: =11
+            Text: ="UNIT PRICE"
+            X: =518
+            Y: =168
+      - lblCkH4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            Size: =11
+            Text: ="TOTAL PRICE"
+            X: =672
+            Y: =168
+      - lblCkH5:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            Size: =11
+            Text: ="Time (Days)"
+            Width: =100
+            X: =826
+            Y: =168
+      - lblCkH6:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            Size: =11
+            Text: ="USD EQUIVALENT"
+            Width: =300
+            X: =930
+            Y: =168
+      - recCkRow1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =If(varCheapestVendor = "Vendor 1", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            Height: =48
+            Width: =1318
+            X: =24
+            Y: =208
+      - lblCkV1Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            PaddingLeft: =10
+            Size: =12
+            Text: =Coalesce(varChecklist.Vendor1Name, ",") & If(varCheapestVendor = "Vendor 1", "   (lowest)", "")
+            Width: =232
+            X: =24
+            Y: =208
+      - txtCkV1Unit:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor1UnitPrice), "", Text(varChecklist.Vendor1UnitPrice))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Unit price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =150
+            X: =518
+            Y: =217
+      - txtCkV1Total:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: |-
+              =If(
+                  !IsBlank(txtCkV1Unit.Text) && IsNumeric(txtCkV1Unit.Text),
+                  Text(Value(txtCkV1Unit.Text) * varSelectedRFQ.Quantity),
+                  If(IsBlank(varChecklist.Vendor1TotalPrice), "", Text(varChecklist.Vendor1TotalPrice))
+              )
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Total price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =150
+            X: =672
+            Y: =217
+      - txtCkV1Lead:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor1LeadTime), "", Text(varChecklist.Vendor1LeadTime))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Days"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =100
+            X: =826
+            Y: =217
+      - lblCkV1Usd:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  !IsBlank(cboCkV1Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1 = 0),
+                  RGBA(168, 0, 0, 1),
+                  RGBA(43, 54, 78, 1)
+              )
+            Font: =Font.'Open Sans'
+            Height: =48
+            Size: =11
+            Text: |-
+              =With(
+                  { r: LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1 },
+                  If(
+                      IsBlank(txtCkV1Total.Text) || !IsNumeric(txtCkV1Total.Text), "no total entered yet",
+                      IsBlank(cboCkV1Cur.Selected), "pick a currency",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV1Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      Text(Value(txtCkV1Total.Text) * r, "#,##0.00") & " USD"
+                  )
+              )
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =300
+            X: =930
+            Y: =208
+      - btnCkUndo1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Reset(cboCkV1Cur); Reset(txtCkV1Unit); Reset(txtCkV1Total); Reset(txtCkV1Lead); Reset(cboCkV1Resp)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =10
+            Text: ="Undo row"
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =100
+            X: =1234
+            Y: =218
+      - recCkRow2:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =If(varCheapestVendor = "Vendor 2", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            Height: =48
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =1318
+            X: =24
+            Y: =256
+      - lblCkV2Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            PaddingLeft: =10
+            Size: =12
+            Text: =varChecklist.Vendor2Name & If(varCheapestVendor = "Vendor 2", "   (lowest)", "")
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =232
+            X: =24
+            Y: =256
+      - txtCkV2Unit:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor2UnitPrice), "", Text(varChecklist.Vendor2UnitPrice))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Unit price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =150
+            X: =518
+            Y: =265
+      - txtCkV2Total:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: |-
+              =If(
+                  !IsBlank(txtCkV2Unit.Text) && IsNumeric(txtCkV2Unit.Text),
+                  Text(Value(txtCkV2Unit.Text) * varSelectedRFQ.Quantity),
+                  If(IsBlank(varChecklist.Vendor2TotalPrice), "", Text(varChecklist.Vendor2TotalPrice))
+              )
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Total price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =150
+            X: =672
+            Y: =265
+      - txtCkV2Lead:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor2LeadTime), "", Text(varChecklist.Vendor2LeadTime))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Days"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =100
+            X: =826
+            Y: =265
+      - lblCkV2Usd:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  !IsBlank(cboCkV2Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1 = 0),
+                  RGBA(168, 0, 0, 1),
+                  RGBA(43, 54, 78, 1)
+              )
+            Font: =Font.'Open Sans'
+            Height: =48
+            Size: =11
+            Text: |-
+              =With(
+                  { r: LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1 },
+                  If(
+                      IsBlank(txtCkV2Total.Text) || !IsNumeric(txtCkV2Total.Text), "no total entered yet",
+                      IsBlank(cboCkV2Cur.Selected), "pick a currency",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV2Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      Text(Value(txtCkV2Total.Text) * r, "#,##0.00") & " USD"
+                  )
+              )
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =300
+            X: =930
+            Y: =256
+      - btnCkUndo2:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Reset(cboCkV2Cur); Reset(txtCkV2Unit); Reset(txtCkV2Total); Reset(txtCkV2Lead); Reset(cboCkV2Resp)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =10
+            Text: ="Undo row"
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =100
+            X: =1234
+            Y: =266
+      - recCkRow3:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =If(varCheapestVendor = "Vendor 3", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            Height: =48
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =1318
+            X: =24
+            Y: =304
+      - lblCkV3Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            PaddingLeft: =10
+            Size: =12
+            Text: =varChecklist.Vendor3Name & If(varCheapestVendor = "Vendor 3", "   (lowest)", "")
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =232
+            X: =24
+            Y: =304
+      - txtCkV3Unit:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor3UnitPrice), "", Text(varChecklist.Vendor3UnitPrice))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Unit price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =150
+            X: =518
+            Y: =313
+      - txtCkV3Total:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: |-
+              =If(
+                  !IsBlank(txtCkV3Unit.Text) && IsNumeric(txtCkV3Unit.Text),
+                  Text(Value(txtCkV3Unit.Text) * varSelectedRFQ.Quantity),
+                  If(IsBlank(varChecklist.Vendor3TotalPrice), "", Text(varChecklist.Vendor3TotalPrice))
+              )
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Total price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =150
+            X: =672
+            Y: =313
+      - txtCkV3Lead:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor3LeadTime), "", Text(varChecklist.Vendor3LeadTime))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Days"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =100
+            X: =826
+            Y: =313
+      - lblCkV3Usd:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  !IsBlank(cboCkV3Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1 = 0),
+                  RGBA(168, 0, 0, 1),
+                  RGBA(43, 54, 78, 1)
+              )
+            Font: =Font.'Open Sans'
+            Height: =48
+            Size: =11
+            Text: |-
+              =With(
+                  { r: LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1 },
+                  If(
+                      IsBlank(txtCkV3Total.Text) || !IsNumeric(txtCkV3Total.Text), "no total entered yet",
+                      IsBlank(cboCkV3Cur.Selected), "pick a currency",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV3Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      Text(Value(txtCkV3Total.Text) * r, "#,##0.00") & " USD"
+                  )
+              )
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =300
+            X: =930
+            Y: =304
+      - btnCkUndo3:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Reset(cboCkV3Cur); Reset(txtCkV3Unit); Reset(txtCkV3Total); Reset(txtCkV3Lead); Reset(cboCkV3Resp)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =10
+            Text: ="Undo row"
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =100
+            X: =1234
+            Y: =314
+      - recCkRow4:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =If(varCheapestVendor = "Vendor 4", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            Height: =48
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =1318
+            X: =24
+            Y: =352
+      - lblCkV4Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            PaddingLeft: =10
+            Size: =12
+            Text: =varChecklist.Vendor4Name & If(varCheapestVendor = "Vendor 4", "   (lowest)", "")
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =232
+            X: =24
+            Y: =352
+      - txtCkV4Unit:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor4UnitPrice), "", Text(varChecklist.Vendor4UnitPrice))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Unit price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =150
+            X: =518
+            Y: =361
+      - txtCkV4Total:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: |-
+              =If(
+                  !IsBlank(txtCkV4Unit.Text) && IsNumeric(txtCkV4Unit.Text),
+                  Text(Value(txtCkV4Unit.Text) * varSelectedRFQ.Quantity),
+                  If(IsBlank(varChecklist.Vendor4TotalPrice), "", Text(varChecklist.Vendor4TotalPrice))
+              )
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Total price"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =150
+            X: =672
+            Y: =361
+      - txtCkV4Lead:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =If(IsBlank(varChecklist.Vendor4LeadTime), "", Text(varChecklist.Vendor4LeadTime))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =30
+            HintText: ="Days"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =100
+            X: =826
+            Y: =361
+      - lblCkV4Usd:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  !IsBlank(cboCkV4Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1 = 0),
+                  RGBA(168, 0, 0, 1),
+                  RGBA(43, 54, 78, 1)
+              )
+            Font: =Font.'Open Sans'
+            Height: =48
+            Size: =11
+            Text: |-
+              =With(
+                  { r: LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1 },
+                  If(
+                      IsBlank(txtCkV4Total.Text) || !IsNumeric(txtCkV4Total.Text), "no total entered yet",
+                      IsBlank(cboCkV4Cur.Selected), "pick a currency",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV4Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      Text(Value(txtCkV4Total.Text) * r, "#,##0.00") & " USD"
+                  )
+              )
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =300
+            X: =930
+            Y: =352
+      - btnCkUndo4:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Reset(cboCkV4Cur); Reset(txtCkV4Unit); Reset(txtCkV4Total); Reset(txtCkV4Lead); Reset(cboCkV4Resp)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =10
+            Text: ="Undo row"
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =100
+            X: =1234
+            Y: =362
+      - btnCkCompare:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =ClearCollect(
+                  colCompare,
+                  { Vendor: "Vendor 1", VName: varChecklist.Vendor1Name, Cur: If(IsBlank(cboCkV1Cur.Selected), "", cboCkV1Cur.Selected.Title), Raw: If(IsBlank(txtCkV1Total.Text) || !IsNumeric(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)) },
+                  { Vendor: "Vendor 2", VName: varChecklist.Vendor2Name, Cur: If(IsBlank(cboCkV2Cur.Selected), "", cboCkV2Cur.Selected.Title), Raw: If(IsBlank(txtCkV2Total.Text) || !IsNumeric(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)) },
+                  { Vendor: "Vendor 3", VName: varChecklist.Vendor3Name, Cur: If(IsBlank(cboCkV3Cur.Selected), "", cboCkV3Cur.Selected.Title), Raw: If(IsBlank(txtCkV3Total.Text) || !IsNumeric(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)) },
+                  { Vendor: "Vendor 4", VName: varChecklist.Vendor4Name, Cur: If(IsBlank(cboCkV4Cur.Selected), "", cboCkV4Cur.Selected.Title), Raw: If(IsBlank(txtCkV4Total.Text) || !IsNumeric(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)) }
+              );
+              ClearCollect(
+                  colCompareRated,
+                  ForAll(
+                      Filter(colCompare, !IsBlank(VName) && !IsBlank(Raw) && Cur <> ""),
+                      {
+                          Vendor: Vendor,
+                          Cur: Cur,
+                          Raw: Raw,
+                          Rate: LookUp('Currency Rate', Title = Cur).field_1
+                      }
+                  )
+              );
+              ClearCollect(colCompareBad, Filter(colCompareRated, IsBlank(Rate) || Rate = 0));
+              If(
+                  CountRows(colCompareRated) = 0,
+                  Set(varCheapestVendor, Blank());
+                  Notify("Enter a total price and a currency for at least one vendor first.", NotificationType.Warning, 4000),
+
+                  CountRows(colCompareBad) > 0,
+                  Set(varCheapestVendor, Blank());
+                  Notify("No exchange rate found for " & Concat(colCompareBad, Cur, ", ") & ". Add the rate to the Currency Rate list and compare again. Nothing has been selected.", NotificationType.Error, 8000),
+
+                  Set(varCheapestVendor, First(Sort(colCompareRated, Raw * Rate, SortOrder.Ascending)).Vendor);
+                  Notify("Cheapest in USD is " & varCheapestVendor & ". This is a suggestion only, you still choose who to recommend.", NotificationType.Information, 4000)
+              )
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Recalculate and compare quotes"
+            Width: =300
+            X: =24
+            Y: =412
+      - lblCkCompareHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(varCheapestVendor),
+                  "Comparison converts every total to USD using the Currency Rate list. Totals are auto calculated from unit price × quantity, but you can overwrite any of them.",
+                  "Lowest USD total: " & varCheapestVendor & ". You are not obliged to award the cheapest, justify your choice below."
+              )
+            Width: =1000
+            X: =342
+            Y: =412
+      - lblCkAwardLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Recommend a vendor to award *"
+            Width: =300
+            X: =24
+            Y: =474
+      - lblCkNotesLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Justification shown to the requestor *"
+            Width: =400
+            X: =344
+            Y: =474
+      - txtCkNotes:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =PlainText(Coalesce(varChecklist.BuyerNotes, ""))
+            Font: =Font.'Open Sans'
+            Height: =120
+            HintText: ="Why this vendor, price, lead time, quality, existing agreement..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Mode: =TextMode.MultiLine
+            Size: =12
+            Width: =680
+            X: =344
+            Y: =498
+      - btnCkSaveDraft:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =54
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Patch(
+                  RFQ_Checklist,
+                  varChecklist,
+                  {
+                      Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                      Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                      Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                      Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+
+                      Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
+                      Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),
+                      Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
+                      Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
+                      AwardVendor: If(IsBlank(cboCkAward.Selected), Blank(), { Value: cboCkAward.Selected.Slot }),
+                      BuyerNotes: txtCkNotes.Text
+                  }
+              );
+              Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+              Notify("Draft saved. The requestor has not been notified yet.", NotificationType.Success, 3000);
+              Set(varSaving, false)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =13
+            Text: ="Save draft"
+            Width: =298
+            X: =1044
+            Y: =498
+      - btnCkSubmit:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =If(
+                  IsBlank(cboCkAward.Selected),
+                  Notify("Select the vendor you are recommending before sending.", NotificationType.Error),
+
+                  IsBlank(Trim(txtCkNotes.Text)),
+                  Notify("Add a justification, the requestor sees this when deciding.", NotificationType.Error),
+
+                  Set(varSaving, true);
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+
+                          Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
+                          Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),
+                          Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
+                          Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
+                          AwardVendor: { Value: cboCkAward.Selected.Slot },
+                          BuyerNotes: Trim(txtCkNotes.Text)
+                      }
+                  );
+                  Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+                  If(
+                      IsBlank(varRFQRecord),
+                      Notify("This RFQ no longer exists. Somebody may have deleted it. The quotes were not sent.", NotificationType.Error, 6000),
+                      Patch(
+                          RFQ,
+                          varRFQRecord,
+                          {
+                              RFQstatus: { Value: "RFQ pending" },
+                              AwaitingAction: { Value: "Requestor" },
+                              ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                          }
+                      )
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Set(varSaving, false);
+                  Notify("Recommendation sent to the requestor.", NotificationType.Success, 3000);
+                  Navigate(scrBuyerQueue, ScreenTransition.Fade)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =14
+            Text: ="Send recommendation to requestor"
+            Width: =298
+            X: =1044
+            Y: =564
+      - lblCkFooter:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =80
+            Size: =10
+            Text: ="Nothing here is final. Save a draft as often as you like, quotes reload exactly as you left them next time you open this RFQ. 'Undo row' restores a single vendor's figures to the last saved values. If the vendor list itself is wrong, use 'Add or remove vendors' at the top; existing quotes for vendors you keep are preserved."
+            Width: =1000
+            X: =24
+            Y: =640
+      - lblCkHResp:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="RESPONSE"
+            Width: =130
+            X: =260
+            Y: =168
+      - btnCkNoQuotes:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(133, 79, 11, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 250, 235, 1)
+            Font: =Font.'Open Sans'
+            Height: =54
+            HoverColor: =RGBA(133, 79, 11, 1)
+            HoverFill: =RGBA(255, 244, 214, 1)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              If(
+                  IsBlank(varRFQRecord),
+                  Notify("This RFQ no longer exists. Somebody may have deleted it.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), { Value: "No response" }),
+                          Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), { Value: "No response" }),
+                          Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), { Value: "No response" }),
+                          Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), { Value: "No response" }),
+                          BuyerNotes: Trim(txtCkNotes.Text)
+                      }
+                  );
+                  Patch(
+                      RFQ,
+                      varRFQRecord,
+                      {
+                          RFQstatus: { Value: "RFQ pending" },
+                          AwaitingAction: { Value: "Buyer" },
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   no usable quotes received, vendor list needs rework" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                      }
+                  );
+                  Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Set(varSaving, false);
+                  Notify("Logged. All four slots are marked as no response and the RFQ stays with you. Open Add or remove vendors to try a different vendor list.", NotificationType.Warning, 7000);
+                  Navigate(scrSendRFQ, ScreenTransition.Fade)
+              )
+            PressedColor: =RGBA(255, 250, 235, 1)
+            PressedFill: =RGBA(255, 191, 0, 1)
+            Size: =12
+            Text: ="No usable quotes. Try other vendors"
+            Width: =300
+            X: =24
+            Y: =564
+      - cboCkV1Resp:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor1Status), Value = Coalesce(varChecklist.Vendor1Status.Value, "Awaiting reply"))
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Awaiting reply"
+            Items: =Choices(RFQ_Checklist.Vendor1Status)
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =130
+            X: =260
+            Y: =217
+      - cboCkV2Resp:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor2Status), Value = Coalesce(varChecklist.Vendor2Status.Value, "Awaiting reply"))
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Awaiting reply"
+            Items: =Choices(RFQ_Checklist.Vendor2Status)
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =130
+            X: =260
+            Y: =265
+      - cboCkV3Resp:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor3Status), Value = Coalesce(varChecklist.Vendor3Status.Value, "Awaiting reply"))
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Awaiting reply"
+            Items: =Choices(RFQ_Checklist.Vendor3Status)
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =130
+            X: =260
+            Y: =313
+      - cboCkV4Resp:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor4Status), Value = Coalesce(varChecklist.Vendor4Status.Value, "Awaiting reply"))
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Awaiting reply"
+            Items: =Choices(RFQ_Checklist.Vendor4Status)
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =130
+            X: =260
+            Y: =361
+      - cboCkV1Cur:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor1Currency.Value)
+            DisplayFields: =["Title"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Currency"
+            Items: ='Currency Rate'
+            SearchFields: =["Title"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor1Name)
+            Width: =120
+            X: =394
+            Y: =217
+      - cboCkV2Cur:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor2Currency.Value)
+            DisplayFields: =["Title"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Currency"
+            Items: ='Currency Rate'
+            SearchFields: =["Title"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =120
+            X: =394
+            Y: =265
+      - cboCkV3Cur:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor3Currency.Value)
+            DisplayFields: =["Title"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Currency"
+            Items: ='Currency Rate'
+            SearchFields: =["Title"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =120
+            X: =394
+            Y: =313
+      - cboCkV4Cur:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor4Currency.Value)
+            DisplayFields: =["Title"]
+            Font: =Font.'Open Sans'
+            Height: =30
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Currency"
+            Items: ='Currency Rate'
+            SearchFields: =["Title"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =120
+            X: =394
+            Y: =361
+      - cboCkAward:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: |-
+              =Filter(
+                  Table(
+                      { Slot: "Vendor 1", VendorName: varChecklist.Vendor1Name },
+                      { Slot: "Vendor 2", VendorName: varChecklist.Vendor2Name },
+                      { Slot: "Vendor 3", VendorName: varChecklist.Vendor3Name },
+                      { Slot: "Vendor 4", VendorName: varChecklist.Vendor4Name }
+                  ),
+                  Slot = varChecklist.AwardVendor.Value
+              )
+            DisplayFields: =["VendorName"]
+            Font: =Font.'Open Sans'
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Select a vendor"
+            Items: |-
+              =Filter(
+                  Table(
+                      { Slot: "Vendor 1", VendorName: varChecklist.Vendor1Name },
+                      { Slot: "Vendor 2", VendorName: varChecklist.Vendor2Name },
+                      { Slot: "Vendor 3", VendorName: varChecklist.Vendor3Name },
+                      { Slot: "Vendor 4", VendorName: varChecklist.Vendor4Name }
+                  ),
+                  !IsBlank(VendorName)
+              )
+            SearchFields: =["VendorName"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =300
+            X: =24
+            Y: =498
+      - Image1_5:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =148

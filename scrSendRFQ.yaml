@@ -1,0 +1,1352 @@
+Screens:
+  scrSendRFQ:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+        Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+        ClearCollect(
+            colVendorList,
+            ForAll(
+                'SG Vendor Master List',
+                { VendorName: field_2, VendorEmail: "" }
+            )
+        );
+        Set(varSvV1Name, Coalesce(varChecklist.Vendor1Name, ""));
+        Set(varSvV2Name, Coalesce(varChecklist.Vendor2Name, ""));
+        Set(varSvV3Name, Coalesce(varChecklist.Vendor3Name, ""));
+        Set(varSvV4Name, Coalesce(varChecklist.Vendor4Name, ""));
+        Set(varSvV1Email, Coalesce(varChecklist.Vendor1Email, ""));
+        Set(varSvV2Email, Coalesce(varChecklist.Vendor2Email, ""));
+        Set(varSvV3Email, Coalesce(varChecklist.Vendor3Email, ""));
+        Set(varSvV4Email, Coalesce(varChecklist.Vendor4Email, ""));
+        Set(varSvV1Manual, !IsBlank(varSvV1Name) && CountRows(Filter(colVendorList, VendorName = varSvV1Name)) = 0);
+        Set(varSvV2Manual, !IsBlank(varSvV2Name) && CountRows(Filter(colVendorList, VendorName = varSvV2Name)) = 0);
+        Set(varSvV3Manual, !IsBlank(varSvV3Name) && CountRows(Filter(colVendorList, VendorName = varSvV3Name)) = 0);
+        Set(varSvV4Manual, !IsBlank(varSvV4Name) && CountRows(Filter(colVendorList, VendorName = varSvV4Name)) = 0);
+        Set(varSaving, false);
+        Set(varShowPreview, false);
+        Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
+        Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
+        Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
+        Reset(tglSvV4Manual); Reset(cboSvV4); Reset(txtSvV4Name); Reset(txtSvV4Email);
+        Reset(dteSvSentDate)
+    Children:
+      - recSvTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnSvBack:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Back"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblSvTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: =varSelectedRFQ.Title & "   ·   Vendor list"
+            Width: =560
+            X: =242
+      - lblSvSentBadge:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(206, 216, 236, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            Size: =11
+            Text: |-
+              =If(
+                  varSelectedRFQ.RFQstatus.Value = "RFQ sent out",
+                  "Already sent to vendors, edits here update the list in place",
+                  "Not yet sent to vendors"
+              )
+            Width: =600
+            X: =742
+      - recSvSummary:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =274
+            Width: =324
+            X: =24
+            Y: =88
+      - recSvSummaryHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Height: =38
+            Width: =324
+            X: =24
+            Y: =88
+      - lblSvSummaryHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =14
+            Text: ="The request"
+            Width: =324
+            X: =24
+            Y: =88
+      - lblSvSummaryBody:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =230
+            PaddingLeft: =14
+            PaddingRight: =14
+            Size: =11
+            Text: |-
+              =PlainText(Coalesce(varSelectedRFQ.Description, "")) & Char(10) & Char(10) &
+              "Quantity: " & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & Char(10) &
+              "Urgency: " & varSelectedRFQ.Urgency.Value & Char(10) &
+              "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & Char(10) &
+              "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.Author.DisplayName, "Unknown") & Char(10) &
+              "Contact: " & Coalesce(varSelectedRFQ.RequestorEmail, varSelectedRFQ.Author.Email, "no email on record") & Char(10) & Char(10) &
+              If(varSelectedRFQ.SoleSource, "SOLE SOURCE" & Char(10) & PlainText(Coalesce(varSelectedRFQ.SoleSourceJustification, "")) & Char(10) & Char(10), "") &
+              If(!IsBlank(varSelectedRFQ.RecommendVendor), "Requestor suggests: " & varSelectedRFQ.RecommendVendor & " (" & Coalesce(varSelectedRFQ.RecommendVendorEmail, "no email") & ")" & Char(10), "") &
+              If(!IsBlank(varChecklist.PreferredVendorName), "Requestor asked for: " & varChecklist.PreferredVendorName & Char(10) & PlainText(Coalesce(varChecklist.RequestorJustification, "")), "")
+            Width: =324
+            X: =24
+            Y: =132
+      - lblSvSentDate:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Date RFQ sent to vendors"
+            Width: =324
+            X: =24
+            Y: =374
+      - dteSvSentDate:
+          Control: Classic/DatePicker@2.6.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            DefaultDate: =Coalesce(varChecklist.RFQSentDate, Today())
+            Font: =Font.'Open Sans'
+            Height: =36
+            IconBackground: =RGBA(56, 96, 178, 1)
+            IconFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Width: =324
+            X: =24
+            Y: =398
+      - btnSvSave:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =48
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varV1, Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, ""))));
+              Set(varV2, Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, ""))));
+              Set(varV3, Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, ""))));
+              Set(varV4, Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, ""))));
+              Set(varE1, Trim(txtSvV1Email.Text));
+              Set(varE2, Trim(txtSvV2Email.Text));
+              Set(varE3, Trim(txtSvV3Email.Text));
+              Set(varE4, Trim(txtSvV4Email.Text));
+              ClearCollect(
+                  colSvSlots,
+                  { Slot: "Vendor 1", VName: varV1, VEmail: varE1 },
+                  { Slot: "Vendor 2", VName: varV2, VEmail: varE2 },
+                  { Slot: "Vendor 3", VName: varV3, VEmail: varE3 },
+                  { Slot: "Vendor 4", VName: varV4, VEmail: varE4 }
+              );
+              ClearCollect(colSvFilled, Filter(colSvSlots, !IsBlank(VName)));
+              If(
+                  CountRows(colSvFilled) = 0,
+                  Notify("Add at least one vendor before saving.", NotificationType.Error);
+                  Set(varSaving, false),
+                  CountRows(Filter(colSvFilled, IsBlank(VEmail) || !IsMatch(VEmail, Match.Email))) > 0,
+                  Notify("Every vendor you list needs a valid email address.", NotificationType.Error);
+                  Set(varSaving, false),
+                  CountRows(colSvFilled) <> CountRows(Distinct(colSvFilled, Lower(VName))),
+                  Notify("The same vendor is listed twice. Remove the duplicate before saving.", NotificationType.Error);
+                  Set(varSaving, false),
+                  Patch(
+                      RFQ_Checklist,
+                      If(IsBlank(varChecklist), Defaults(RFQ_Checklist), varChecklist),
+                      {
+                          Title: varSelectedRFQ.Title,
+                          RFQID: varSelectedRFQ.ID,
+                          RFQSentDate: dteSvSentDate.SelectedDate,
+                          Vendor1Name: varV1,
+                          Vendor1Email: If(IsBlank(varV1), Blank(), varE1),
+                          Vendor1Currency: If(IsBlank(varV1), Blank(), varChecklist.Vendor1Currency),
+                          Vendor1UnitPrice: If(IsBlank(varV1), Blank(), varChecklist.Vendor1UnitPrice),
+                          Vendor1TotalPrice: If(IsBlank(varV1), Blank(), varChecklist.Vendor1TotalPrice),
+                          Vendor1LeadTime: If(IsBlank(varV1), Blank(), varChecklist.Vendor1LeadTime),
+                          Vendor1Status: If(
+                              IsBlank(varV1),
+                              Blank(),
+                              If(
+                                  Coalesce(varChecklist.Vendor1Name, "") <> varV1,
+                                  { Value: "Awaiting reply" },
+                                  Coalesce(varChecklist.Vendor1Status, { Value: "Awaiting reply" })
+                              )
+                          ),
+                          Vendor2Name: varV2,
+                          Vendor2Email: If(IsBlank(varV2), Blank(), varE2),
+                          Vendor2Currency: If(IsBlank(varV2), Blank(), varChecklist.Vendor2Currency),
+                          Vendor2UnitPrice: If(IsBlank(varV2), Blank(), varChecklist.Vendor2UnitPrice),
+                          Vendor2TotalPrice: If(IsBlank(varV2), Blank(), varChecklist.Vendor2TotalPrice),
+                          Vendor2LeadTime: If(IsBlank(varV2), Blank(), varChecklist.Vendor2LeadTime),
+                          Vendor2Status: If(
+                              IsBlank(varV2),
+                              Blank(),
+                              If(
+                                  Coalesce(varChecklist.Vendor2Name, "") <> varV2,
+                                  { Value: "Awaiting reply" },
+                                  Coalesce(varChecklist.Vendor2Status, { Value: "Awaiting reply" })
+                              )
+                          ),
+                          Vendor3Name: varV3,
+                          Vendor3Email: If(IsBlank(varV3), Blank(), varE3),
+                          Vendor3Currency: If(IsBlank(varV3), Blank(), varChecklist.Vendor3Currency),
+                          Vendor3UnitPrice: If(IsBlank(varV3), Blank(), varChecklist.Vendor3UnitPrice),
+                          Vendor3TotalPrice: If(IsBlank(varV3), Blank(), varChecklist.Vendor3TotalPrice),
+                          Vendor3LeadTime: If(IsBlank(varV3), Blank(), varChecklist.Vendor3LeadTime),
+                          Vendor3Status: If(
+                              IsBlank(varV3),
+                              Blank(),
+                              If(
+                                  Coalesce(varChecklist.Vendor3Name, "") <> varV3,
+                                  { Value: "Awaiting reply" },
+                                  Coalesce(varChecklist.Vendor3Status, { Value: "Awaiting reply" })
+                              )
+                          ),
+                          Vendor4Name: varV4,
+                          Vendor4Email: If(IsBlank(varV4), Blank(), varE4),
+                          Vendor4Currency: If(IsBlank(varV4), Blank(), varChecklist.Vendor4Currency),
+                          Vendor4UnitPrice: If(IsBlank(varV4), Blank(), varChecklist.Vendor4UnitPrice),
+                          Vendor4TotalPrice: If(IsBlank(varV4), Blank(), varChecklist.Vendor4TotalPrice),
+                          Vendor4LeadTime: If(IsBlank(varV4), Blank(), varChecklist.Vendor4LeadTime),
+                          Vendor4Status: If(
+                              IsBlank(varV4),
+                              Blank(),
+                              If(
+                                  Coalesce(varChecklist.Vendor4Name, "") <> varV4,
+                                  { Value: "Awaiting reply" },
+                                  Coalesce(varChecklist.Vendor4Status, { Value: "Awaiting reply" })
+                              )
+                          ),
+                          AwardVendor: If(
+                              (varChecklist.AwardVendor.Value = "Vendor 1" && IsBlank(varV1))
+                                  || (varChecklist.AwardVendor.Value = "Vendor 2" && IsBlank(varV2))
+                                  || (varChecklist.AwardVendor.Value = "Vendor 3" && IsBlank(varV3))
+                                  || (varChecklist.AwardVendor.Value = "Vendor 4" && IsBlank(varV4)),
+                              Blank(),
+                              varChecklist.AwardVendor
+                          )
+                      }
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Notify("Vendor list saved (" & CountRows(colSvFilled) & " vendor(s)).", NotificationType.Success, 3000);
+                  Set(varSaving, false)
+              )
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =13
+            Text: ="Save vendor list"
+            Width: =324
+            X: =24
+            Y: =450
+      - btnSvSend:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varChecklist.Vendor1Name) || varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =56
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              If(
+                  IsBlank(varRFQRecord),
+                  Notify("This RFQ no longer exists. Somebody may have deleted it. Go back to the queue and refresh.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+                  Patch(
+                      RFQ,
+                      varRFQRecord,
+                      {
+                          RFQstatus: { Value: "RFQ sent out" },
+                          AwaitingAction: { Value: "Vendor" },
+                          Assigned_x0020_Buyer: User().Email,
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ sent to " & CountRows(Filter(colSvSlots, !IsBlank(VName))) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                      }
+                  );
+                  Patch(RFQ_Checklist, varChecklist, { RFQSentDate: dteSvSentDate.SelectedDate });
+                  Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Set(varSaving, false);
+                  Notify("RFQ marked as sent. Please review and send the email draft on your screen.", NotificationType.Success, 5000);
+                  Set(varShowPreview, true)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =14
+            Text: =If(varSelectedRFQ.RFQstatus.Value = "RFQ sent out", "Update sent date and go to checklist", "Mark RFQ as sent to vendors")
+            Width: =324
+            X: =24
+            Y: =518
+      - lblSvLeftHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.Vendor1Name),
+                  "Save the vendor list first, the send button unlocks once at least one vendor is stored.",
+                  "Vendors can be added, swapped or removed at any time; clearing a slot also clears that vendor's saved quote."
+              )
+            Width: =536
+            X: =830
+            Y: =717
+      - recSvCard1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =112
+            Width: =983
+            X: =372
+            Y: =88
+      - recSvHead1:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =38
+            Width: =983
+            X: =372
+            Y: =88
+      - lblSvHead1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =14
+            Text: ="Vendor 1  (required)"
+            Width: =300
+            X: =372
+            Y: =88
+      - btnSvClear1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: |-
+              =Set(varSvV1Name, "");
+              Set(varSvV1Email, "");
+              Set(varSvV1Manual, false);
+              Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =10
+            Text: ="Clear"
+            Width: =76
+            X: =1265
+            Y: =153
+      - lblSvManual1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Not on the master list?"
+            Width: =190
+            X: =596
+            Y: =93
+      - tglSvV1Manual:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Default: =varSvV1Manual
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =95
+            X: =778
+            Y: =94
+      - lblSvName1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor name"
+            Width: =200
+            X: =380
+            Y: =131
+      - txtSvV1Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV1Name
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="Type the vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Visible: =tglSvV1Manual.Value
+            Width: =430
+            X: =379
+            Y: =155
+      - lblSvEmail1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor email"
+            Width: =200
+            X: =823
+            Y: =131
+      - txtSvV1Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV1Email
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =430
+            X: =823
+            Y: =155
+      - lblSvCheck1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))) || IsBlank(Trim(txtSvV1Email.Text)) || !IsMatch(Trim(txtSvV1Email.Text), Match.Email),
+                  ColorValue("#A32D2D"),
+                  ColorValue("#3B6D11")
+              )
+            Font: =Font.'Open Sans'
+            Height: =34
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))), "Vendor 1 is required, pick one from the list or enter it manually.",
+                  IsBlank(Trim(txtSvV1Email.Text)), "Add an email address for this vendor.",
+                  !IsMatch(Trim(txtSvV1Email.Text), Match.Email), "That does not look like a valid email address.",
+                  "Ready to save."
+              )
+            Width: =427
+            X: =924
+            Y: =90
+      - recSvCard2:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =108
+            Width: =983
+            X: =372
+            Y: =212
+      - recSvHead2:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(0, 0, 0, 1)
+            Height: =38
+            Width: =983
+            X: =372
+            Y: =212
+      - lblSvHead2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =14
+            Text: ="Vendor 2  (optional)"
+            Width: =300
+            X: =372
+            Y: =213
+      - btnSvClear2:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: |-
+              =Set(varSvV2Name, "");
+              Set(varSvV2Email, "");
+              Set(varSvV2Manual, false);
+              Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =10
+            Text: ="Clear"
+            Width: =76
+            X: =1266
+            Y: =276
+      - lblSvManual2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Not on the master list?"
+            Width: =190
+            X: =596
+            Y: =216
+      - tglSvV2Manual:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Default: =varSvV2Manual
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =95
+            X: =778
+            Y: =216
+      - lblSvName2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor name"
+            Width: =200
+            X: =380
+            Y: =252
+      - txtSvV2Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV2Name
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="Type the vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Visible: =tglSvV2Manual.Value
+            Width: =430
+            X: =380
+            Y: =276
+      - lblSvEmail2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor email"
+            Width: =200
+            X: =823
+            Y: =252
+      - txtSvV2Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV2Email
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =430
+            X: =823
+            Y: =276
+      - lblSvCheck2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, "")))), "Empty slot, leave it blank if you only need one vendor.",
+                  IsBlank(Trim(txtSvV2Email.Text)), "Add an email address for this vendor.",
+                  !IsMatch(Trim(txtSvV2Email.Text), Match.Email), "That does not look like a valid email address.",
+                  "Ready to save."
+              )
+            Width: =431
+            X: =924
+            Y: =208
+      - recSvCard3:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =109
+            Width: =982
+            X: =373
+            Y: =333
+      - recSvHead3:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(0, 0, 0, 1)
+            Height: =38
+            Width: =983
+            X: =372
+            Y: =333
+      - lblSvHead3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =14
+            Text: ="Vendor 3  (optional)"
+            Width: =300
+            X: =373
+            Y: =333
+      - btnSvClear3:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: |-
+              =Set(varSvV3Name, "");
+              Set(varSvV3Email, "");
+              Set(varSvV3Manual, false);
+              Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =10
+            Text: ="Clear"
+            Width: =76
+            X: =1266
+            Y: =396
+      - lblSvManual3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Not on the master list?"
+            Width: =190
+            X: =596
+            Y: =340
+      - tglSvV3Manual:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Default: =varSvV3Manual
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =95
+            X: =778
+            Y: =338
+      - lblSvName3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor name"
+            Width: =200
+            X: =380
+            Y: =374
+      - txtSvV3Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV3Name
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="Type the vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Visible: =tglSvV3Manual.Value
+            Width: =430
+            X: =380
+            Y: =398
+      - lblSvEmail3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor email"
+            Width: =200
+            X: =823
+            Y: =374
+      - txtSvV3Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV3Email
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =430
+            X: =823
+            Y: =398
+      - lblSvCheck3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, "")))), "Empty slot, leave it blank if not needed.",
+                  IsBlank(Trim(txtSvV3Email.Text)), "Add an email address for this vendor.",
+                  !IsMatch(Trim(txtSvV3Email.Text), Match.Email), "That does not look like a valid email address.",
+                  "Ready to save."
+              )
+            Width: =430
+            X: =924
+            Y: =331
+      - recSvCard4:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =114
+            Width: =983
+            X: =372
+            Y: =454
+      - recSvHead4:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(0, 0, 0, 1)
+            Height: =38
+            Width: =983
+            X: =372
+            Y: =454
+      - lblSvHead4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =14
+            Text: ="Vendor 4  (optional)"
+            Width: =300
+            X: =372
+            Y: =453
+      - btnSvClear4:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: |-
+              =Set(varSvV4Name, "");
+              Set(varSvV4Email, "");
+              Set(varSvV4Manual, false);
+              Reset(tglSvV4Manual); Reset(cboSvV4); Reset(txtSvV4Name); Reset(txtSvV4Email)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =10
+            Text: ="Clear"
+            Width: =76
+            X: =1266
+            Y: =521
+      - lblSvManual4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Not on the master list?"
+            Width: =190
+            X: =596
+            Y: =461
+      - tglSvV4Manual:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Default: =varSvV4Manual
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =95
+            X: =781
+            Y: =459
+      - lblSvName4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor name"
+            Width: =200
+            X: =380
+            Y: =497
+      - txtSvV4Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV4Name
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="Type the vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Visible: =tglSvV4Manual.Value
+            Width: =430
+            X: =380
+            Y: =520
+      - lblSvEmail4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Vendor email"
+            Width: =200
+            X: =823
+            Y: =498
+      - txtSvV4Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varSvV4Email
+            Font: =Font.'Open Sans'
+            Height: =34
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =430
+            X: =823
+            Y: =522
+      - lblSvCheck4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, "")))), "Empty slot, leave it blank if not needed.",
+                  IsBlank(Trim(txtSvV4Email.Text)), "Add an email address for this vendor.",
+                  !IsMatch(Trim(txtSvV4Email.Text), Match.Email), "That does not look like a valid email address.",
+                  "Ready to save."
+              )
+            Width: =430
+            X: =924
+            Y: =453
+      - lblSvFooter:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =91
+            Size: =10
+            Text: |-
+              ="Saved vendors: " & CountRows(Filter(
+                  Table(
+                      { N: Coalesce(varChecklist.Vendor1Name, "") },
+                      { N: Coalesce(varChecklist.Vendor2Name, "") },
+                      { N: Coalesce(varChecklist.Vendor3Name, "") },
+                      { N: Coalesce(varChecklist.Vendor4Name, "") }
+                  ),
+                  !IsBlank(N)
+              )) & " of 4    ·    Quotes already entered for a vendor are kept when you edit the list, and cleared only if you remove that vendor."
+            Width: =348
+            X: =12
+            Y: =597
+      - btnSvDraftEmail:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: |-
+              =If(
+                  IsBlank(varChecklist.Vendor1Name) && IsBlank(varChecklist.Vendor2Name) && IsBlank(varChecklist.Vendor3Name) && IsBlank(varChecklist.Vendor4Name),
+                  DisplayMode.Disabled,
+                  DisplayMode.Edit
+              )
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =52
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =ClearCollect(
+                  colSvMailTo,
+                  Filter(
+                      Table(
+                          { E: Coalesce(varChecklist.Vendor1Email, "") },
+                          { E: Coalesce(varChecklist.Vendor2Email, "") },
+                          { E: Coalesce(varChecklist.Vendor3Email, "") },
+                          { E: Coalesce(varChecklist.Vendor4Email, "") }
+                      ),
+                      !IsBlank(E)
+                  )
+              );
+              If(
+                  CountRows(colSvMailTo) = 0,
+                  Notify("Save the vendor list first. There are no vendor email addresses stored yet.", NotificationType.Warning, 4000),
+                  Reset(rtePreview);
+                  Set(varShowPreview, true)
+              )
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =13
+            Text: ="Send the RFQ to these vendors"
+            Width: =470
+            X: =358
+            Y: =705
+      - cboSvV1:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(colVendorList, VendorName = varSvV1Name)
+            DisplayFields: =["VendorName"]
+            Font: =Font.'Open Sans'
+            Height: =34
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Search the vendor master list"
+            Items: =colVendorList
+            OnChange: |-
+              =Set(varSvV1Email, Coalesce(cboSvV1.Selected.VendorEmail, txtSvV1Email.Text));
+              Reset(txtSvV1Email)
+            SearchFields: =["VendorName"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Visible: =!tglSvV1Manual.Value
+            Width: =430
+            X: =380
+            Y: =155
+      - cboSvV2:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(colVendorList, VendorName = varSvV2Name)
+            DisplayFields: =["VendorName"]
+            Font: =Font.'Open Sans'
+            Height: =34
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Search the vendor master list"
+            Items: =colVendorList
+            OnChange: |-
+              =Set(varSvV2Email, Coalesce(cboSvV2.Selected.VendorEmail, txtSvV2Email.Text));
+              Reset(txtSvV2Email)
+            SearchFields: =["VendorName"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Visible: =!tglSvV2Manual.Value
+            Width: =430
+            X: =380
+            Y: =276
+      - cboSvV3:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(colVendorList, VendorName = varSvV3Name)
+            DisplayFields: =["VendorName"]
+            Font: =Font.'Open Sans'
+            Height: =34
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Search the vendor master list"
+            Items: =colVendorList
+            OnChange: |-
+              =Set(varSvV3Email, Coalesce(cboSvV3.Selected.VendorEmail, txtSvV3Email.Text));
+              Reset(txtSvV3Email)
+            SearchFields: =["VendorName"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Visible: =!tglSvV3Manual.Value
+            Width: =430
+            X: =380
+            Y: =398
+      - cboSvV4:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: =Filter(colVendorList, VendorName = varSvV4Name)
+            DisplayFields: =["VendorName"]
+            Font: =Font.'Open Sans'
+            Height: =34
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Search the vendor master list"
+            Items: =colVendorList
+            OnChange: |-
+              =Set(varSvV4Email, Coalesce(cboSvV4.Selected.VendorEmail, txtSvV4Email.Text));
+              Reset(txtSvV4Email)
+            SearchFields: =["VendorName"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Visible: =!tglSvV4Manual.Value
+            Width: =430
+            X: =380
+            Y: =521
+      - Image1_4:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =148
+      - recPreviewDimmer:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 0.7)
+            Height: =768
+            OnSelect: =Set(varShowPreview, false)
+            Visible: =varShowPreview
+            Width: =1366
+      - recPreviewCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =640
+            Visible: =varShowPreview
+            Width: =820
+            X: =273
+            Y: =64
+      - recPreviewHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =48
+            Visible: =varShowPreview
+            Width: =820
+            X: =273
+            Y: =64
+      - lblPreviewHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            PaddingLeft: =20
+            Size: =14
+            Text: ="Review the email before sending"
+            Visible: =varShowPreview
+            Width: =600
+            X: =273
+            Y: =64
+      - lblPreviewSubtitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =20
+            Size: =10
+            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send."
+            Visible: =varShowPreview
+            Width: =780
+            X: =293
+            Y: =116
+      - rtePreview:
+          Control: RichTextEditor@2.7.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Default: |-
+              ="<p>Dear vendors,</p>
+              <p><strong>Pratt &amp; Whitney Component Solutions Pte Ltd (PWCS) Request For Quotation</strong></p>
+              <p>We would like to RFQ for the item below for PWCS. Appreciate if you could provide us the quotation by <strong>" & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & "</strong>.<br>
+              Kindly quote our RFQ# <strong>" & Text(varSelectedRFQ.Title) & "</strong> in your quotation.</p>
+              <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;width:100%;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                <tr style=""background-color:#1F2A44;color:#FFFFFF;"">
+                  <th align=""left"" width=""50%"">Item Description</th>
+                  <th align=""left"" width=""50%"">Other Info</th>
+                </tr>
+                <tr>
+                  <td valign=""top"">" & PlainText(Coalesce(Text(varSelectedRFQ.Description), "")) & "</td>
+                  <td valign=""top"">Quantity: " & Text(varSelectedRFQ.Quantity) & " " & Coalesce(Text(varSelectedRFQ.UOM), "") & "<br>Urgency: " & Text(varSelectedRFQ.Urgency.Value) & "<br>" & PlainText(Coalesce(Text(varSelectedRFQ.Remarks), "")) & "</td>
+                </tr>
+              </table>
+              <p>Please contact <strong>" & Coalesce(Text(varSelectedRFQ.RequestorName), Text(varSelectedRFQ.Author.DisplayName), "the requestor") & "</strong> (see email) for more details, if you need any other info. Their email address is as per cc-ed.</p>
+              <p><strong>Requirements to be included in the quotation:</strong></p>
+              <ul>
+                <li>Quotation must be sent or forwarded only to PWCS BUYER at <a href=""mailto:pws.shq.quote@prattwhitney.com"">pws.shq.quote@prattwhitney.com</a></li>
+                <li>Indicate RFQ Reference in quote as well as in email subject title. Note that emails without RFQ reference in subject will not be picked up by our system.</li>
+                <li>Indicate the qty as per mentioned in the RFQ email</li>
+                <li>Indicate Lead Time for the job, service or item</li>
+                <li>State the work scope, materials, and other requirements highlighted by the requestor</li>
+                <li>Quotation must have a validity period of 60 days</li>
+                <li>Address quote to Pratt &amp; Whitney Component Solutions PL, 61 Seletar Aerospace View, Singapore 797560</li>
+                <li>Pratt &amp; Whitney has a standard 90 days payment term and DDP shipping term which applies unbiased across Vendors, unless otherwise negotiated</li>
+              </ul>
+              <p><strong>Note for subcontracting:</strong></p>
+              <ul>
+                <li>If job awarded requires to be sub-contracted to third parties</li>
+                <li>Per export control requirement, please provide the details of your Sub-contractor (Company Name and address) for screening</li>
+              </ul>
+              <p><strong>Quotation Submission Reminder</strong></p>
+              <p>All quotations are treated as confidential documents and must be attention and sent directly to the Buyer. You are not allowed to send any quotations to the requestor directly nor copy them in the email when quotations are submitted to the Buyer.</p>
+              <p>Failing to adhere to this instruction will result in your quotation being rejected and your proposal will not be considered for the job.</p>
+              <p>We need to follow this strictly as we want to protect the confidentiality of your price offers and to ensure that your quote is competitively and fairly evaluated by the Buyer.</p>
+              <p>Do indicate the requestor's name on the quotation to the Buyer, and if necessary, you may send a separate workscope proposal to the requestor without stating any pricing.</p>
+              <p><strong>Reminder</strong></p>
+              <ul>
+                <li>Kindly ensure the above requirements are strictly adhered to avoid disqualification</li>
+                <li>Make an appointment with the requestor if you are coming for a meeting or discussion</li>
+                <li>Ensure that you are cleared for visit before coming to our facility</li>
+              </ul>
+              <p style=""color:#A32D2D;""><strong>IMPORTANT NOTE:</strong><br>
+              Per Pratt &amp; Whitney Policy and UTC Code Of Ethics, any reported finding or suspected case of the following nature shall be subjected to investigation, which could lead to termination of service.</p>
+              <ol>
+                <li>Commercial pricing disclosure, sharing or discussion, not released by PWCS Purchasing</li>
+                <li>Job carried out without PWCS official purchase order, or specific instruction by PWCS Purchasing</li>
+                <li>Monetary or gift acceptance of any form, without obtaining prior approval from PWCS Ethics and Compliance Officer (ECO)</li>
+              </ol>
+              <p>Thank You and Best Regards,</p>
+              <p style=""font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+              <strong>" & Coalesce(Text(Office365Users.MyProfileV2().displayName), User().FullName) & "</strong><br>
+              Buyer<br>
+              O: " & Coalesce(Text(First(Office365Users.MyProfileV2().businessPhones).Value), "") & "<br>
+              C: " & Coalesce(Text(Office365Users.MyProfileV2().mobilePhone), "") & "<br>
+              <a href=""mailto:" & User().Email & """>" & User().Email & "</a><br><br>
+              <strong>Pratt &amp; Whitney | An RTX Business</strong><br>
+              Pratt &amp; Whitney Component Solutions Pte Ltd<br>
+              61 Seletar Aerospace View, Singapore 797560<br>
+              <a href=""https://www.rtx.com"">RTX.com</a>
+              </p>
+              <p style=""font-size:11px;color:#606A7E;"">
+              This message may contain RTX proprietary, business confidential, and/or privileged information. Unless you are the addressee (or authorized to receive mail for the addressee), you should not use, copy, or disclose to anyone this message or any information contained in this message. If you have received this message in error, please advise the sender by reply e-mail and delete this message; you should not otherwise use, distribute, retransmit, or reproduce this email. Thank you for your cooperation.<br><br>
+              This document does not contain any export regulated technical data.
+              </p>"
+            Height: =430
+            Visible: =varShowPreview
+            Width: =780
+            X: =293
+            Y: =152
+      - ClosePreview:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =55
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Set(varShowPreview, false)
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: |-
+              ="Close
+              (Do not send)"
+            Visible: =varShowPreview
+            Width: =150
+            X: =703
+            Y: =597
+      - SendEmail:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            DisplayMode: =If(IsBlank(Trim(PlainText(rtePreview.HtmlText))) || varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              If(
+                  IsBlank(varRFQRecord),
+                  Notify("This RFQ no longer exists. Somebody may have deleted it. Nothing was sent.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  SendRFQToVendors.Run(
+                      Concat(colSvMailTo, E, ";"),
+                      Coalesce(varSelectedRFQ.RequestorEmail, varSelectedRFQ.Author.Email, ""),
+                      "RFQ " & varSelectedRFQ.Title & " . Reply by " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy"),
+                      rtePreview.HtmlText,
+                      User().Email
+                  );
+                  Patch(
+                      RFQ,
+                      varRFQRecord,
+                      {
+                          RFQstatus: { Value: "RFQ sent out" },
+                          AwaitingAction: { Value: "Vendor" },
+                          Assigned_x0020_Buyer: User().Email,
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                      }
+                  );
+                  Patch(RFQ_Checklist, varChecklist, { RFQSentDate: Coalesce(dteSvSentDate.SelectedDate, Today()) });
+                  Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
+                  Set(varSaving, false);
+                  Notify("RFQ sent. Vendors are on BCC and cannot see each other.", NotificationType.Success, 5000);
+                  Set(varShowPreview, false);
+                  Navigate(scrChecklist, ScreenTransition.Fade)
+              )
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Size: =12
+            Text: ="Send to vendors"
+            Visible: =varShowPreview
+            Width: =200
+            X: =869
+            Y: =608

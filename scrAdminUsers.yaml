@@ -1,0 +1,694 @@
+Screens:
+  scrAdminUsers:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varAuDenied, false);
+        Set(varAuDenied, Coalesce(varRole, "Requestor") <> "Admin");
+        If(
+            varAuDenied,
+            Notify("Only an administrator can change who has access. Taking you back to the home screen.", NotificationType.Error, 4000),
+            Refresh('PWS_SHQ Purchase Requisition SU');
+            ClearCollect(colAppUsers, 'PWS_SHQ Purchase Requisition SU');
+            Set(varAuSelected, Blank());
+            Set(varAuConfirmDelete, false);
+            Set(varSaving, false);
+            Reset(txtAuSearch);
+            Reset(txtAuEmail);
+            Reset(txtAuName);
+            Reset(cboAuRole)
+        )
+    Children:
+      - recAuTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnAuBack:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrHome, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Back"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblAuTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: ="Elevated access"
+            Width: =520
+            X: =240
+      - lblAuCounts:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(206, 216, 236, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            Size: =12
+            Text: |-
+              =CountRows(Filter(colAppUsers, Role = "Buyer")) & " buyers   " &
+              CountRows(Filter(colAppUsers, Role = "Admin")) & " admins   " &
+              "everybody else is a requestor"
+            Width: =460
+            X: =860
+      - recAuFormCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =560
+            Width: =420
+            X: =24
+            Y: =88
+      - recAuFormHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Fill: =RGBA(243, 246, 252, 1)
+            Height: =40
+            Width: =420
+            X: =24
+            Y: =88
+      - lblAuFormHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =14
+            Text: =If(IsBlank(varAuSelected), "Give somebody buyer or admin access", "Changing access for " & varAuSelected.User.DisplayName)
+            Width: =420
+            X: =24
+            Y: =88
+      - lblAuEmailLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            Size: =11
+            Text: ="Work email address. Must match their Microsoft 365 sign in exactly."
+            Width: =380
+            X: =44
+            Y: =128
+      - txtAuEmail:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =Coalesce(varAuSelected.User.Email, "")
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="firstname.lastname@prattwhitney.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =380
+            X: =44
+            Y: =168
+      - lblAuNameLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Full name as you want it to appear on RFQs"
+            Width: =380
+            X: =44
+            Y: =218
+      - txtAuName:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =Coalesce(varAuSelected.User.DisplayName, "")
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="Jane Tan"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =380
+            X: =44
+            Y: =242
+      - lblAuRoleLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="Access level"
+            Width: =380
+            X: =44
+            Y: =292
+      - lblAuRoleHelp:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =106
+            Size: =10
+            Text: ="Everybody in the company can already raise RFQs and confirm awards on their own requests. That is the requestor level and it needs no entry here. Buyer adds the buyer queue, vendor lists and quote entry. Admin is a buyer who can also open this screen and change who has access."
+            Width: =380
+            X: =44
+            Y: =364
+      - lblAuFormHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =56
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(varAuSelected),
+                  "Only add somebody here if they need more than requestor access. Nobody needs an entry to raise RFQs.",
+                  "The change takes effect the next time that person opens the app, because access is read once at start up."
+              )
+            Width: =380
+            X: =44
+            Y: =588
+      - btnAuSave:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =46
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varAuEmail, Lower(Trim(txtAuEmail.Text)));
+              If(
+                  IsBlank(varAuEmail) || !IsMatch(varAuEmail, Match.Email),
+                  Notify("Enter a valid work email address.", NotificationType.Error);
+                  Set(varSaving, false),
+
+                  IsBlank(Trim(txtAuName.Text)),
+                  Notify("Enter the person's full name so the list is readable.", NotificationType.Error);
+                  Set(varSaving, false),
+
+                  IsBlank(cboAuRole.Selected),
+                  Notify("Pick the access level to grant.", NotificationType.Error);
+                  Set(varSaving, false),
+
+                  IsBlank(varAuSelected) && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Lower(ThisRecord.User.Email) = varAuEmail)) > 0,
+                  Notify("That person already has elevated access. Select them on the right to change their level instead.", NotificationType.Error, 5000);
+                  Set(varSaving, false),
+
+                  !IsBlank(varAuSelected)
+                      && Lower(varAuSelected.User.Email) = Lower(User().Email)
+                      && cboAuRole.Selected.Value <> "Admin",
+                  Notify("You cannot downgrade your own administrator access. Ask another administrator to do it.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  !IsBlank(varAuSelected)
+                      && varAuSelected.Role = "Admin"
+                      && cboAuRole.Selected.Value <> "Admin"
+                      && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Role = "Admin")) <= 1,
+                  Notify("This is the only administrator left. Promote somebody else first.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  Patch(
+                      'PWS_SHQ Purchase Requisition SU',
+                      If(IsBlank(varAuSelected), Defaults('PWS_SHQ Purchase Requisition SU'), varAuSelected),
+                      {
+                          User: {
+                              '@odata.type': "#Microsoft.Azure.Connectors.SharePoint.SPListExpandedUser",
+                              Claims: "i:0#.f|membership|" & varAuEmail,
+                              Department: "",
+                              DisplayName: Trim(txtAuName.Text),
+                              Email: varAuEmail,
+                              JobTitle: "",
+                              Picture: ""
+                          },
+                          Role: cboAuRole.Selected.Value
+                      }
+                  );
+                  Refresh('PWS_SHQ Purchase Requisition SU');
+                  ClearCollect(colAppUsers, 'PWS_SHQ Purchase Requisition SU');
+                  Notify(If(IsBlank(varAuSelected), Trim(txtAuName.Text) & " now has " & Lower(cboAuRole.Selected.Value) & " access.", "Access level saved."), NotificationType.Success, 4000);
+                  Set(varAuSelected, Blank());
+                  Reset(txtAuEmail); Reset(txtAuName); Reset(cboAuRole);
+                  Set(varSaving, false)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =13
+            Text: =If(IsBlank(varAuSelected), "Grant this access", "Save changes")
+            Width: =184
+            X: =44
+            Y: =516
+      - btnAuClear:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =46
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Set(varAuSelected, Blank());
+              Set(varAuConfirmDelete, false);
+              Reset(txtAuEmail); Reset(txtAuName); Reset(cboAuRole)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =13
+            Text: =If(IsBlank(varAuSelected), "Clear the form", "Stop editing")
+            Width: =184
+            X: =240
+            Y: =516
+      - recAuListCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =560
+            Width: =874
+            X: =468
+            Y: =88
+      - txtAuSearch:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="Search by name or email"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =420
+            X: =488
+            Y: =108
+      - btnAuRefresh:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Refresh('PWS_SHQ Purchase Requisition SU');
+              ClearCollect(colAppUsers, 'PWS_SHQ Purchase Requisition SU');
+              Notify("List refreshed.", NotificationType.Success, 2000)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Refresh"
+            Width: =120
+            X: =1202
+            Y: =108
+      - recAuTableHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =36
+            Width: =834
+            X: =488
+            Y: =160
+      - lblAuHName:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="NAME"
+            Width: =240
+            X: =488
+            Y: =160
+      - lblAuHEmail:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="EMAIL"
+            Width: =340
+            X: =728
+            Y: =160
+      - lblAuHRole:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            PaddingLeft: =10
+            Size: =11
+            Text: ="ACCESS"
+            Width: =130
+            X: =1068
+            Y: =160
+      - galAuUsers:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =424
+            Items: |-
+              =Sort(
+                  Filter(
+                      colAppUsers,
+                      IsBlank(txtAuSearch.Text)
+                          || txtAuSearch.Text in ThisRecord.User.Email
+                          || txtAuSearch.Text in ThisRecord.User.DisplayName
+                  ),
+                  ThisRecord.User.DisplayName,
+                  SortOrder.Ascending
+              )
+            OnSelect: |-
+              =Set(varAuSelected, ThisItem);
+              Set(varAuConfirmDelete, false);
+              Reset(txtAuEmail); Reset(txtAuName); Reset(cboAuRole)
+            TemplateFill: =If(ThisItem.IsSelected, RGBA(233, 239, 250, 1), RGBA(255, 255, 255, 1))
+            TemplatePadding: =0
+            TemplateSize: =44
+            Width: =834
+            X: =488
+            Y: =200
+          Children:
+            - lblAuRowName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(24, 34, 56, 1)
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =12
+                  Text: =Coalesce(ThisItem.User.DisplayName, "No name recorded") & If(Lower(ThisItem.User.Email) = Lower(User().Email), "  (you)", "")
+                  Width: =240
+            - lblAuRowEmail:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(96, 106, 126, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =44
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: =ThisItem.User.Email
+                  Width: =340
+                  X: =240
+            - lblAuRowRole:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: |-
+                    =Switch(
+                        ThisItem.Role,
+                        "Admin", ColorValue("#993C1D"),
+                        "Buyer", ColorValue("#185FA5"),
+                        RGBA(150, 158, 172, 1)
+                    )
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  OnSelect: =Select(Parent)
+                  PaddingLeft: =10
+                  Size: =11
+                  Text: |-
+                    =If(
+                        ThisItem.Role in ["Buyer", "Admin"],
+                        ThisItem.Role,
+                        Coalesce(ThisItem.Role, "blank") & ". No effect, safe to remove."
+                    )
+                  Width: =213
+                  X: =496
+            - btnAuRowEdit:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Fill: =RGBA(255, 255, 255, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =28
+                  HoverColor: =RGBA(56, 96, 178, 1)
+                  HoverFill: =RGBA(240, 244, 251, 1)
+                  OnSelect: =Select(Parent)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(56, 96, 178, 1)
+                  Size: =10
+                  Text: ="Edit"
+                  Width: =80
+                  X: =714
+                  Y: =8
+            - recAuRowLine:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Fill: =RGBA(238, 242, 248, 1)
+                  Height: =1
+                  Width: =834
+                  Y: =43
+      - lblAuEmptyList:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            Size: =12
+            Text: |-
+              =If(
+                  IsBlank(txtAuSearch.Text),
+                  "Nobody has elevated access yet. Everybody can still raise RFQs, but no one can open the buyer queue.",
+                  "Nobody matches that search. Clear the box to see everyone."
+              )
+            Visible: =CountRows(galAuUsers.AllItems) = 0
+            Width: =834
+            X: =488
+            Y: =300
+      - btnAuDelete:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(168, 0, 0, 1)
+            Color: =RGBA(168, 0, 0, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varAuSelected) || varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =RGBA(168, 0, 0, 1)
+            OnSelect: |-
+              =If(
+                  Lower(varAuSelected.User.Email) = Lower(User().Email),
+                  Notify("You cannot take away your own access. Ask another administrator.", NotificationType.Error, 5000),
+
+                  varAuSelected.Role = "Admin" && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Role = "Admin")) <= 1,
+                  Notify("This is the only administrator left. Give somebody else admin access first.", NotificationType.Error, 6000),
+
+                  Set(varAuConfirmDelete, true)
+              )
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(168, 0, 0, 1)
+            Size: =12
+            Text: =If(IsBlank(varAuSelected), "Select somebody to take their access away", "Take away " & Coalesce(varAuSelected.User.DisplayName, varAuSelected.User.Email) & "'s " & Lower(Coalesce(varAuSelected.Role, "elevated")) & " access")
+            Width: =834
+            X: =488
+            Y: =668
+      - lblAuFooter:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            Size: =10
+            Text: ="Taking access away deletes nothing. The person keeps every RFQ they raised and can still raise more. They simply drop back to requestor level and lose the buyer queue."
+            Width: =420
+            X: =24
+            Y: =668
+      - recAuScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: =Set(varAuConfirmDelete, false)
+            Visible: =varAuConfirmDelete
+            Width: =1366
+      - recAuModal:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =220
+            Visible: =varAuConfirmDelete
+            Width: =560
+            X: =403
+            Y: =274
+      - lblAuModalTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =24
+            Size: =15
+            Text: ="Drop this person back to requestor?"
+            Visible: =varAuConfirmDelete
+            Width: =560
+            X: =403
+            Y: =298
+      - lblAuModalBody:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =80
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =11
+            Text: =Coalesce(varAuSelected.User.DisplayName, varAuSelected.User.Email) & " will lose " & Lower(Coalesce(varAuSelected.Role, "elevated")) & " access the next time they open the app, and will go back to raising RFQs like everybody else. Nothing is deleted and you can grant it again at any time."
+            Visible: =varAuConfirmDelete
+            Width: =560
+            X: =403
+            Y: =334
+      - btnAuModalCancel:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Set(varAuConfirmDelete, false)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Leave it as it is"
+            Visible: =varAuConfirmDelete
+            Width: =240
+            X: =427
+            Y: =426
+      - btnAuModalConfirm:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(168, 0, 0, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(168, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(168, 0, 0, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Remove('PWS_SHQ Purchase Requisition SU', varAuSelected);
+              Refresh('PWS_SHQ Purchase Requisition SU');
+              ClearCollect(colAppUsers, 'PWS_SHQ Purchase Requisition SU');
+              Set(varAuSelected, Blank());
+              Set(varAuConfirmDelete, false);
+              Reset(txtAuEmail); Reset(txtAuName); Reset(cboAuRole);
+              Set(varSaving, false);
+              Notify("Access removed. They are a requestor again.", NotificationType.Success, 4000)
+            PressedColor: =RGBA(168, 0, 0, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Yes, drop them back"
+            Visible: =varAuConfirmDelete
+            Width: =240
+            X: =699
+            Y: =426
+      - tmrAuRedirect:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =1
+            Height: =20
+            OnTimerEnd: =Navigate(scrHome, ScreenTransition.Fade)
+            Start: =varAuDenied
+            Visible: =false
+            Width: =20
+      - cboAuRole:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: |-
+              =Filter(
+                  Table({ Value: "Buyer" }, { Value: "Admin" }),
+                  Value = Coalesce(varAuSelected.Role, "Buyer")
+              )
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =38
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Buyer or Admin"
+            Items: |-
+              =Table(({ Value: "Buyer" }, { Value: "Admin" })
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =380
+            X: =44
+            Y: =316
+      - Image1_7:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =152

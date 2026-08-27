@@ -1,0 +1,591 @@
+Screens:
+  scrAwardConfirm:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+        Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+        Set(varShowAlternate, false);
+        Set(varAwardConfirm, Blank());
+        Set(varSaving, false);
+        Reset(txtAwPreferredVendor);
+        Reset(txtAwAlternateJust)
+    Children:
+      - recAwTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnAwBack:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrEditRFQ, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Back"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblAwTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: =varSelectedRFQ.Title & "   ·   Confirm the award"
+            Width: =620
+            X: =264
+      - recAwSummary:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =60
+            Width: =1318
+            X: =24
+            Y: =88
+      - lblAwSummary:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            PaddingLeft: =16
+            PaddingRight: =16
+            Size: =11
+            Text: |-
+              =varSelectedRFQ.Description & Char(10) &
+              varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
+              "     ·     " & varSelectedRFQ.Urgency.Value &
+              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
+              "     ·     Buyer: " & Coalesce(varSelectedRFQ.Assigned_x0020_Buyer, "not assigned")
+            Width: =1318
+            X: =24
+            Y: =88
+      - recAwQuotesCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =198
+            Width: =660
+            X: =24
+            Y: =168
+      - lblAwQuotesHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: ="Quotes received"
+            Width: =660
+            X: =24
+            Y: =168
+      - lblAwV1:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =If(varChecklist.AwardVendor.Value = "Vendor 1", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =16
+            Size: =11
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.Vendor1TotalPrice),
+                  Coalesce(varChecklist.Vendor1Name, ",") & "   ·   no quote",
+                  varChecklist.Vendor1Name & "   ·   " & Text(varChecklist.Vendor1TotalPrice * LookUp('Currency Rate', Title = varChecklist.Vendor1Currency.Value).field_1, "#,##0.00") & " USD   ·   " & varChecklist.Vendor1LeadTime & " days"
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 1", "    (recommended)", "")
+            Width: =660
+            X: =24
+            Y: =210
+      - lblAwV2:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =If(varChecklist.AwardVendor.Value = "Vendor 2", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =16
+            Size: =11
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.Vendor2TotalPrice),
+                  varChecklist.Vendor2Name & "   ·   no quote",
+                  varChecklist.Vendor2Name & "   ·   " & Text(varChecklist.Vendor2TotalPrice * LookUp('Currency Rate', Title = varChecklist.Vendor2Currency.Value).field_1, "#,##0.00") & " USD   ·   " & varChecklist.Vendor2LeadTime & " days"
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 2", "    (recommended)", "")
+            Visible: =!IsBlank(varChecklist.Vendor2Name)
+            Width: =660
+            X: =24
+            Y: =248
+      - lblAwV3:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =If(varChecklist.AwardVendor.Value = "Vendor 3", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =16
+            Size: =11
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.Vendor3TotalPrice),
+                  varChecklist.Vendor3Name & "   ·   no quote",
+                  varChecklist.Vendor3Name & "   ·   " & Text(varChecklist.Vendor3TotalPrice * LookUp('Currency Rate', Title = varChecklist.Vendor3Currency.Value).field_1, "#,##0.00") & " USD   ·   " & varChecklist.Vendor3LeadTime & " days"
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 3", "    (recommended)", "")
+            Visible: =!IsBlank(varChecklist.Vendor3Name)
+            Width: =660
+            X: =24
+            Y: =286
+      - lblAwV4:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =If(varChecklist.AwardVendor.Value = "Vendor 4", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =16
+            Size: =11
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.Vendor4TotalPrice),
+                  varChecklist.Vendor4Name & "   ·   no quote",
+                  varChecklist.Vendor4Name & "   ·   " & Text(varChecklist.Vendor4TotalPrice * LookUp('Currency Rate', Title = varChecklist.Vendor4Currency.Value).field_1, "#,##0.00") & " USD   ·   " & varChecklist.Vendor4LeadTime & " days"
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 4", "    (recommended)", "")
+            Visible: =!IsBlank(varChecklist.Vendor4Name)
+            Width: =660
+            X: =24
+            Y: =324
+      - recAwRecCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =200
+            Width: =660
+            X: =24
+            Y: =386
+      - lblAwRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: |-
+              ="Buyer recommends: " & Switch(
+                  varChecklist.AwardVendor.Value,
+                  "Vendor 1", varChecklist.Vendor1Name,
+                  "Vendor 2", varChecklist.Vendor2Name,
+                  "Vendor 3", varChecklist.Vendor3Name,
+                  "Vendor 4", varChecklist.Vendor4Name,
+                  "no vendor selected yet"
+              )
+            Width: =660
+            X: =24
+            Y: =386
+      - lblAwRecNotes:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =150
+            PaddingLeft: =16
+            PaddingRight: =16
+            Size: =11
+            Text: =PlainText(Coalesce((varChecklist.BuyerNotes), "The buyer did not add a justification."))
+            Width: =660
+            X: =24
+            Y: =430
+      - lblAwPriorRequest:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =120
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(varChecklist.RequestorDecision.Value),
+                  "You have not responded to this RFQ yet.",
+                  "Your last response: " & varChecklist.RequestorDecision.Value &
+                  If(!IsBlank(varChecklist.PreferredVendorName), Char(10) & "You asked for: " & varChecklist.PreferredVendorName, "") &
+                  If(!IsBlank(varChecklist.RequestorJustification), Char(10) & varChecklist.RequestorJustification, "")
+              )
+            Width: =660
+            X: =24
+            Y: =600
+      - recAwDecisionCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =576
+            Width: =634
+            X: =708
+            Y: =168
+      - lblAwDecisionHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: ="Your decision"
+            Width: =634
+            X: =708
+            Y: =168
+      - btnAwConfirm:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(59, 109, 17, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varChecklist.AwardVendor.Value) || varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
+            OnSelect: =Set(varAwardConfirm, "confirm")
+            PressedColor: =RGBA(59, 109, 17, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =14
+            Text: ="Accept the recommendation"
+            Width: =586
+            X: =732
+            Y: =232
+      - lblAwOr:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            Size: =11
+            Text: ="or"
+            Width: =586
+            X: =732
+            Y: =304
+      - btnAwAlternate:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =56
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: =Set(varShowAlternate, !varShowAlternate)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =13
+            Text: =If(varShowAlternate, "Cancel, do not request an alternative", "Ask the buyer for a different vendor")
+            Width: =586
+            X: =732
+            Y: =344
+      - lblAwPreferredLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Vendor you would prefer (optional)"
+            Visible: =varShowAlternate
+            Width: =586
+            X: =732
+            Y: =424
+      - txtAwPreferredVendor:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varChecklist.PreferredVendorName
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="Vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Visible: =varShowAlternate
+            Width: =586
+            X: =732
+            Y: =448
+      - lblAwJustLbl:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Why. The buyer needs a reason to re quote. Required."
+            Visible: =varShowAlternate
+            Width: =586
+            X: =732
+            Y: =502
+      - txtAwAlternateJust:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =varChecklist.RequestorJustification
+            Font: =Font.'Open Sans'
+            Height: =120
+            HintText: ="Technical fit, past performance, delivery window..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Mode: =TextMode.MultiLine
+            Size: =12
+            Visible: =varShowAlternate
+            Width: =586
+            X: =732
+            Y: =526
+      - btnAwSubmitAlt:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =52
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =If(
+                  IsBlank(Trim(txtAwAlternateJust.Text)),
+                  Notify("A justification is required before sending this back to the buyer.", NotificationType.Error),
+
+                  Set(varSaving, true);
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          RequestorDecision: { Value: "Alternate requested" },
+                          PreferredVendorName: Trim(txtAwPreferredVendor.Text),
+                          RequestorJustification: Trim(txtAwAlternateJust.Text)
+                      }
+                  );
+                  Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+                  Patch(
+                      RFQ,
+                      Coalesce(varRFQRecord, varSelectedRFQ),
+                      {
+                          RFQstatus: { Value: "Re-RFQ" },
+                          AwaitingAction: { Value: "Buyer" },
+                          ReRFQCount: Coalesce(varRFQRecord.ReRFQCount, 0) + 1,
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor asked for a different vendor" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                      }
+                  );
+                  Set(varSaving, false);
+                  Notify("Sent back to the buyer as a re quote request.", NotificationType.Success, 3000);
+                  Navigate(scrHome, ScreenTransition.Fade)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =13
+            Text: ="Send back to buyer"
+            Visible: =varShowAlternate
+            Width: =586
+            X: =732
+            Y: =664
+      - lblAwFooterHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =80
+            PaddingLeft: =4
+            Size: =10
+            Text: ="Accepting closes the RFQ and reminds you to raise the PR manually. If you accept by mistake, open the RFQ from the home screen and reopen it, nothing is permanently locked."
+            Visible: =!varShowAlternate
+            Width: =586
+            X: =732
+            Y: =424
+      - recAwScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 0.55)
+            Height: =768
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =1366
+      - recAwModal:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =248
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =520
+            X: =423
+            Y: =260
+      - lblAwModalTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =46
+            PaddingLeft: =28
+            Size: =16
+            Text: ="Confirm this award?"
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =520
+            X: =423
+            Y: =284
+      - lblAwModalBody:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =92
+            PaddingLeft: =28
+            PaddingRight: =28
+            Size: =12
+            Text: |-
+              ="This closes " & varSelectedRFQ.Title & " and awards " & Switch(
+                  varChecklist.AwardVendor.Value,
+                  "Vendor 1", varChecklist.Vendor1Name,
+                  "Vendor 2", varChecklist.Vendor2Name,
+                  "Vendor 3", varChecklist.Vendor3Name,
+                  "Vendor 4", varChecklist.Vendor4Name,
+                  "the recommended vendor"
+              ) & ". You will still need to raise the PR manually. The RFQ can be reopened afterwards if needed."
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =520
+            X: =423
+            Y: =330
+      - btnAwModalNo:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Set(varAwardConfirm, Blank())
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Not yet"
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =200
+            X: =451
+            Y: =440
+      - btnAwModalYes:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(59, 109, 17, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              Set(varAwardedTotal,
+                  Switch(
+                      varChecklist.AwardVendor.Value,
+                      "Vendor 1", varChecklist.Vendor1TotalPrice,
+                      "Vendor 2", varChecklist.Vendor2TotalPrice,
+                      "Vendor 3", varChecklist.Vendor3TotalPrice,
+                      "Vendor 4", varChecklist.Vendor4TotalPrice
+                  )
+              );
+              If(
+                  IsBlank(varRFQRecord),
+                  Notify("This RFQ no longer exists. Somebody may have deleted it. Nothing was awarded.", NotificationType.Error, 6000);
+                  Set(varAwardConfirm, Blank());
+                  Set(varSaving, false),
+
+                  IsBlank(varChecklist.AwardVendor),
+                  Notify("There is no recommended vendor on this RFQ yet, so there is nothing to award. Ask the buyer to send a recommendation.", NotificationType.Error, 6000);
+                  Set(varAwardConfirm, Blank());
+                  Set(varSaving, false),
+
+                  IsBlank(varAwardedTotal) || varAwardedTotal <= 0,
+                  Notify("The recommended vendor has no price recorded. Send it back to the buyer rather than awarding a blank quote.", NotificationType.Error, 7000);
+                  Set(varAwardConfirm, Blank());
+                  Set(varSaving, false),
+
+                  Patch(RFQ_Checklist, varChecklist, { RequestorDecision: { Value: "Confirmed" } });
+                  Patch(
+                      RFQ,
+                      varRFQRecord,
+                      {
+                          RFQstatus: { Value: "RFQ closed/completed" },
+                          AwaitingAction: { Value: "None" },
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   award confirmed" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                      }
+                  );
+                  Set(varAwardConfirm, Blank());
+                  Set(varSaving, false);
+                  Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
+                  Notify("Award confirmed. Raise the purchase requisition next.", NotificationType.Success, 5000);
+                  Navigate(scrEditRFQ, ScreenTransition.Fade)
+              )
+            PressedColor: =RGBA(59, 109, 17, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Yes, award it"
+            Visible: =!IsBlank(varAwardConfirm)
+            Width: =200
+            X: =715
+            Y: =440
+      - Image1_8:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =157
