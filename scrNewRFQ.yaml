@@ -1,0 +1,629 @@
+Screens:
+  scrNewRFQ:
+    Properties:
+      Fill: =RGBA(238, 242, 248, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =Set(varSaving, false);
+        Set(varNwUrgentDays, 3);
+        Set(varNwNormalDays, 7);
+        Set(varNwUrgency, "Not urgent");
+        Set(varNwDueDate, Today() + varNwNormalDays);
+        Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
+        Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
+        Reset(txtNwRecVendor); Reset(txtNwRecVendorEmail); Reset(txtNwRemarks)
+    Children:
+      - recNwTopBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(31, 42, 68, 1)
+            Height: =64
+            Width: =1366
+      - btnNwCancel:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scrHome, ScreenTransition.Fade)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Cancel"
+            Width: =100
+            X: =24
+            Y: =14
+      - lblNwTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =64
+            Size: =18
+            Text: ="Raise a new RFQ"
+            Width: =420
+            X: =258
+      - lblNwTopHint:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Right
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(206, 216, 236, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            Size: =11
+            Text: ="Everything here stays editable after you submit"
+            Width: =600
+            X: =742
+      - recNwCardA:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =656
+            Width: =430
+            X: =24
+            Y: =88
+      - lblNwHeadA:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: ="1.  What do you need?"
+            Width: =430
+            X: =24
+            Y: =88
+      - lblNwLblDesc:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Description *"
+            Width: =382
+            X: =48
+            Y: =144
+      - txtNwDescription:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =180
+            HintText: ="Part number, specification, quantity notes, drawings referenced..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Mode: =TextMode.MultiLine
+            Size: =12
+            Width: =382
+            X: =48
+            Y: =168
+      - lblNwLblQty:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Quantity required *"
+            Width: =382
+            X: =48
+            Y: =357
+      - txtNwQuantity:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =38
+            HintText: ="0"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =382
+            X: =48
+            Y: =381
+      - lblNwLblUOM:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Unit of measure"
+            Width: =382
+            X: =48
+            Y: =431
+      - txtNwUOM:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="EA, KG, SET..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =382
+            X: =48
+            Y: =455
+      - lblNwCheckA:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: |-
+              =If(
+                  IsBlank(Trim(txtNwDescription.Text)) || IsBlank(Trim(txtNwQuantity.Text)) || !IsNumeric(txtNwQuantity.Text) || Value(txtNwQuantity.Text) <= 0,
+                  ColorValue("#A32D2D"),
+                  ColorValue("#3B6D11")
+              )
+            Font: =Font.'Open Sans'
+            Height: =25
+            Size: =10
+            Text: |-
+              =If(
+                  IsBlank(Trim(txtNwDescription.Text)), "A description is required, the buyer works from this text.",
+                  IsBlank(Trim(txtNwQuantity.Text)), "A quantity is required.",
+                  !IsNumeric(txtNwQuantity.Text), "Quantity must be a number.",
+                  Value(txtNwQuantity.Text) <= 0, "Quantity must be greater than zero.",
+                  "Looks good."
+              )
+            Width: =382
+            X: =48
+            Y: =507
+      - recNwCardB:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =656
+            Width: =430
+            X: =478
+            Y: =88
+      - lblNwHeadB:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: ="2.  Timing and sourcing"
+            Width: =430
+            X: =478
+            Y: =88
+      - lblNwLblUrgency:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="How urgent is this?"
+            Width: =382
+            X: =502
+            Y: =144
+      - radNwUrgency:
+          Control: Classic/Radio@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Default: =varNwUrgency
+            Font: =Font.'Open Sans'
+            Height: =65
+            Items: =["Urgent", "Not urgent"]
+            Items.Value: =Value
+            Layout: =Layout.Horizontal
+            OnChange: |-
+              =Set(varNwUrgency, radNwUrgency.Selected.Value);
+              Set(varNwDueDate, Today() + If(radNwUrgency.Selected.Value = "Urgent", varNwUrgentDays, varNwNormalDays));
+              Reset(dteNwDueDate)
+            RadioBorderColor: =RGBA(56, 96, 178, 1)
+            RadioSelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Width: =382
+            X: =502
+            Y: =162
+      - lblNwLblDue:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =22
+            Size: =11
+            Text: ="When do you need it by?"
+            Width: =382
+            X: =502
+            Y: =225
+      - recNwDueBox:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =If(varNwUrgency = "Urgent", RGBA(255, 250, 235, 1), RGBA(240, 244, 251, 1))
+            Height: =36
+            Width: =382
+            X: =502
+            Y: =291
+      - lblNwDuePreview:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =36
+            Size: =11
+            Text: |-
+              =If(
+                  varNwUrgency = "Urgent",
+                  "Within " & varNwUrgentDays & " days, so this counts as urgent",
+                  "More than " & varNwUrgentDays & " days away, so this is not urgent"
+              )
+            Width: =382
+            X: =502
+            Y: =291
+      - lblNwLblSole:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Is this a sole source request?"
+            Width: =382
+            X: =502
+            Y: =326
+      - tglNwSoleSource:
+          Control: Classic/Toggle@2.1.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Font: =Font.'Open Sans'
+            TrueFill: =RGBA(56, 96, 178, 1)
+            Width: =87
+            X: =639
+            Y: =356
+      - lblNwLblJust:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Business justification *"
+            Visible: =tglNwSoleSource.Value
+            Width: =382
+            X: =502
+            Y: =392
+      - txtNwJustification:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =160
+            HintText: ="Why can only this source supply it?"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Mode: =TextMode.MultiLine
+            Size: =12
+            Visible: =tglNwSoleSource.Value
+            Width: =382
+            X: =502
+            Y: =416
+      - lblNwSoleHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =120
+            Size: =10
+            Text: |-
+              =If(
+                  tglNwSoleSource.Value,
+                  "Sole source requests still go through the buyer, who will document the single quote against your justification.",
+                  "Leave this off for a normal competitive RFQ. The buyer will approach up to four vendors."
+              )
+            Width: =382
+            X: =502
+            Y: =600
+      - recNwCardC:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =656
+            Width: =410
+            X: =932
+            Y: =88
+      - lblNwHeadC:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =38
+            PaddingLeft: =16
+            Text: ="3.  Suggestions and notes"
+            Width: =410
+            X: =932
+            Y: =88
+      - lblNwLblRecVendor:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Vendor you would recommend (optional)"
+            Width: =362
+            X: =956
+            Y: =144
+      - txtNwRecVendor:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="Vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =362
+            X: =956
+            Y: =168
+      - lblNwLblRecEmail:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Their email (optional)"
+            Width: =362
+            X: =956
+            Y: =222
+      - txtNwRecVendorEmail:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =38
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =12
+            Width: =362
+            X: =956
+            Y: =246
+      - lblNwLblRemarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            Size: =11
+            Text: ="Anything else the buyer should know"
+            Width: =362
+            X: =956
+            Y: =300
+      - txtNwRemarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =180
+            HintText: ="Budget code, delivery point, project reference..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Mode: =TextMode.MultiLine
+            Size: =12
+            Width: =362
+            X: =956
+            Y: =324
+      - btnNwSubmit:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =64
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =If(
+                  IsBlank(Trim(txtNwDescription.Text)) || IsBlank(Trim(txtNwQuantity.Text)),
+                  Notify("Description and quantity are both required.", NotificationType.Error),
+
+                  !IsNumeric(txtNwQuantity.Text) || Value(txtNwQuantity.Text) <= 0,
+                  Notify("Quantity must be a number greater than zero.", NotificationType.Error),
+
+                  tglNwSoleSource.Value && IsBlank(Trim(txtNwJustification.Text)),
+                  Notify("A sole source request needs a business justification.", NotificationType.Error),
+
+                  IsBlank(varNwDueDate) || varNwDueDate < Today(),
+                  Set(varSaving, false);
+                  Notify("Pick a due date of today or later.", NotificationType.Error),
+
+                  Set(varSaving, true);
+                  Set(
+                      varNewRFQ,
+                      Patch(
+                          RFQ,
+                          Defaults(RFQ),
+                          {
+                              Title: "RFQ DRAFT",
+                              Description: Trim(txtNwDescription.Text),
+                              Quantity: Value(txtNwQuantity.Text),
+                              UOM: Trim(txtNwUOM.Text),
+                              Urgency: { Value: varNwUrgency },
+                              RFQRaiseDate: Today(),
+                              RFQduedate: varNwDueDate,
+                              SoleSource: tglNwSoleSource.Value,
+                              SoleSourceJustification: If(tglNwSoleSource.Value, Trim(txtNwJustification.Text), Blank()),
+                              RequestorEmail: User().Email,
+                              RequestorName: User().FullName,
+                              ReRFQCount: 0,
+                              ActivityLog: Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ raised",
+                              RFQstatus: { Value: "RFQ pending" },
+                              AwaitingAction: { Value: "Buyer" },
+                              RecommendVendor: Trim(txtNwRecVendor.Text),
+                              RecommendVendorEmail: Trim(txtNwRecVendorEmail.Text),
+                              Remarks: Trim(txtNwRemarks.Text)
+                          }
+                      )
+                  );
+                  Patch(
+                      RFQ,
+                      varNewRFQ,
+                      { Title: "RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000") }
+                  );
+                  Set(varSaving, false);
+                  Notify("RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000") & " submitted. You can still edit it from the home screen.", NotificationType.Success, 5000);
+                  Navigate(scrHome, ScreenTransition.Fade)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =14
+            Text: ="Submit RFQ"
+            Width: =362
+            X: =956
+            Y: =560
+      - btnNwClearForm:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Set(varNwUrgency, "Not urgent");
+              Set(varNwDueDate, Today() + varNwNormalDays);
+              Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
+              Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
+              Reset(txtNwRecVendor); Reset(txtNwRecVendorEmail); Reset(txtNwRemarks);
+              Notify("Form cleared.", NotificationType.Information, 2000)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Clear the form"
+            Width: =362
+            X: =956
+            Y: =636
+      - lblNwFooter:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =48
+            Size: =10
+            Text: ="The RFQ number is generated from the list ID, so two people submitting at the same time can never collide."
+            Width: =362
+            X: =956
+            Y: =692
+      - dteNwDueDate:
+          Control: Classic/DatePicker@2.6.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            DefaultDate: =varNwDueDate
+            Font: =Font.'Open Sans'
+            Height: =36
+            IconBackground: =RGBA(56, 96, 178, 1)
+            IconFill: =RGBA(255, 255, 255, 1)
+            OnChange: |-
+              =Set(varNwDueDate, dteNwDueDate.SelectedDate);
+              Set(varNwUrgency, If(DateDiff(Today(), dteNwDueDate.SelectedDate, TimeUnit.Days) <= varNwUrgentDays, "Urgent", "Not urgent"));
+              Reset(radNwUrgency)
+            Size: =12
+            Width: =382
+            X: =502
+            Y: =251
+      - Image1_1:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Height: =64
+            Image: =image
+            Width: =76
+            X: =153
+      - attNwAttachments:
+          Control: Attachments@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =84
+            HoverFill: =RGBA(186, 202, 226, 1)
+            ItemColor: =RGBA(255, 255, 255, 1)
+            ItemFill: =RGBA(56, 96, 178, 1)
+            ItemHoverFill: =RGBA(186, 202, 226, 1)
+            PaddingBottom: =5
+            PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+            PaddingRight: =5
+            PaddingTop: =5
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(0, 18, 107, 1)
+            Size: |+
+              =10
+            Width: =382
+            X: =48
+            Y: =636
+      - lblNwLblAttach:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =83
+            Size: =10
+            Text: |-
+              ="Please attach all relevant supporting documents before submitting the RFQ request. (Eg.: Technical Drawing, Specification, Scope of Work (SOW), Photo, Samples, Reference of Previous Purchase Order, etc.)"
+            Width: =382
+            X: =48
+            Y: =550
