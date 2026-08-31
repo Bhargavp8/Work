@@ -73,8 +73,8 @@ Screens:
               =varSelectedRFQ.Description & Char(10) &
               varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
               "     ·     " & varSelectedRFQ.Urgency.Value &
-              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
-              "     ·     Buyer: " & Coalesce(varSelectedRFQ.Assigned_x0020_Buyer, "not assigned")
+              "     ·     Due " & Text(varSelectedRFQ.'RFQ  due date', "dd mmm yyyy") &
+              "     ·     Buyer: " & Coalesce(varSelectedRFQ.'Assigned Buyer', "not assigned")
             Width: =1318
             X: =24
             Y: =88
@@ -410,10 +410,10 @@ Screens:
                       RFQ,
                       Coalesce(varRFQRecord, varSelectedRFQ),
                       {
-                          RFQstatus: { Value: "Re-RFQ" },
+                          'RFQ status': { Value: "Re-RFQ" },
                           AwaitingAction: { Value: "Buyer" },
-                          ReRFQCount: Coalesce(varRFQRecord.ReRFQCount, 0) + 1,
-                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor asked for a different vendor" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                          'ReRFQCount ': Coalesce(varRFQRecord.'ReRFQCount ', 0) + 1,
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor asked for a different vendor" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
                   );
                   Set(varSaving, false);
@@ -561,9 +561,9 @@ Screens:
                       RFQ,
                       varRFQRecord,
                       {
-                          RFQstatus: { Value: "RFQ closed/completed" },
+                          'RFQ status': { Value: "RFQ closed/completed" },
                           AwaitingAction: { Value: "None" },
-                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   award confirmed" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   award confirmed" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
                   );
                   Set(varAwardConfirm, Blank());
