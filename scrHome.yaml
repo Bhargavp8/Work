@@ -11,7 +11,15 @@ Screens:
         ClearCollect(colMyRFQs, Filter(RFQ, RequestorEmail = User().Email));
         Reset(txtHmSearch);
         Reset(cboHmStatus);
-        Reset(tglHmAwaitingMe)
+        Reset(tglHmAwaitingMe);
+        Set(varHmDeepGo, false);
+        If(
+            varDeepLinkID > 0 && !IsBlank(LookUp(RFQ, ID = varDeepLinkID)),
+            Set(varSelectedRFQ, LookUp(RFQ, ID = varDeepLinkID));
+            Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varDeepLinkID));
+            Set(varDeepLinkID, 0);
+            Set(varHmDeepGo, true)
+        )
     Children:
       - recHmTopBar:
           Control: Rectangle@2.3.0
@@ -652,3 +660,17 @@ Screens:
             Height: =64
             Image: =image
             Width: =76
+      - tmrHmDeepLink:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =1
+            Height: =20
+            OnTimerEnd: |-
+              =If(
+                  varRole = "Buyer" || varRole = "Admin",
+                  Navigate(scrSendRFQ, ScreenTransition.Fade),
+                  Navigate(scrEditRFQ, ScreenTransition.Fade)
+              )
+            Start: =varHmDeepGo
+            Visible: =false
+            Width: =20
