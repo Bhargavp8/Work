@@ -8,6 +8,8 @@ Screens:
         Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
         Set(varCanEdit, !(varSelectedRFQ.RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"]));
         Set(varShowHistory, false);
+        Set(varShowDocs, false);
+        ClearCollect(colEdDocs, Filter('RFQ Documents', RFQNumber = varSelectedRFQ.Title));
         Set(varConfirmAction, Blank());
         Set(varSaving, false);
         Reset(txtEdDescription);
@@ -1035,3 +1037,202 @@ Screens:
             Image: =image
             Width: =76
             X: =157
+      - btnEdDocs:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =ClearCollect(colEdDocs, Filter('RFQ Documents', RFQNumber = varSelectedRFQ.Title));
+              Set(varShowDocs, true)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Documents (" & CountRows(colEdDocs) & ")"
+            Width: =186
+            X: =668
+            Y: =14
+      - recEdDocsScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: =Set(varShowDocs, false)
+            Visible: =varShowDocs
+            Width: =1366
+      - recEdDocsCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =560
+            Visible: =varShowDocs
+            Width: =860
+            X: =253
+            Y: =104
+      - lblEdDocsTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =24
+            Size: =15
+            Text: ="Documents for this RFQ"
+            Visible: =varShowDocs
+            Width: =600
+            X: =253
+            Y: =120
+      - lblEdDocsHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: ="Files you attached when raising the RFQ appear here, and vendor replies are filed here automatically."
+            Visible: =varShowDocs
+            Width: =860
+            X: =253
+            Y: =164
+      - lblEdDocsHdrName:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            PaddingLeft: =12
+            Size: =10
+            Text: ="FILE"
+            Visible: =varShowDocs
+            Width: =420
+            X: =277
+            Y: =208
+      - lblEdDocsHdrType:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            PaddingLeft: =12
+            Size: =10
+            Text: ="SOURCE"
+            Visible: =varShowDocs
+            Width: =392
+            X: =697
+            Y: =208
+      - lblEdDocsEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            Size: =12
+            Text: ="No documents yet. Use Open the SharePoint folder below to drag files in. Upload will ask for the RFQ number and a security classification, both required."
+            Visible: =varShowDocs && CountRows(colEdDocs) = 0
+            Width: =860
+            X: =253
+            Y: =300
+      - btnEdOpenFolder:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            DisplayMode: =If(IsBlank(varSelectedRFQ.RFQFolderUrl), DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Launch(varSelectedRFQ.RFQFolderUrl)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Open the SharePoint folder"
+            Visible: =varShowDocs
+            Width: =280
+            X: =277
+            Y: =600
+      - btnEdDocsClose:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Set(varShowDocs, false)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Close"
+            Visible: =varShowDocs
+            Width: =200
+            X: =889
+            Y: =600
+      - galEdDocs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =340
+            Items: =colEdDocs
+            TemplatePadding: =0
+            TemplateSize: =44
+            Visible: =varShowDocs
+            Width: =812
+            X: =277
+            Y: =244
+          Children:
+            - recEdDocRowLine:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Fill: =RGBA(238, 242, 248, 1)
+                  Height: =1
+                  Width: =812
+                  Y: =43
+            - lblEdDocName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =44
+                  OnSelect: =Launch(ThisItem.'Link to item')
+                  PaddingLeft: =12
+                  Size: =11
+                  Text: =ThisItem.Name
+                  Width: =420
+            - lblEdDocType:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(96, 106, 126, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =44
+                  PaddingLeft: =12
+                  Size: =10
+                  Text: =Coalesce(ThisItem.DocType.Value, "Attachment")
+                  Width: =392
+                  X: =420
