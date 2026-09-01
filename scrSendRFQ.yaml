@@ -27,6 +27,15 @@ Screens:
         Set(varSvV4Manual, !IsBlank(varSvV4Name) && CountRows(Filter(colVendorList, VendorName = varSvV4Name)) = 0);
         Set(varSaving, false);
         Set(varShowPreview, false);
+        ClearCollect(colSvDocs, Filter('RFQ Documents', RFQNumber = varSelectedRFQ.Title));
+        ClearCollect(
+            colSvPending,
+            Filter(
+                ForAll(varSelectedRFQ.Attachments, { FileName: DisplayName, FileLink: Value }),
+                !(FileName in colSvDocs.Name)
+            )
+        );
+        Set(varShowClassify, false);
         Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
         Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
         Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
@@ -342,6 +351,93 @@ Screens:
             Width: =324
             X: =24
             Y: =518
+      - recSvAttachCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =176
+            Width: =324
+            X: =24
+            Y: =584
+      - recSvAttachHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Height: =32
+            Width: =324
+            X: =24
+            Y: =584
+      - lblSvAttachHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =14
+            Size: =11
+            Text: ="Attachments from the requestor"
+            Width: =324
+            X: =24
+            Y: =584
+      - galSvDocs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =92
+            Items: =colSvDocs
+            TemplatePadding: =0
+            TemplateSize: =30
+            Width: =308
+            X: =32
+            Y: =620
+          Children:
+            - lblSvDocName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =30
+                  OnSelect: =Launch(ThisItem.'Link to item')
+                  Size: =9
+                  Text: =ThisItem.Name
+                  Width: =308
+      - lblSvDocsEmpty:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =39
+            Size: =9
+            Text: ="The requestor did not attach any documents."
+            Visible: =CountRows(colSvDocs) = 0
+            Width: =308
+            X: =32
+            Y: =683
+      - lblSvAttachHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =If(CountRows(colSvPending) > 0, RGBA(168, 0, 0, 1), RGBA(96, 106, 126, 1))
+            Font: =Font.'Open Sans'
+            Height: =34
+            Size: =9
+            Text: |-
+              =If(
+                  CountRows(colSvPending) > 0,
+                  CountRows(colSvPending) & " file(s) from the requestor still need classifying before they can be sent.",
+                  "Sent automatically with the RFQ email to vendors. Click a file to open it."
+              )
+            Width: =308
+            X: =32
+            Y: =722
       - lblSvLeftHint:
           Control: Label@2.5.1
           Properties:
@@ -962,7 +1058,7 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =91
+            Height: =67
             Size: =10
             Text: |-
               ="Saved vendors: " & CountRows(Filter(
@@ -974,9 +1070,9 @@ Screens:
                   ),
                   !IsBlank(N)
               )) & " of 4    ·    Quotes already entered for a vendor are kept when you edit the list, and cleared only if you remove that vendor."
-            Width: =348
-            X: =12
-            Y: =597
+            Width: =308
+            X: =32
+            Y: =624
       - btnSvDraftEmail:
           Control: Classic/Button@2.2.0
           Properties:
@@ -1192,7 +1288,7 @@ Screens:
             Height: =26
             PaddingLeft: =20
             Size: =10
-            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send."
+            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send. Any files the requestor attached go out with this email automatically."
             Visible: =varShowPreview
             Width: =780
             X: =293
@@ -1321,7 +1417,9 @@ Screens:
                       Coalesce(varSelectedRFQ.RequestorEmail, varSelectedRFQ.Author.Email, ""),
                       "RFQ " & varSelectedRFQ.Title & " . Reply by " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy"),
                       rtePreview.HtmlText,
-                      User().Email
+                      User().Email,
+                      varRFQRecord.ID,
+                      varSelectedRFQ.Title
                   );
                   Patch(
                       RFQ,
@@ -1350,3 +1448,225 @@ Screens:
             Width: =200
             X: =869
             Y: =608
+      - btnSvClassify:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Color: =RGBA(43, 33, 0, 1)
+            DisplayMode: =If(CountRows(colSvPending) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 191, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =34
+            HoverColor: =RGBA(43, 33, 0, 1)
+            HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
+            OnSelect: =Set(varShowClassify, true)
+            PressedColor: =RGBA(255, 191, 0, 1)
+            PressedFill: =RGBA(43, 33, 0, 1)
+            Size: =10
+            Text: |-
+              =If(
+                  CountRows(colSvPending) = 0,
+                  "All files classified",
+                  "Classify " & CountRows(colSvPending) & " new file(s)"
+              )
+            Width: =308
+            X: =32
+            Y: =722
+      - recSvClassScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: =Set(varShowClassify, false)
+            Visible: =varShowClassify
+            Width: =1366
+      - recSvClassCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =520
+            Visible: =varShowClassify
+            Width: =820
+            X: =273
+            Y: =124
+      - lblSvClassTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =24
+            Size: =15
+            Text: ="Classify the requestor's documents"
+            Visible: =varShowClassify
+            Width: =620
+            X: =273
+            Y: =140
+      - lblSvClassHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: ="Set a classification for each file, then file them. Only No Tech Data and Low Tech Data are ever emailed to vendors. Anything else is stored but held back."
+            Visible: =varShowClassify
+            Width: =820
+            X: =273
+            Y: =184
+      - lblSvClassHdrFile:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            PaddingLeft: =12
+            Size: =10
+            Text: ="FILE"
+            Visible: =varShowClassify
+            Width: =470
+            X: =297
+            Y: =232
+      - lblSvClassHdrClass:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            PaddingLeft: =12
+            Size: =10
+            Text: ="CLASSIFICATION"
+            Visible: =varShowClassify
+            Width: =302
+            X: =767
+            Y: =232
+      - btnSvClassCancel:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Set(varShowClassify, false)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Not now"
+            Visible: =varShowClassify
+            Width: =200
+            X: =627
+            Y: =580
+      - btnSvClassFile:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(59, 109, 17, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: |-
+              =If(
+                  varSaving || CountRows(Filter(galSvPending.AllItems, IsBlank(cboSvPendClass.Selected))) > 0,
+                  DisplayMode.Disabled,
+                  DisplayMode.Edit
+              )
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              ForAll(
+                  galSvPending.AllItems As Row,
+                CreateRFQFolder.Run(
+                  varSelectedRFQ.ID,
+                  varSelectedRFQ.Title,
+                  Row.cboSvPendClass.Selected.Value
+              )
+              );
+              ClearCollect(colSvDocs, Filter('RFQ Documents', RFQNumber = varSelectedRFQ.Title));
+              ClearCollect(
+                  colSvPending,
+                  Filter(
+                      ForAll(LookUp(RFQ, ID = varSelectedRFQ.ID).Attachments, { FileName: DisplayName, FileLink: Value }),
+                      !(FileName in colSvDocs.Name)
+                  )
+              );
+              Set(varSaving, false);
+              Set(varShowClassify, false);
+              Notify("Documents filed to SharePoint.", NotificationType.Success, 4000)
+            PressedColor: =RGBA(59, 109, 17, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="File them to SharePoint"
+            Visible: =varShowClassify
+            Width: =240
+            X: =845
+            Y: =580
+      - galSvPending:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =300
+            Items: =colSvPending
+            TemplatePadding: =0
+            TemplateSize: =46
+            Visible: =varShowClassify
+            Width: =772
+            X: =297
+            Y: =268
+          Children:
+            - recSvPendLine:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Fill: =RGBA(238, 242, 248, 1)
+                  Height: =1
+                  Width: =772
+                  Y: =45
+            - lblSvPendName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =46
+                  OnSelect: =Launch(ThisItem.FileLink)
+                  PaddingLeft: =12
+                  Size: =11
+                  Text: =ThisItem.FileName
+                  Width: =470
+            - cboSvPendClass:
+                Control: Classic/ComboBox@2.4.0
+                Properties:
+                  BorderColor: =If(IsBlank(cboSvPendClass.Selected), RGBA(168, 0, 0, 1), RGBA(214, 221, 233, 1))
+                  ChevronBackground: =RGBA(255, 255, 255, 1)
+                  ChevronFill: =RGBA(56, 96, 178, 1)
+                  DisplayFields: =["Value"]
+                  Font: =Font.'Open Sans'
+                  Height: =34
+                  InputTextPlaceholder: ="Set classification"
+                  Items: =Choices('RFQ Documents'.Classification)
+                  SearchFields: =["Value"]
+                  SelectMultiple: =false
+                  Size: =10
+                  Width: =290
+                  X: =470
+                  Y: =6
