@@ -93,9 +93,9 @@ Screens:
             Text: |-
               =PlainText(Coalesce(varSelectedRFQ.Description, "")) & Char(10) &
               varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
-              "     ·     Requested by " & varSelectedRFQ.RequestorEmail &
+              "     ·     Requested by " & varSelectedRFQ.'Requestor Email' &
               "     ·     " & varSelectedRFQ.Urgency.Value &
-              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
+              "     ·     Due " & Text(varSelectedRFQ.'RFQ  due date', "dd mmm yyyy") &
               "     ·     Sent " & If(IsBlank(varChecklist.RFQSentDate), "not recorded", Text(varChecklist.RFQSentDate, "dd mmm yyyy"))
             Width: =1318
             X: =24
@@ -875,9 +875,9 @@ Screens:
                           RFQ,
                           varRFQRecord,
                           {
-                              RFQstatus: { Value: "RFQ pending" },
+                              'RFQ status': { Value: "RFQ pending" },
                               AwaitingAction: { Value: "Requestor" },
-                              ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                           }
                       )
                   );
@@ -955,9 +955,9 @@ Screens:
                       RFQ,
                       varRFQRecord,
                       {
-                          RFQstatus: { Value: "RFQ pending" },
+                          'RFQ status': { Value: "RFQ pending" },
                           AwaitingAction: { Value: "Buyer" },
-                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   no usable quotes received, vendor list needs rework" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   no usable quotes received, vendor list needs rework" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
                   );
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
