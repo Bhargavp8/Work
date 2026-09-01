@@ -609,7 +609,7 @@ Screens:
             PaddingTop: =5
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(0, 18, 107, 1)
-            Size: |+
+            Size: |
               =10
             Width: =382
             X: =48
