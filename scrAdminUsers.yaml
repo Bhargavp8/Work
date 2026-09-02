@@ -675,7 +675,7 @@ Screens:
             HoverFill: =RGBA(246, 249, 253, 1)
             InputTextPlaceholder: ="Buyer or Admin"
             Items: |-
-              =Table(({ Value: "Buyer" }, { Value: "Admin" })
+              =Table(({ Value: "Buyer" }), { Value: "Admin" })
             SearchFields: =["Value"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
