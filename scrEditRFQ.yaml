@@ -6,8 +6,10 @@ Screens:
       OnVisible: |-
         =Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
         Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
-        Set(varCanEdit, !(varSelectedRFQ.RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"]));
+        Set(varCanEdit, !(varSelectedRFQ.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"]));
         Set(varShowHistory, false);
+        Set(varShowDocs, false);
+        ClearCollect(colEdDocs, ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value }));
         Set(varConfirmAction, Blank());
         Set(varSaving, false);
         Reset(txtEdDescription);
@@ -46,7 +48,7 @@ Screens:
                           || Trim(txtEdUOM.Text) <> Coalesce(varSelectedRFQ.UOM, "")
                           || radEdUrgency.Selected.Value <> varSelectedRFQ.Urgency.Value
                           || dteEdDueDate.SelectedDate <> varSelectedRFQ.RFQduedate
-                          || tglEdSoleSource.Value <> Coalesce(varSelectedRFQ.SoleSource, false)
+                          || tglEdSoleSource.Value <> Coalesce(varSelectedRFQ.'Sole Source', false)
                           || Trim(txtEdRemarks.Text) <> Coalesce(varSelectedRFQ.Remarks, "")),
                   Set(varConfirmAction, "leave"),
                   Navigate(scrHome, ScreenTransition.Fade)
@@ -76,7 +78,7 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Fill: |-
               =Switch(
-                  varSelectedRFQ.RFQstatus.Value,
+                  varSelectedRFQ.'RFQ status'.Value,
                   "RFQ pending", ColorValue("#854F0B"),
                   "RFQ sent out", ColorValue("#185FA5"),
                   "Re-RFQ", ColorValue("#993C1D"),
@@ -98,7 +100,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =32
             Size: =11
-            Text: =Switch(varSelectedRFQ.RFQstatus.Value, "Re-RFQ", "Re quote requested", varSelectedRFQ.RFQstatus.Value)
+            Text: =Switch(varSelectedRFQ.'RFQ status'.Value, "Re-RFQ", "Re quote requested", varSelectedRFQ.'RFQ status'.Value)
             Width: =240
             X: =1102
             Y: =16
@@ -288,7 +290,7 @@ Screens:
           Control: Classic/Toggle@2.1.0
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: =Coalesce(varSelectedRFQ.SoleSource, false)
+            Default: =Coalesce(varSelectedRFQ.'Sole Source', false)
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             TrueFill: =RGBA(56, 96, 178, 1)
@@ -312,7 +314,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: =varSelectedRFQ.SoleSourceJustification
+            Default: =varSelectedRFQ.'Business Justification'
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =64
@@ -341,7 +343,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: =varSelectedRFQ.RecommendVendor
+            Default: =varSelectedRFQ.'Recommend Vendor'
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =36
@@ -442,8 +444,8 @@ Screens:
             Size: =11
             Text: |-
               ="Currently waiting on: " & Coalesce(varSelectedRFQ.AwaitingAction.Value, "nobody, this RFQ is finished") &
-              Char(10) & "Assigned buyer: " & Coalesce(varSelectedRFQ.Assigned_x0020_Buyer, "not assigned yet") &
-              Char(10) & "Raised: " & Text(varSelectedRFQ.RFQRaiseDate, "dd mmm yyyy") & "     Last updated: " & Text(varSelectedRFQ.Modified, "dd mmm yyyy hh:mm") &
+              Char(10) & "Assigned buyer: " & Coalesce(varSelectedRFQ.'Assigned Buyer', "not assigned yet") &
+              Char(10) & "Raised: " & Text(varSelectedRFQ.'RFQ Raise Date', "dd mmm yyyy") & "     Last updated: " & Text(varSelectedRFQ.Modified, "dd mmm yyyy hh:mm") &
               Char(10) & "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & If(varSelectedRFQ.RFQduedate < Today() && varCanEdit, "   (past due)", "")
             Width: =674
             X: =668
@@ -619,7 +621,7 @@ Screens:
                           || Value(txtEdQuantity.Text) <> varSelectedRFQ.Quantity
                           || Trim(txtEdUOM.Text) <> Coalesce(varSelectedRFQ.UOM, "")
                   );
-                  Set(varWasSentOut, varSelectedRFQ.RFQstatus.Value = "RFQ sent out");
+                  Set(varWasSentOut, varSelectedRFQ.'RFQ status'.Value = "RFQ sent out");
                   Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
                   If(
                       IsBlank(varRFQRecord),
@@ -635,9 +637,9 @@ Screens:
                           UOM: Trim(txtEdUOM.Text),
                           Urgency: { Value: radEdUrgency.Selected.Value },
                           RFQduedate: dteEdDueDate.SelectedDate,
-                          SoleSource: tglEdSoleSource.Value,
-                          SoleSourceJustification: If(tglEdSoleSource.Value, Trim(txtEdJustification.Text), Blank()),
-                          RecommendVendor: Trim(txtEdRecVendor.Text),
+                          'Sole Source': tglEdSoleSource.Value,
+                          'Business Justification': If(tglEdSoleSource.Value, Trim(txtEdJustification.Text), Blank()),
+                          'Recommend Vendor': Trim(txtEdRecVendor.Text),
                           RecommendVendorEmail: Trim(txtEdRecVendorEmail.Text),
                           Remarks: Trim(txtEdRemarks.Text),
                           ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor edited the RFQ" & If(varMaterialChange, " (specification changed)", "") & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
@@ -649,7 +651,7 @@ Screens:
                           RFQ,
                           varRFQRecord,
                           {
-                              RFQstatus: { Value: "Re-RFQ" },
+                              'RFQ status': { Value: "Re-RFQ" },
                               AwaitingAction: { Value: "Buyer" },
                               ReRFQCount: Coalesce(varRFQRecord.ReRFQCount, 0) + 1
                           }
@@ -766,7 +768,7 @@ Screens:
               =If(
                   varCanEdit,
                   "Changing the description, quantity or unit of measure after the RFQ has gone out to vendors sends it back to the buyer as a re quote request and clears the old quotes, because those prices were given for the previous specification. Everything else saves in place.",
-                  "This RFQ is " & Switch(varSelectedRFQ.RFQstatus.Value, "Re-RFQ", "waiting on a re quote", varSelectedRFQ.RFQstatus.Value) & ", so the fields are read only. Reopen it if it was closed or cancelled by mistake."
+                  "This RFQ is " & Switch(varSelectedRFQ.'RFQ status'.Value, "Re-RFQ", "waiting on a re quote", varSelectedRFQ.'RFQ status'.Value) & ", so the fields are read only. Reopen it if it was closed or cancelled by mistake."
               )
             Width: =674
             X: =668
@@ -875,7 +877,7 @@ Screens:
                           RFQ,
                           Coalesce(varRFQRecord, varSelectedRFQ),
                           {
-                              RFQstatus: { Value: "RFQ cancelled" },
+                              'RFQ status': { Value: "RFQ cancelled" },
                               AwaitingAction: { Value: "None" },
                               ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ cancelled" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                           }
@@ -890,7 +892,7 @@ Screens:
                           RFQ,
                           Coalesce(varRFQRecord, varSelectedRFQ),
                           {
-                              RFQstatus: { Value: "RFQ pending" },
+                              'RFQ status': { Value: "RFQ pending" },
                               AwaitingAction: { Value: "Buyer" },
                               ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ reopened" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                           }
@@ -1023,7 +1025,7 @@ Screens:
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =13
             Text: ="Raise the purchase requisition for this RFQ"
-            Visible: =varSelectedRFQ.RFQstatus.Value = "RFQ closed/completed"
+            Visible: =varSelectedRFQ.'RFQ status'.Value = "RFQ closed/completed"
             Width: =674
             X: =668
             Y: =520
@@ -1035,3 +1037,248 @@ Screens:
             Image: =image
             Width: =76
             X: =157
+      - btnEdDocs:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =36
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =ClearCollect(colEdDocs, ForAll(LookUp(RFQ, ID = varSelectedRFQ.ID).Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value }));
+              Set(varShowDocs, true)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Documents (" & CountRows(colEdDocs) & ")"
+            Width: =186
+            X: =668
+            Y: =14
+      - recEdDocsScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: =Set(varShowDocs, false)
+            Visible: =varShowDocs
+            Width: =1366
+      - recEdDocsCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =560
+            Visible: =varShowDocs
+            Width: =860
+            X: =253
+            Y: =104
+      - lblEdDocsTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =24
+            Size: =15
+            Text: ="Documents for this RFQ"
+            Visible: =varShowDocs
+            Width: =600
+            X: =253
+            Y: =120
+      - lblEdDocsHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: |-
+              =If(
+                  !varCanEdit,
+                  "This RFQ is closed or cancelled. Files are read only.",
+                  varSelectedRFQ.'RFQ status'.Value = "RFQ sent out",
+                  "These files have ALREADY been emailed to the vendors. Adding or removing anything now will not reach them unless the buyer re-sends, and the change is written to the activity log.",
+                  "Add or remove the files that go out with the RFQ email. Apply a Sensitivity Label from OneDrive or File Explorer before uploading."
+              )
+            Visible: =varShowDocs
+            Width: =860
+            X: =253
+            Y: =164
+      - frmEdAttach:
+          Control: Form@2.4.4
+          Variant: Classic
+          Layout: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            DataSource: =RFQ
+            DefaultMode: =If(varCanEdit, FormMode.Edit, FormMode.View)
+            Height: =330
+            Item: =varSelectedRFQ
+            NumberOfColumns: =1
+            OnFailure: |-
+              =Set(varSaving, false);
+              Notify("The files could not be saved. " & frmEdAttach.Error, NotificationType.Error, 8000)
+            OnSuccess: |-
+              =Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              ClearCollect(colEdDocs, ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value }));
+              // Files that changed after the vendors were emailed are a trust problem,
+              // so the buyer gets to see it in the log rather than finding out later.
+              If(
+                  varSelectedRFQ.'RFQ status'.Value = "RFQ sent out",
+                  Patch(
+                      RFQ,
+                      LookUp(RFQ, ID = varSelectedRFQ.ID),
+                      {
+                          ActivityLog: Left(
+                              Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   attachments changed AFTER the RFQ was emailed, now " & CountRows(colEdDocs) & " file(s)" & Char(10) &
+                              Coalesce(LookUp(RFQ, ID = varSelectedRFQ.ID).ActivityLog, ""),
+                              30000
+                          )
+                      }
+                  );
+                  Notify("Files saved. The vendors already have the previous set, so tell the buyer if they need to re-send.", NotificationType.Warning, 7000),
+                  Notify("Files saved.", NotificationType.Success, 4000)
+              );
+              Set(varSaving, false)
+            Visible: =varShowDocs
+            Width: =812
+            X: =277
+            Y: =208
+          Children:
+            - Attachments_DataCard_Edit:
+                Control: TypedDataCard@1.0.7
+                Variant: ClassicAttachmentsEdit
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  DataField: ="{Attachments}"
+                  Default: =ThisItem.Attachments
+                  DisplayName: =DataSourceInfo([@RFQ],DataSourceInfo.DisplayName,Attachments)
+                  Height: =330
+                  Required: =false
+                  Update: =attEdAttachments.Attachments
+                  Width: =812
+                  X: =0
+                  Y: =0
+                Children:
+                  - DataCardKey_EdAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: FieldName
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Height: =1
+                        PaddingLeft: =0
+                        Text: =Parent.DisplayName
+                        Visible: =false
+                        Width: =Parent.Width
+                  - attEdAttachments:
+                      Control: Attachments@2.3.0
+                      MetadataKey: FieldValue
+                      Properties:
+                        AddAttachmentText: ="Add a file"
+                        BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(96, 106, 126, 1)
+                        DisplayMode: =Parent.DisplayMode
+                        Font: =Font.'Open Sans'
+                        Height: =320
+                        ItemColor: =RGBA(255, 255, 255, 1)
+                        ItemFill: =RGBA(56, 96, 178, 1)
+                        ItemHoverFill: =RGBA(186, 202, 226, 1)
+                        Items: =Parent.Default
+                        MaxAttachmentSize: =20
+                        MaxAttachments: =10
+                        NoAttachmentsColor: =RGBA(150, 158, 172, 1)
+                        NoAttachmentsText: ="No files attached yet."
+                        PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                        Size: =10
+                        Width: =812
+                  - ErrorMessage_EdAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: ErrorMessage
+                      Properties:
+                        AutoHeight: =true
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(168, 0, 0, 1)
+                        Font: =Font.'Open Sans'
+                        Height: =10
+                        Live: =Live.Assertive
+                        Size: =9
+                        Text: =Parent.Error
+                        Visible: =Parent.DisplayMode=DisplayMode.Edit
+                        Width: =Parent.Width
+                        Y: =320
+      - btnEdSaveDocs:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(59, 109, 17, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(varCanEdit && !varSaving, DisplayMode.Edit, DisplayMode.Disabled)
+            Fill: =RGBA(59, 109, 17, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
+            OnSelect: |-
+              =Set(varSaving, true);
+              SubmitForm(frmEdAttach)
+            PressedColor: =RGBA(59, 109, 17, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Save files"
+            Visible: =varShowDocs
+            Width: =200
+            X: =661
+            Y: =600
+      - btnEdOpenFolder:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Launch("https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Open this RFQ in SharePoint"
+            Visible: =varShowDocs
+            Width: =280
+            X: =277
+            Y: =600
+      - btnEdDocsClose:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Set(varShowDocs, false)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Close"
+            Visible: =varShowDocs
+            Width: =200
+            X: =889
+            Y: =600
