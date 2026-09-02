@@ -8,10 +8,18 @@ Screens:
         Set(varShowAlternate, false);
         Set(varSaving, false);
         Refresh(RFQ);
-        ClearCollect(colMyRFQs, Filter(RFQ, RequestorEmail = User().Email));
+        ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email));
         Reset(txtHmSearch);
         Reset(cboHmStatus);
-        Reset(tglHmAwaitingMe)
+        Reset(tglHmAwaitingMe);
+        Set(varHmDeepGo, false);
+        If(
+            varDeepLinkID > 0 && !IsBlank(LookUp(RFQ, ID = varDeepLinkID)),
+            Set(varSelectedRFQ, LookUp(RFQ, ID = varDeepLinkID));
+            Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varDeepLinkID));
+            Set(varDeepLinkID, 0);
+            Set(varHmDeepGo, true)
+        )
     Children:
       - recHmTopBar:
           Control: Rectangle@2.3.0
@@ -56,7 +64,7 @@ Screens:
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
             OnSelect: |-
               =Refresh(RFQ);
-              ClearCollect(colMyRFQs, Filter(RFQ, RequestorEmail = User().Email));
+              ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email));
               Notify("RFQ list refreshed.", NotificationType.Success, 2000)
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
@@ -101,7 +109,7 @@ Screens:
             Font: =Font.'Open Sans'
             Height: =48
             Size: =11
-            Text: ="OPEN RFQs      " & CountRows(Filter(colMyRFQs, !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"])))
+            Text: ="OPEN RFQs      " & CountRows(Filter(colMyRFQs, !('RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"])))
             Width: =204
             X: =264
             Y: =88
@@ -147,7 +155,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =48
             Size: =11
-            Text: ="PAST DUE DATE      " & CountRows(Filter(colMyRFQs, RFQduedate < Today(), !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"])))
+            Text: ="PAST DUE DATE      " & CountRows(Filter(colMyRFQs, RFQduedate < Today(), !('RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"])))
             Width: =216
             X: =752
             Y: =88
@@ -293,7 +301,7 @@ Screens:
                       (IsBlank(txtHmSearch.Text)
                           || StartsWith(Title, txtHmSearch.Text)
                           || txtHmSearch.Text in Description),
-                      (IsBlank(cboHmStatus.Selected) || RFQstatus.Value = cboHmStatus.Selected.Value),
+                      (IsBlank(cboHmStatus.Selected) || 'RFQ status'.Value = cboHmStatus.Selected.Value),
                       (!tglHmAwaitingMe.Value || AwaitingAction.Value = "Requestor")
                   ),
                   Modified,
@@ -337,7 +345,7 @@ Screens:
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
                     =If(
-                        ThisItem.RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
+                        ThisItem.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
                         ThisItem.RFQduedate < Today(), ColorValue("#A32D2D"),
                         ThisItem.RFQduedate <= Today() + 2, ColorValue("#854F0B"),
                         RGBA(43, 54, 78, 1)
@@ -356,7 +364,7 @@ Screens:
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
                     =Switch(
-                        ThisItem.RFQstatus.Value,
+                        ThisItem.'RFQ status'.Value,
                         "RFQ pending", ColorValue("#854F0B"),
                         "RFQ sent out", ColorValue("#185FA5"),
                         "Re-RFQ", ColorValue("#993C1D"),
@@ -370,7 +378,7 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =Switch(ThisItem.RFQstatus.Value, "Re-RFQ", "Re quote requested", ThisItem.RFQstatus.Value)
+                  Text: =Switch(ThisItem.'RFQ status'.Value, "Re-RFQ", "Re quote requested", ThisItem.'RFQ status'.Value)
                   Width: =170
                   X: =270
             - lblHmRowAwaiting:
@@ -636,7 +644,7 @@ Screens:
             Height: =44
             HoverFill: =RGBA(246, 249, 253, 1)
             InputTextPlaceholder: ="All statuses"
-            Items: =Choices(RFQ.RFQstatus)
+            Items: =Choices(RFQ.'RFQ status')
             SearchFields: =["Value"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
@@ -652,3 +660,17 @@ Screens:
             Height: =64
             Image: =image
             Width: =76
+      - tmrHmDeepLink:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =1
+            Height: =20
+            OnTimerEnd: |-
+              =If(
+                  varRole = "Buyer" || varRole = "Admin",
+                  Navigate(scrSendRFQ, ScreenTransition.Fade),
+                  Navigate(scrEditRFQ, ScreenTransition.Fade)
+              )
+            Start: =varHmDeepGo
+            Visible: =false
+            Width: =20
