@@ -27,6 +27,13 @@ Screens:
         Set(varSvV4Manual, !IsBlank(varSvV4Name) && CountRows(Filter(colVendorList, VendorName = varSvV4Name)) = 0);
         Set(varSaving, false);
         Set(varShowPreview, false);
+        // Requestor files stay as attachments on the RFQ list item. Sensitivity is
+        // carried by the real Purview label the requestor applied before uploading,
+        // not by a column in this app.
+        ClearCollect(
+            colSvDocs,
+            ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value })
+        );
         Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
         Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
         Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
@@ -81,7 +88,7 @@ Screens:
             Size: =11
             Text: |-
               =If(
-                  varSelectedRFQ.RFQstatus.Value = "RFQ sent out",
+                  varSelectedRFQ.'RFQ status'.Value = "RFQ sent out",
                   "Already sent to vendors, edits here update the list in place",
                   "Not yet sent to vendors"
               )
@@ -135,9 +142,9 @@ Screens:
               "Urgency: " & varSelectedRFQ.Urgency.Value & Char(10) &
               "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & Char(10) &
               "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.Author.DisplayName, "Unknown") & Char(10) &
-              "Contact: " & Coalesce(varSelectedRFQ.RequestorEmail, varSelectedRFQ.Author.Email, "no email on record") & Char(10) & Char(10) &
-              If(varSelectedRFQ.SoleSource, "SOLE SOURCE" & Char(10) & PlainText(Coalesce(varSelectedRFQ.SoleSourceJustification, "")) & Char(10) & Char(10), "") &
-              If(!IsBlank(varSelectedRFQ.RecommendVendor), "Requestor suggests: " & varSelectedRFQ.RecommendVendor & " (" & Coalesce(varSelectedRFQ.RecommendVendorEmail, "no email") & ")" & Char(10), "") &
+              "Contact: " & Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.Author.Email, "no email on record") & Char(10) & Char(10) &
+              If(varSelectedRFQ.'Sole Source', "SOLE SOURCE" & Char(10) & PlainText(Coalesce(varSelectedRFQ.'Business Justification', "")) & Char(10) & Char(10), "") &
+              If(!IsBlank(varSelectedRFQ.'Recommend Vendor'), "Requestor suggests: " & varSelectedRFQ.'Recommend Vendor' & " (" & Coalesce(varSelectedRFQ.RecommendVendorEmail, "no email") & ")" & Char(10), "") &
               If(!IsBlank(varChecklist.PreferredVendorName), "Requestor asked for: " & varChecklist.PreferredVendorName & Char(10) & PlainText(Coalesce(varChecklist.RequestorJustification, "")), "")
             Width: =324
             X: =24
@@ -322,9 +329,9 @@ Screens:
                       RFQ,
                       varRFQRecord,
                       {
-                          RFQstatus: { Value: "RFQ sent out" },
+                          'RFQ status': { Value: "RFQ sent out" },
                           AwaitingAction: { Value: "Vendor" },
-                          Assigned_x0020_Buyer: User().Email,
+                          'Assigned Buyer': User().Email,
                           ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ sent to " & CountRows(Filter(colSvSlots, !IsBlank(VName))) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
                   );
@@ -338,10 +345,97 @@ Screens:
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =14
-            Text: =If(varSelectedRFQ.RFQstatus.Value = "RFQ sent out", "Update sent date and go to checklist", "Mark RFQ as sent to vendors")
+            Text: =If(varSelectedRFQ.'RFQ status'.Value = "RFQ sent out", "Update sent date and go to checklist", "Mark RFQ as sent to vendors")
             Width: =324
             X: =24
             Y: =518
+      - recSvAttachCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =176
+            Width: =324
+            X: =24
+            Y: =584
+      - recSvAttachHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Height: =32
+            Width: =324
+            X: =24
+            Y: =584
+      - lblSvAttachHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =14
+            Size: =11
+            Text: ="Attachments from the requestor"
+            Width: =324
+            X: =24
+            Y: =584
+      - galSvDocs:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =64
+            Items: =colSvDocs
+            TemplatePadding: =0
+            TemplateSize: =30
+            Width: =308
+            X: =32
+            Y: =620
+          Children:
+            - lblSvDocName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =30
+                  OnSelect: =Launch(ThisItem.FileLink)
+                  Size: =9
+                  Text: =ThisItem.FileName
+                  Width: =308
+      - lblSvDocsEmpty:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =39
+            Size: =9
+            Text: ="The requestor did not attach any documents."
+            Visible: =CountRows(colSvDocs) = 0
+            Width: =308
+            X: =32
+            Y: =617
+      - lblSvAttachHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =34
+            Size: =9
+            Text: |-
+              =If(
+                  CountRows(colSvDocs) = 0,
+                  "No files to send. The vendors get the email text only.",
+                  CountRows(colSvDocs) & " file(s) go out with the RFQ email. Click a file to open it."
+              )
+            Width: =308
+            X: =32
+            Y: =721
       - lblSvLeftHint:
           Control: Label@2.5.1
           Properties:
@@ -962,7 +1056,7 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =91
+            Height: =67
             Size: =10
             Text: |-
               ="Saved vendors: " & CountRows(Filter(
@@ -974,9 +1068,9 @@ Screens:
                   ),
                   !IsBlank(N)
               )) & " of 4    ·    Quotes already entered for a vendor are kept when you edit the list, and cleared only if you remove that vendor."
-            Width: =348
-            X: =12
-            Y: =597
+            Width: =308
+            X: =32
+            Y: =652
       - btnSvDraftEmail:
           Control: Classic/Button@2.2.0
           Properties:
@@ -1012,13 +1106,14 @@ Screens:
               If(
                   CountRows(colSvMailTo) = 0,
                   Notify("Save the vendor list first. There are no vendor email addresses stored yet.", NotificationType.Warning, 4000),
+
                   Reset(rtePreview);
                   Set(varShowPreview, true)
               )
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(56, 96, 178, 1)
             Size: =13
-            Text: ="Send the RFQ to these vendors"
+            Text: ="Draft Email to be sent to vendors"
             Width: =470
             X: =358
             Y: =705
@@ -1192,7 +1287,7 @@ Screens:
             Height: =26
             PaddingLeft: =20
             Size: =10
-            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send."
+            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send. Any files the requestor attached go out with this email automatically."
             Visible: =varShowPreview
             Width: =780
             X: =293
@@ -1318,18 +1413,20 @@ Screens:
 
                   SendRFQToVendors.Run(
                       Concat(colSvMailTo, E, ";"),
-                      Coalesce(varSelectedRFQ.RequestorEmail, varSelectedRFQ.Author.Email, ""),
+                      Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.Author.Email, ""),
                       "RFQ " & varSelectedRFQ.Title & " . Reply by " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy"),
                       rtePreview.HtmlText,
-                      User().Email
+                      User().Email,
+                      varRFQRecord.ID,
+                      varSelectedRFQ.Title
                   );
                   Patch(
                       RFQ,
                       varRFQRecord,
                       {
-                          RFQstatus: { Value: "RFQ sent out" },
+                          'RFQ status': { Value: "RFQ sent out" },
                           AwaitingAction: { Value: "Vendor" },
-                          Assigned_x0020_Buyer: User().Email,
+                          'Assigned Buyer': User().Email,
                           ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
                   );
