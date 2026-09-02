@@ -4,7 +4,8 @@ Screens:
       Fill: =RGBA(238, 242, 248, 1)
       LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
       OnVisible: |-
-        =Set(varSaving, false);
+        =UpdateContext({ varShowLabelInstructions: false });
+        Set(varSaving, false);
         Set(varNwUrgentDays, 3);
         Set(varNwNormalDays, 7);
         Set(varNwUrgency, "Not urgent");
@@ -177,7 +178,7 @@ Screens:
                   ColorValue("#3B6D11")
               )
             Font: =Font.'Open Sans'
-            Height: =25
+            Height: =30
             Size: =10
             Text: |-
               =If(
@@ -187,9 +188,9 @@ Screens:
                   Value(txtNwQuantity.Text) <= 0, "Quantity must be greater than zero.",
                   "Looks good."
               )
-            Width: =382
-            X: =48
-            Y: =507
+            Width: =287
+            X: =153
+            Y: =132
       - recNwCardB:
           Control: Rectangle@2.3.0
           Properties:
@@ -484,45 +485,13 @@ Screens:
                   Notify("A sole source request needs a business justification.", NotificationType.Error),
 
                   IsBlank(varNwDueDate) || varNwDueDate < Today(),
-                  Set(varSaving, false);
                   Notify("Pick a due date of today or later.", NotificationType.Error),
 
+                  // The record has to be created by the form, not by Patch, or the
+                  // Attachments control has nothing to upload to. Everything else is
+                  // patched onto the new record in frmNwAttach.OnSuccess.
                   Set(varSaving, true);
-                  Set(
-                      varNewRFQ,
-                      Patch(
-                          RFQ,
-                          Defaults(RFQ),
-                          {
-                              Title: "RFQ DRAFT",
-                              Description: Trim(txtNwDescription.Text),
-                              Quantity: Value(txtNwQuantity.Text),
-                              UOM: Trim(txtNwUOM.Text),
-                              Urgency: { Value: varNwUrgency },
-                              RFQRaiseDate: Today(),
-                              RFQduedate: varNwDueDate,
-                              SoleSource: tglNwSoleSource.Value,
-                              SoleSourceJustification: If(tglNwSoleSource.Value, Trim(txtNwJustification.Text), Blank()),
-                              RequestorEmail: User().Email,
-                              RequestorName: User().FullName,
-                              ReRFQCount: 0,
-                              ActivityLog: Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ raised",
-                              RFQstatus: { Value: "RFQ pending" },
-                              AwaitingAction: { Value: "Buyer" },
-                              RecommendVendor: Trim(txtNwRecVendor.Text),
-                              RecommendVendorEmail: Trim(txtNwRecVendorEmail.Text),
-                              Remarks: Trim(txtNwRemarks.Text)
-                          }
-                      )
-                  );
-                  Patch(
-                      RFQ,
-                      varNewRFQ,
-                      { Title: "RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000") }
-                  );
-                  Set(varSaving, false);
-                  Notify("RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000") & " submitted. You can still edit it from the home screen.", NotificationType.Success, 5000);
-                  Navigate(scrHome, ScreenTransition.Fade)
+                  SubmitForm(frmNwAttach)
               )
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
@@ -547,6 +516,7 @@ Screens:
               Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
               Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
               Reset(txtNwRecVendor); Reset(txtNwRecVendorEmail); Reset(txtNwRemarks);
+              ResetForm(frmNwAttach);
               Notify("Form cleared.", NotificationType.Information, 2000)
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(56, 96, 178, 1)
@@ -592,28 +562,182 @@ Screens:
             Image: =image
             Width: =76
             X: =153
-      - attNwAttachments:
-          Control: Attachments@2.3.0
+      - frmNwAttach:
+          Control: Form@2.4.4
+          Variant: Classic
+          Layout: Vertical
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Color: =RGBA(96, 106, 126, 1)
-            Font: =Font.'Open Sans'
+            DataSource: =RFQ
+            DefaultMode: =FormMode.New
             Height: =84
-            HoverFill: =RGBA(186, 202, 226, 1)
-            ItemColor: =RGBA(255, 255, 255, 1)
-            ItemFill: =RGBA(56, 96, 178, 1)
-            ItemHoverFill: =RGBA(186, 202, 226, 1)
-            PaddingBottom: =5
-            PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
-            PaddingRight: =5
-            PaddingTop: =5
-            PressedColor: =RGBA(255, 255, 255, 1)
-            PressedFill: =RGBA(0, 18, 107, 1)
-            Size: |+
-              =10
+            Item: =Defaults(RFQ)
+            NumberOfColumns: =1
+            OnFailure: |-
+              =Set(varSaving, false);
+              Notify("The RFQ could not be saved. " & frmNwAttach.Error, NotificationType.Error, 8000)
+            OnSuccess: |-
+              =Set(varNewRFQ, frmNwAttach.LastSubmit);
+              Set(varNwRFQNumber, "RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000"));
+              Patch(
+                  RFQ,
+                  varNewRFQ,
+                  {
+                      Title: varNwRFQNumber,
+                      Description: Trim(txtNwDescription.Text),
+                      Quantity: Value(txtNwQuantity.Text),
+                      UOM: Trim(txtNwUOM.Text),
+                      Urgency: { Value: varNwUrgency },
+                      'RFQ Raise Date': Today(),
+                      RFQduedate: varNwDueDate,
+                      'Sole Source': tglNwSoleSource.Value,
+                      'Business Justification': If(tglNwSoleSource.Value, Trim(txtNwJustification.Text), Blank()),
+                      'Requestor Email': User().Email,
+                      RequestorName: User().FullName,
+                      ReRFQCount: 0,
+                      ActivityLog: Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ raised with " & CountRows(attNwAttachments.Attachments) & " attachment(s)",
+                      'RFQ status': { Value: "RFQ pending" },
+                      AwaitingAction: { Value: "Buyer" },
+                      'Recommend Vendor': Trim(txtNwRecVendor.Text),
+                      RecommendVendorEmail: Trim(txtNwRecVendorEmail.Text),
+                      Remarks: Trim(txtNwRemarks.Text)
+                  }
+              );
+              Set(varSaving, false);
+              Notify(
+                  varNwRFQNumber & " submitted with " & CountRows(attNwAttachments.Attachments) & " attachment(s). You can still edit it from the home screen.",
+                  NotificationType.Success,
+                  5000
+              );
+              Navigate(scrHome, ScreenTransition.Fade)
             Width: =382
             X: =48
             Y: =636
+          Children:
+            - Attachments_DataCard_New:
+                Control: TypedDataCard@1.0.7
+                Variant: ClassicAttachmentsEdit
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  DataField: ="{Attachments}"
+                  Default: =ThisItem.Attachments
+                  DisplayName: =DataSourceInfo([@RFQ],DataSourceInfo.DisplayName,Attachments)
+                  Height: =84
+                  Required: =false
+                  Update: =attNwAttachments.Attachments
+                  Width: =382
+                  X: =0
+                  Y: =0
+                Children:
+                  - DataCardKey_NwAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: FieldName
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(96, 106, 126, 1)
+                        Font: =Font.'Open Sans'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =1
+                        PaddingLeft: =0
+                        Size: =9
+                        Text: =Parent.DisplayName
+                        Visible: =false
+                        Width: =Parent.Width
+                        Wrap: =false
+                  - attNwAttachments:
+                      Control: Attachments@2.3.0
+                      MetadataKey: FieldValue
+                      Properties:
+                        AddAttachmentText: ="Attach supporting documents (drawing, specification, scope of work, photo, previous PO reference, etc.)"
+                        BorderColor: =If(IsBlank(Parent.Error), Parent.BorderColor, Color.Red)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(96, 106, 126, 1)
+                        DisplayMode: =Parent.DisplayMode
+                        Font: =Font.'Open Sans'
+                        Height: =84
+                        HoverFill: =RGBA(186, 202, 226, 1)
+                        ItemColor: =RGBA(255, 255, 255, 1)
+                        ItemFill: =RGBA(56, 96, 178, 1)
+                        ItemHoverFill: =RGBA(186, 202, 226, 1)
+                        Items: =Parent.Default
+                        MaxAttachmentSize: =20
+                        MaxAttachments: =10
+                        NoAttachmentsColor: =RGBA(150, 158, 172, 1)
+                        PaddingBottom: =5
+                        PaddingLeft: =If(Self.DisplayMode = DisplayMode.Edit, 5, 0)
+                        PaddingRight: =5
+                        PaddingTop: =5
+                        PressedColor: =RGBA(255, 255, 255, 1)
+                        PressedFill: =RGBA(0, 18, 107, 1)
+                        Size: =10
+                        Tooltip: =Parent.DisplayName
+                        Width: =382
+                  - ErrorMessage_NwAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: ErrorMessage
+                      Properties:
+                        AutoHeight: =true
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(168, 0, 0, 1)
+                        Font: =Font.'Open Sans'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =10
+                        Live: =Live.Assertive
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        Size: =9
+                        Text: =Parent.Error
+                        Visible: =Parent.DisplayMode=DisplayMode.Edit
+                        Width: =Parent.Width
+                        Y: =84
+      - lblNwAttachWarning:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(168, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =57
+            Italic: =true
+            Size: =9
+            Text: |-
+              ="IMPORTANT: apply a Sensitivity Label to every file from OneDrive or File Explorer BEFORE uploading. Unlabelled files get locked by O365 compliance and nobody will be able to open them."
+            Width: =288
+            X: =32
+            Y: =499
+      - btnNwLabelInstructions:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =39
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =UpdateContext({ varShowLabelInstructions: true })
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =9
+            Text: ="View labelling instructions"
+            Width: =118
+            X: =322
+            Y: =504
+      - recNwLabelScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: |-
+              =UpdateContext({ varShowLabelInstructions: false })
+            Visible: =varShowLabelInstructions
+            Width: =1366
       - lblNwLblAttach:
           Control: Label@2.5.1
           Properties:
@@ -627,3 +751,117 @@ Screens:
             Width: =382
             X: =48
             Y: =550
+      - recNwLabelCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =520
+            Visible: =varShowLabelInstructions
+            Width: =820
+            X: =273
+            Y: =124
+      - lblNwLabelIntro:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: ="A Sensitivity Label can only be applied from OneDrive or File Explorer, on a local or shared drive. If an unlabelled file is uploaded to an Office 365 online space, the automated compliance scanners quarantine it and lock it for editing, and nobody downstream will be able to open it."
+            Visible: =varShowLabelInstructions
+            Width: =820
+            X: =273
+            Y: =184
+      - lblNwLabelTitle:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =24
+            Size: =15
+            Text: ="Label your files before you attach them"
+            Visible: =varShowLabelInstructions
+            Width: =620
+            X: =373
+            Y: =135
+      - htmNwLabelSteps:
+          Control: HtmlViewer@2.1.0
+          Properties:
+            DisabledBorderColor: =RGBA(56, 56, 56, 1)
+            Font: =Font.'Open Sans'
+            Height: =190
+            HtmlText: |-
+              ="<ol>
+                <li>Locate the file(s) on OneDrive or another local or shared drive</li>
+                <li>Right-click the file names (you can select several at once)</li>
+                <li>Choose <b>Classify &amp; Protect</b> from the menu</li>
+                <li>Select the appropriate label and click <b>Apply</b>. <i>Note: *.msg files must be labelled as Unsupported Files</i></li>
+                <li>The files are now ready to attach to this RFQ</li>
+              </ol>"
+            Size: =11
+            Visible: =varShowLabelInstructions
+            Width: =760
+            X: =297
+            Y: =248
+      - lblNwLabelWhich:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(168, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =60
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: ="Choose No Tech Data or Tech Data (USP) as appropriate. Do not choose the (EXT) or UNSURE options. Anything above No Tech Data cannot be emailed to an external vendor through this tool - speak to your Global Trade Professional first."
+            Visible: =varShowLabelInstructions
+            Width: =760
+            X: =273
+            Y: =442
+      - btnNwLabelClose:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =UpdateContext({ varShowLabelInstructions: false })
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Text: ="Close"
+            Visible: =varShowLabelInstructions
+            X: =893
+            Y: =570
+      - btnNwLabelMore:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Launch("https://home.rtx.com/Articles/2020/09/16/20/47/How-to-label-files-in-O365")
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =11
+            Text: |-
+              ="More info: How to Label Files in O365"
+            Visible: =varShowLabelInstructions
+            Width: =320
+            X: =297
+            Y: =570
