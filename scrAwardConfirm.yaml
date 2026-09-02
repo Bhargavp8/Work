@@ -73,7 +73,7 @@ Screens:
               =varSelectedRFQ.Description & Char(10) &
               varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
               "     ·     " & varSelectedRFQ.Urgency.Value &
-              "     ·     Due " & Text(varSelectedRFQ.'RFQ  due date', "dd mmm yyyy") &
+              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
               "     ·     Buyer: " & Coalesce(varSelectedRFQ.'Assigned Buyer', "not assigned")
             Width: =1318
             X: =24
@@ -412,12 +412,37 @@ Screens:
                       {
                           'RFQ status': { Value: "Re-RFQ" },
                           AwaitingAction: { Value: "Buyer" },
-                          'ReRFQCount ': Coalesce(varRFQRecord.'ReRFQCount ', 0) + 1,
-                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor asked for a different vendor" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                          ReRFQCount: Coalesce(varRFQRecord.ReRFQCount, 0) + 1,
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor asked for a different vendor" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
                   );
+                  // Hand the RFQ back to the buyer who worked it, or to the whole buyer
+                  // group if no buyer has claimed it yet.
+                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                  If(
+                      IsBlank(varAwBuyer),
+                      Notify("Saved, but no buyer could be identified so nobody was emailed. Tell an administrator.", NotificationType.Warning, 8000),
+
+                      SendRFQNotification.Run(
+                          varAwBuyer,
+                          User().Email,
+                          "Re-quote requested: " & varSelectedRFQ.Title,
+                          "<p>The requestor has asked for a different vendor on <strong>" & varSelectedRFQ.Title & "</strong>. It is back in your queue as a re-quote.</p>
+                          <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                            <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varSelectedRFQ.Description, "")) & "</td></tr>
+                            <tr><td><strong>Quantity</strong></td><td>" & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & "</td></tr>
+                            <tr><td><strong>You recommended</strong></td><td>" & Switch(varChecklist.AwardVendor.Value, "Vendor 1", varChecklist.Vendor1Name, "Vendor 2", varChecklist.Vendor2Name, "Vendor 3", varChecklist.Vendor3Name, "Vendor 4", varChecklist.Vendor4Name, "not recorded") & "</td></tr>
+                            <tr><td><strong>Requestor prefers</strong></td><td>" & Coalesce(Trim(txtAwPreferredVendor.Text), "no specific vendor named") & "</td></tr>
+                            <tr><td><strong>Reason</strong></td><td>" & Trim(txtAwAlternateJust.Text) & "</td></tr>
+                            <tr><td><strong>Requestor</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                            <tr><td><strong>Re-quote number</strong></td><td>" & (Coalesce(varRFQRecord.ReRFQCount, 0) + 1) & "</td></tr>
+                          </table>
+                          <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
+                          varSelectedRFQ.ID
+                      )
+                  );
                   Set(varSaving, false);
-                  Notify("Sent back to the buyer as a re quote request.", NotificationType.Success, 3000);
+                  Notify("Sent back to the buyer as a re quote request. The buyer has been emailed.", NotificationType.Success, 3000);
                   Navigate(scrHome, ScreenTransition.Fade)
               )
             PressedColor: =RGBA(56, 96, 178, 1)
@@ -563,14 +588,48 @@ Screens:
                       {
                           'RFQ status': { Value: "RFQ closed/completed" },
                           AwaitingAction: { Value: "None" },
-                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   award confirmed" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   award confirmed" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
+                  );
+                  // Closing the RFQ is the buyer's cue to place the order. They are not
+                  // watching this screen, so it has to be an email.
+                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                  Set(varAwVendorName,
+                      Switch(
+                          varChecklist.AwardVendor.Value,
+                          "Vendor 1", varChecklist.Vendor1Name,
+                          "Vendor 2", varChecklist.Vendor2Name,
+                          "Vendor 3", varChecklist.Vendor3Name,
+                          "Vendor 4", varChecklist.Vendor4Name,
+                          "the recommended vendor"
+                      )
+                  );
+                  If(
+                      IsBlank(varAwBuyer),
+                      Notify("Award saved, but no buyer could be identified so nobody was emailed. Tell an administrator.", NotificationType.Warning, 8000),
+
+                      SendRFQNotification.Run(
+                          varAwBuyer,
+                          User().Email,
+                          "Award confirmed: " & varSelectedRFQ.Title & "   (" & varAwVendorName & ")",
+                          "<p>The requestor has accepted your recommendation on <strong>" & varSelectedRFQ.Title & "</strong>. The RFQ is now closed.</p>
+                          <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                            <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varSelectedRFQ.Description, "")) & "</td></tr>
+                            <tr><td><strong>Quantity</strong></td><td>" & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & "</td></tr>
+                            <tr><td><strong>Awarded to</strong></td><td>" & varAwVendorName & "</td></tr>
+                            <tr><td><strong>Quoted total</strong></td><td>" & Text(varAwardedTotal, "#,##0.00") & "</td></tr>
+                            <tr><td><strong>Confirmed by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                          </table>
+                          <p>The requestor has been reminded to raise the purchase requisition.</p>
+                          <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
+                          varSelectedRFQ.ID
+                      )
                   );
                   Set(varAwardConfirm, Blank());
                   Set(varSaving, false);
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
                   Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
-                  Notify("Award confirmed. Raise the purchase requisition next.", NotificationType.Success, 5000);
+                  Notify("Award confirmed and the buyer has been emailed. Raise the purchase requisition next.", NotificationType.Success, 5000);
                   Navigate(scrEditRFQ, ScreenTransition.Fade)
               )
             PressedColor: =RGBA(59, 109, 17, 1)

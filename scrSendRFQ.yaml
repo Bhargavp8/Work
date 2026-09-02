@@ -141,8 +141,8 @@ Screens:
               "Quantity: " & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & Char(10) &
               "Urgency: " & varSelectedRFQ.Urgency.Value & Char(10) &
               "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & Char(10) &
-              "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.Author.DisplayName, "Unknown") & Char(10) &
-              "Contact: " & Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.Author.Email, "no email on record") & Char(10) & Char(10) &
+              "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.'Created By'.DisplayName, "Unknown") & Char(10) &
+              "Contact: " & Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.'Created By'.Email, "no email on record") & Char(10) & Char(10) &
               If(varSelectedRFQ.'Sole Source', "SOLE SOURCE" & Char(10) & PlainText(Coalesce(varSelectedRFQ.'Business Justification', "")) & Char(10) & Char(10), "") &
               If(!IsBlank(varSelectedRFQ.'Recommend Vendor'), "Requestor suggests: " & varSelectedRFQ.'Recommend Vendor' & " (" & Coalesce(varSelectedRFQ.RecommendVendorEmail, "no email") & ")" & Char(10), "") &
               If(!IsBlank(varChecklist.PreferredVendorName), "Requestor asked for: " & varChecklist.PreferredVendorName & Char(10) & PlainText(Coalesce(varChecklist.RequestorJustification, "")), "")
@@ -321,31 +321,50 @@ Screens:
             OnSelect: |-
               =Set(varSaving, true);
               Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
               If(
                   IsBlank(varRFQRecord),
                   Notify("This RFQ no longer exists. Somebody may have deleted it. Go back to the queue and refresh.", NotificationType.Error, 6000);
                   Set(varSaving, false),
-                  Patch(
-                      RFQ,
-                      varRFQRecord,
-                      {
-                          'RFQ status': { Value: "RFQ sent out" },
-                          AwaitingAction: { Value: "Vendor" },
-                          'Assigned Buyer': User().Email,
-                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ sent to " & CountRows(Filter(colSvSlots, !IsBlank(VName))) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
-                      }
-                  );
-                  Patch(RFQ_Checklist, varChecklist, { RFQSentDate: dteSvSentDate.SelectedDate });
-                  Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
-                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+
+                  // Already sent. This button only corrects the recorded sent date,
+                  // it never re-sends and never re-flips the status.
+                  varRFQRecord.'RFQ status'.Value = "RFQ sent out",
+                  Patch(RFQ_Checklist, varChecklist, { RFQSentDate: Coalesce(dteSvSentDate.SelectedDate, Today()) });
+                  Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
                   Set(varSaving, false);
-                  Notify("RFQ marked as sent. Please review and send the email draft on your screen.", NotificationType.Success, 5000);
-                  Set(varShowPreview, true)
+                  Notify("Sent date updated.", NotificationType.Success, 3000);
+                  Navigate(scrChecklist, ScreenTransition.Fade),
+
+                  // Not sent yet. Build the recipient list from what is actually saved on
+                  // THIS RFQ and open the preview. The status is only moved to "RFQ sent
+                  // out" once the email really goes out, in SendEmail.OnSelect.
+                  ClearCollect(
+                      colSvMailTo,
+                      Filter(
+                          Table(
+                              { E: Coalesce(varChecklist.Vendor1Email, "") },
+                              { E: Coalesce(varChecklist.Vendor2Email, "") },
+                              { E: Coalesce(varChecklist.Vendor3Email, "") },
+                              { E: Coalesce(varChecklist.Vendor4Email, "") }
+                          ),
+                          !IsBlank(E)
+                      )
+                  );
+                  Set(varSaving, false);
+                  If(
+                      CountRows(colSvMailTo) = 0,
+                      Notify("Save the vendor list first. There are no vendor email addresses stored yet.", NotificationType.Warning, 4000),
+
+                      Reset(rtePreview);
+                      Set(varShowPreview, true)
+                  )
               )
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =14
-            Text: =If(varSelectedRFQ.'RFQ status'.Value = "RFQ sent out", "Update sent date and go to checklist", "Mark RFQ as sent to vendors")
+            Text: =If(varSelectedRFQ.'RFQ status'.Value = "RFQ sent out", "Update sent date and go to checklist", "Review and send RFQ to vendors")
             Width: =324
             X: =24
             Y: =518
@@ -1091,7 +1110,8 @@ Screens:
             HoverColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(240, 244, 251, 1)
             OnSelect: |-
-              =ClearCollect(
+              =Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+              ClearCollect(
                   colSvMailTo,
                   Filter(
                       Table(
@@ -1311,7 +1331,7 @@ Screens:
                   <td valign=""top"">Quantity: " & Text(varSelectedRFQ.Quantity) & " " & Coalesce(Text(varSelectedRFQ.UOM), "") & "<br>Urgency: " & Text(varSelectedRFQ.Urgency.Value) & "<br>" & PlainText(Coalesce(Text(varSelectedRFQ.Remarks), "")) & "</td>
                 </tr>
               </table>
-              <p>Please contact <strong>" & Coalesce(Text(varSelectedRFQ.RequestorName), Text(varSelectedRFQ.Author.DisplayName), "the requestor") & "</strong> (see email) for more details, if you need any other info. Their email address is as per cc-ed.</p>
+              <p>Please contact <strong>" & Coalesce(Text(varSelectedRFQ.RequestorName), Text(varSelectedRFQ.'Created By'.DisplayName), "the requestor") & "</strong> (see email) for more details, if you need any other info. Their email address is as per cc-ed.</p>
               <p><strong>Requirements to be included in the quotation:</strong></p>
               <ul>
                 <li>Quotation must be sent or forwarded only to PWCS BUYER at <a href=""mailto:pws.shq.quote@prattwhitney.com"">pws.shq.quote@prattwhitney.com</a></li>
@@ -1406,20 +1426,48 @@ Screens:
             OnSelect: |-
               =Set(varSaving, true);
               Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+              // Rebuild the recipient list here, from the checklist row of THIS RFQ, at the
+              // moment of sending. A collection left behind by another button can still hold
+              // the previous RFQ's vendors, which would mail this RFQ to the wrong companies.
+              ClearCollect(
+                  colSvMailTo,
+                  Filter(
+                      Table(
+                          { E: Coalesce(varChecklist.Vendor1Email, "") },
+                          { E: Coalesce(varChecklist.Vendor2Email, "") },
+                          { E: Coalesce(varChecklist.Vendor3Email, "") },
+                          { E: Coalesce(varChecklist.Vendor4Email, "") }
+                      ),
+                      !IsBlank(E)
+                  )
+              );
+              Set(varSvRequestor, Coalesce(varRFQRecord.'Requestor Email', varRFQRecord.'Created By'.Email, ""));
               If(
                   IsBlank(varRFQRecord),
                   Notify("This RFQ no longer exists. Somebody may have deleted it. Nothing was sent.", NotificationType.Error, 6000);
                   Set(varSaving, false),
 
+                  CountRows(colSvMailTo) = 0,
+                  Notify("No vendor email addresses are saved on this RFQ, so there is nobody to send to. Nothing was sent. Save the vendor list first.", NotificationType.Error, 8000);
+                  Set(varSaving, false);
+                  Set(varShowPreview, false),
+
+                  IsBlank(varSvRequestor),
+                  Notify("This RFQ has no requestor email address, so the requestor cannot be copied. Nothing was sent. Fix the RFQ record first.", NotificationType.Error, 8000);
+                  Set(varSaving, false);
+                  Set(varShowPreview, false),
+
                   SendRFQToVendors.Run(
                       Concat(colSvMailTo, E, ";"),
-                      Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.Author.Email, ""),
-                      "RFQ " & varSelectedRFQ.Title & " . Reply by " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy"),
+                      varSvRequestor,
+                      "RFQ " & varRFQRecord.Title & " . Reply by " & Text(varRFQRecord.RFQduedate, "dd mmm yyyy"),
                       rtePreview.HtmlText,
                       User().Email,
                       varRFQRecord.ID,
-                      varSelectedRFQ.Title
+                      varRFQRecord.Title
                   );
+                  // Status only moves once the mail has actually gone out.
                   Patch(
                       RFQ,
                       varRFQRecord,
@@ -1434,7 +1482,7 @@ Screens:
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
                   Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
                   Set(varSaving, false);
-                  Notify("RFQ sent. Vendors are on BCC and cannot see each other.", NotificationType.Success, 5000);
+                  Notify("RFQ sent to " & CountRows(colSvMailTo) & " vendor(s). Vendors are on BCC and cannot see each other.", NotificationType.Success, 5000);
                   Set(varShowPreview, false);
                   Navigate(scrChecklist, ScreenTransition.Fade)
               )

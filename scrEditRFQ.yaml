@@ -670,7 +670,28 @@ Screens:
                               }
                           )
                       );
-                      Notify("Saved. Because this RFQ was already with vendors, it has been pushed back to the buyer as a re quote request and the old quotes have been cleared.", NotificationType.Warning, 6000),
+                      // The specification changed after vendors were approached. Their quotes
+                      // are now void, so the buyer must re-issue the RFQ.
+                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                      If(
+                          !IsBlank(varEdBuyer),
+                          SendRFQNotification.Run(
+                              varEdBuyer,
+                              User().Email,
+                              "Specification changed, re-quote needed: " & varSelectedRFQ.Title,
+                              "<p>The requestor has changed the specification on <strong>" & varSelectedRFQ.Title & "</strong> after it had already gone out to vendors. The quotes held against it have been cleared and the RFQ is back in your queue.</p>
+                              <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                                <tr><td><strong>New description</strong></td><td>" & Trim(txtEdDescription.Text) & "</td></tr>
+                                <tr><td><strong>New quantity</strong></td><td>" & Trim(txtEdQuantity.Text) & " " & Trim(txtEdUOM.Text) & "</td></tr>
+                                <tr><td><strong>Needed by</strong></td><td>" & Text(dteEdDueDate.SelectedDate, "dd mmm yyyy") & "</td></tr>
+                                <tr><td><strong>Changed by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                              </table>
+                              <p>Please re-issue the RFQ to the vendor list with the corrected specification.</p>
+                              <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
+                              varSelectedRFQ.ID
+                          )
+                      );
+                      Notify("Saved. Because this RFQ was already with vendors, it has been pushed back to the buyer as a re quote request, the old quotes have been cleared and the buyer has been emailed.", NotificationType.Warning, 6000),
                       Notify("Changes saved.", NotificationType.Success, 3000)
                   );
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
@@ -882,10 +903,30 @@ Screens:
                               ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ cancelled" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                           }
                       );
+                      // A cancelled RFQ may still be out with vendors. The buyer has to be
+                      // told immediately so they can stand the vendors down.
+                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                      If(
+                          !IsBlank(varEdBuyer),
+                          SendRFQNotification.Run(
+                              varEdBuyer,
+                              User().Email,
+                              "RFQ cancelled: " & varSelectedRFQ.Title,
+                              "<p><strong>" & varSelectedRFQ.Title & "</strong> has been cancelled by the requestor.</p>
+                              <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                                <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varSelectedRFQ.Description, "")) & "</td></tr>
+                                <tr><td><strong>Status when cancelled</strong></td><td>" & varSelectedRFQ.'RFQ status'.Value & "</td></tr>
+                                <tr><td><strong>Cancelled by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                              </table>
+                              <p>If this RFQ was already out with vendors, please stand them down. The RFQ can be reopened later if it was cancelled by mistake.</p>
+                              <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
+                              varSelectedRFQ.ID
+                          )
+                      );
                       Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
                       Set(varCanEdit, false);
                       Set(varConfirmAction, Blank());
-                      Notify("RFQ cancelled. You can reopen it from this screen at any time.", NotificationType.Success, 4000),
+                      Notify("RFQ cancelled and the buyer has been emailed. You can reopen it from this screen at any time.", NotificationType.Success, 4000),
                   "reopen",
                       Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
                       Patch(

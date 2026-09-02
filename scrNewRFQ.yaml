@@ -603,9 +603,35 @@ Screens:
                       Remarks: Trim(txtNwRemarks.Text)
                   }
               );
+              // Tell the buyers there is something in their queue. Without this the RFQ
+              // sits unseen until somebody happens to open the Buyer Queue screen.
+              Set(varNwBuyers, Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";"));
+              If(
+                  IsBlank(varNwBuyers),
+                  Notify("RFQ saved, but no buyer is listed in the access list so nobody could be emailed. Tell an administrator.", NotificationType.Warning, 8000),
+
+                  SendRFQNotification.Run(
+                      varNwBuyers,
+                      User().Email,
+                      "New RFQ raised: " & varNwRFQNumber & "   (needed by " & Text(varNwDueDate, "dd mmm yyyy") & ")",
+                      "<p><strong>" & varNwRFQNumber & "</strong> has been raised and is waiting in the buyer queue.</p>
+                      <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                        <tr><td><strong>Raised by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                        <tr><td><strong>Description</strong></td><td>" & Trim(txtNwDescription.Text) & "</td></tr>
+                        <tr><td><strong>Quantity</strong></td><td>" & Trim(txtNwQuantity.Text) & " " & Trim(txtNwUOM.Text) & "</td></tr>
+                        <tr><td><strong>Urgency</strong></td><td>" & varNwUrgency & "</td></tr>
+                        <tr><td><strong>Needed by</strong></td><td>" & Text(varNwDueDate, "dd mmm yyyy") & "</td></tr>
+                        <tr><td><strong>Sole source</strong></td><td>" & If(tglNwSoleSource.Value, "Yes. " & Trim(txtNwJustification.Text), "No") & "</td></tr>
+                        <tr><td><strong>Suggested vendor</strong></td><td>" & Coalesce(Trim(txtNwRecVendor.Text), "none given") & "</td></tr>
+                        <tr><td><strong>Attachments</strong></td><td>" & CountRows(attNwAttachments.Attachments) & "</td></tr>
+                      </table>
+                      <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varNewRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
+                      varNewRFQ.ID
+                  )
+              );
               Set(varSaving, false);
               Notify(
-                  varNwRFQNumber & " submitted with " & CountRows(attNwAttachments.Attachments) & " attachment(s). You can still edit it from the home screen.",
+                  varNwRFQNumber & " submitted with " & CountRows(attNwAttachments.Attachments) & " attachment(s). The buyers have been emailed. You can still edit it from the home screen.",
                   NotificationType.Success,
                   5000
               );

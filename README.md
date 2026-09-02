@@ -1,1 +1,502 @@
-# Work
+# PWCS RFQ Application
+
+Power Apps canvas app that runs the Request For Quotation (RFQ) process for
+Pratt & Whitney Component Solutions Pte Ltd (PWCS), Singapore.
+
+A requestor raises an RFQ, a buyer sources it from up to four vendors, the
+requestor accepts or rejects the buyer's recommendation, and the RFQ closes.
+This repository holds the **screen source only** (`.yaml`, one file per screen).
+The app manifest, `App.OnStart`, connections and the Power Automate flows live
+in the Power Platform environment, not here — see
+[What you need for this to work](#what-you-need-for-this-to-work).
+
+---
+
+## Table of contents
+
+- [Architecture at a glance](#architecture-at-a-glance)
+- [Screens](#screens)
+- [Data sources](#data-sources)
+- [The RFQ lifecycle](#the-rfq-lifecycle)
+- [Email: who gets what, and when](#email-who-gets-what-and-when)
+- [Power Automate flow contracts](#power-automate-flow-contracts)
+- [What you need for this to work](#what-you-need-for-this-to-work)
+- [SharePoint limits and archiving](#sharepoint-limits-and-archiving)
+- [Known issues and follow-ups](#known-issues-and-follow-ups)
+- [Conventions](#conventions)
+
+---
+
+## Architecture at a glance
+
+There is no middle tier. The canvas app talks straight to SharePoint lists for
+state, and calls Power Automate flows only to send mail (a canvas app cannot BCC
+or send as a shared mailbox on its own).
+
+```
+                    ┌──────────────────────────────────┐
+                    │      Canvas app (8 screens)      │
+                    │  scrHome · scrNewRFQ · scrEditRFQ│
+                    │  scrBuyerQueue · scrSendRFQ      │
+                    │  scrChecklist · scrAwardConfirm  │
+                    │  scrAdminUsers                   │
+                    └───┬───────────────────────┬──────┘
+        read / write    │                       │  .Run(...)
+                        ▼                       ▼
+      ┌─────────────────────────────┐   ┌───────────────────────────┐
+      │  SharePoint Online lists    │   │     Power Automate        │
+      │  ─────────────────────────  │   │  ───────────────────────  │
+      │  RFQ            (state)     │   │  SendRFQToVendors         │
+      │  RFQ_Checklist  (quotes)    │   │  SendRFQNotification      │
+      │  PWS_SHQ ...SU  (roles)     │   └────────────┬──────────────┘
+      │  SG Vendor Master List      │                │
+      │  Currency Rate              │                ▼
+      └─────────────────────────────┘        Office 365 Outlook
+                                             (vendors, buyers,
+                                              requestors)
+```
+
+**Two lists carry the workflow.** `RFQ` holds one item per request and owns the
+status. `RFQ_Checklist` holds one item per RFQ and owns the four vendor slots
+and their quotes. They are joined on `RFQ_Checklist.RFQID = RFQ.ID` — a plain
+number column, not a lookup, so nothing cascades and either row can be repaired
+independently.
+
+**Two variables carry the selection.** Every screen reads `varSelectedRFQ` (the
+`RFQ` row) and `varChecklist` (the `RFQ_Checklist` row). Screens re-fetch both in
+`OnVisible` rather than trusting what the previous screen left behind, because
+two people can work the same RFQ at once.
+
+**Roles are data, not Entra groups.** `varRole` is resolved once in
+`App.OnStart` from the `PWS_SHQ Purchase Requisition SU` list. Anyone not in
+that list is a Requestor.
+
+---
+
+## Screens
+
+| Screen | Who uses it | What it does |
+|---|---|---|
+| `scrHome` | Everyone | The requestor's own RFQs, an "awaiting you" panel, and role-gated links to the buyer queue and admin screen. Handles the `?rfq=` deep link. |
+| `scrNewRFQ` | Requestor | Raises an RFQ. Creates the row via a form (needed so the Attachments control has somewhere to upload), then patches every other field in `OnSuccess`. **Emails the buyers.** |
+| `scrEditRFQ` | Requestor | Views and edits an RFQ, cancels or reopens it, opens attachments and the activity log. A change to description / quantity / UOM on an already-sent RFQ forces a re-quote. **Emails the buyer on cancel and on re-quote.** |
+| `scrBuyerQueue` | Buyer, Admin | Every RFQ in the system, sorted by due date. Routes to `scrSendRFQ` if no vendors are saved yet, otherwise to `scrChecklist`. Redirects non-buyers home. |
+| `scrSendRFQ` | Buyer | Picks up to four vendors, saves them to the checklist, then previews and **sends the RFQ email to vendors**. |
+| `scrChecklist` | Buyer | Records each vendor's quote, converts totals to USD, picks a recommendation. **Emails the requestor** on recommend and on "no usable quotes". |
+| `scrAwardConfirm` | Requestor | Accepts the recommendation or asks for a different vendor. **Emails the buyer either way.** |
+| `scrAdminUsers` | Admin | Grants and revokes Buyer/Admin access. Refuses to remove the last admin or to let an admin demote themselves. No email. |
+
+---
+
+## Data sources
+
+### `RFQ` — one item per request
+
+| Column | Type | Notes |
+|---|---|---|
+| `Title` | Text | RFQ number, generated as `RFQ yyyymm 0000` from the list ID. Unique by construction. |
+| `Description`, `Quantity`, `UOM` | Text / Number / Text | Changing any of these after the RFQ has gone out forces a re-quote. |
+| `Urgency` | Choice | `Urgent`, `Not urgent`. Drives the default due date (+3 / +7 days). |
+| `RFQ Raise Date`, `RFQduedate` | Date | |
+| `Sole Source`, `Business Justification` | Yes/No, Text | Justification is required when the toggle is on. |
+| `Requestor Email`, `RequestorName` | Text | Set from `User()` at raise time. **Every email path depends on `Requestor Email`.** |
+| `Assigned Buyer` | Text | Set to the buyer's email when the RFQ email actually goes out. Blank until then. |
+| `RFQ status` | Choice | `RFQ pending`, `RFQ sent out`, `Re-RFQ`, `RFQ closed/completed`, `RFQ cancelled`. |
+| `AwaitingAction` | Choice | `Requestor`, `Buyer`, `Vendor`, `None`. Drives every "waiting on you" view. |
+| `ReRFQCount` | Number | Incremented on each re-quote. |
+| `Recommend Vendor`, `RecommendVendorEmail`, `Remarks` | Text | Requestor's suggestion to the buyer. |
+| `ActivityLog` | Multiline text | Newest entry first, capped at 30,000 characters by `Left(...)`. |
+| `Attachments` | Attachments | Requestor's drawings, specs, SOW. Sent with the vendor email by the flow. |
+
+### `RFQ_Checklist` — one item per RFQ, joined on `RFQID`
+
+`RFQID` (Number) plus, for each of vendors 1–4: `VendorNName`, `VendorNEmail`,
+`VendorNCurrency` (Choice), `VendorNUnitPrice`, `VendorNTotalPrice`,
+`VendorNLeadTime`, `VendorNStatus` (Choice: `Awaiting reply`, `Quoted`,
+`No response`, …). Plus `RFQSentDate`, `AwardVendor` (Choice: `Vendor 1`–`Vendor
+4`), `BuyerNotes`, `RequestorDecision` (Choice: `Confirmed`, `Alternate
+requested`), `PreferredVendorName`, `RequestorJustification`.
+
+### `PWS_SHQ Purchase Requisition SU` — access control
+
+`User` (Person) and `Role` (Text: `Buyer` or `Admin`). Absence from this list
+means Requestor. This list is also the **recipient list for new-RFQ
+notifications**, so a buyer who is not in it will not be told about new work.
+
+### `SG Vendor Master List` and `Currency Rate`
+
+The vendor master is read into `colVendorList` as `{ VendorName: field_2,
+VendorEmail: "" }` — see [issue 1](#1-vendor-emails-are-not-read-from-the-master-list).
+`Currency Rate` maps `Title` (currency code) to `field_1` (rate to USD) and is
+used to compare quotes on a common basis.
+
+---
+
+## The RFQ lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> RFQ_pending : Requestor raises RFQ<br/>✉ buyers
+    RFQ_pending --> RFQ_sent_out : Buyer previews and sends<br/>✉ vendors (BCC), cc requestor
+    RFQ_sent_out --> RFQ_pending : Buyer recommends a vendor<br/>✉ requestor
+    RFQ_sent_out --> RFQ_pending : No usable quotes<br/>✉ requestor
+    RFQ_pending --> RFQ_closed : Requestor accepts<br/>✉ buyer
+    RFQ_pending --> Re_RFQ : Requestor wants another vendor<br/>✉ buyer
+    RFQ_sent_out --> Re_RFQ : Requestor changes the spec<br/>✉ buyer
+    Re_RFQ --> RFQ_sent_out : Buyer re-issues
+    RFQ_pending --> RFQ_cancelled : Requestor cancels<br/>✉ buyer
+    RFQ_sent_out --> RFQ_cancelled : Requestor cancels<br/>✉ buyer
+    RFQ_closed --> RFQ_pending : Reopened
+    RFQ_cancelled --> RFQ_pending : Reopened
+    RFQ_closed --> [*]
+```
+
+`AwaitingAction` moves in lockstep with the status and is what the UI actually
+filters on:
+
+| Status | AwaitingAction | Sitting with |
+|---|---|---|
+| RFQ pending (just raised) | `Buyer` | Buyer queue |
+| RFQ sent out | `Vendor` | Vendors |
+| RFQ pending (recommendation made) | `Requestor` | Requestor's "awaiting you" panel |
+| Re-RFQ | `Buyer` | Buyer queue |
+| RFQ closed/completed | `None` | Nobody |
+| RFQ cancelled | `None` | Nobody |
+
+Nothing is ever locked. A closed or cancelled RFQ can be reopened from
+`scrEditRFQ`, which puts it back to `RFQ pending` / `Buyer`.
+
+---
+
+## Email: who gets what, and when
+
+Eight send points across seven transitions. Everything else in the app is a
+`Notify()` toast, which only the person clicking ever sees.
+
+| # | Trigger | Control | To | Cc | Flow |
+|---|---|---|---|---|---|
+| 1 | Requestor submits a new RFQ | `scrNewRFQ` › `frmNwAttach.OnSuccess` | All `Buyer` + `Admin` in the SU list | Requestor | `SendRFQNotification` |
+| 2 | Buyer sends the RFQ to vendors | `scrSendRFQ` › `SendEmail` | Vendor emails on the checklist (**BCC**) | Requestor | `SendRFQToVendors` |
+| 3 | Buyer recommends a vendor | `scrChecklist` › `btnCkSubmit` | Requestor | Buyer | `SendRFQNotification` |
+| 4 | No usable quotes, re-sourcing | `scrChecklist` › `btnCkNoQuotes` | Requestor | Buyer | `SendRFQNotification` |
+| 5 | Requestor accepts the award | `scrAwardConfirm` › `btnAwModalYes` | `Assigned Buyer`, else all buyers | Requestor | `SendRFQNotification` |
+| 6 | Requestor asks for another vendor | `scrAwardConfirm` › `btnAwSubmitAlt` | `Assigned Buyer`, else all buyers | Requestor | `SendRFQNotification` |
+| 7 | Requestor cancels the RFQ | `scrEditRFQ` › `btnEdModalYes` (`cancelrfq`) | `Assigned Buyer`, else all buyers | Requestor | `SendRFQNotification` |
+| 8 | Requestor changes the spec after send | `scrEditRFQ` › `btnEdSave` | `Assigned Buyer`, else all buyers | Requestor | `SendRFQNotification` |
+
+**Confidentiality rules baked into the vendor email (#2).** Vendors go on **BCC**
+so they cannot see each other. The requestor is on **CC** so vendors can reach
+them for technical questions. The body instructs vendors to send quotes only to
+`pws.shq.quote@prattwhitney.com` and never to the requestor — this is what keeps
+pricing away from the person who chooses the winner. Do not move vendors to
+To/CC, and do not remove the buyer-only instruction, without a compliance review.
+
+**Recipient resolution.**
+
+- *Buyers* — `Coalesce('Assigned Buyer', <every Buyer/Admin in the SU list>)`.
+  Once an RFQ has been sent out it has an owner, so replies go to that person;
+  before that they go to the whole group.
+- *Requestor* — `Coalesce('Requestor Email', 'Created By'.Email, "")`.
+- Every send point checks its recipient string is non-blank first, and warns the
+  user rather than firing a flow into the void.
+
+### The vendor send path, in detail
+
+This is the only email that leaves the company, so it is worth being explicit
+about the order of operations:
+
+```
+btnSvSave            writes Vendor1-4 Name/Email to RFQ_Checklist
+        │
+        ▼
+btnSvSend  ──or──  btnSvDraftEmail
+        │                 │
+        └────────┬────────┘
+                 │  both re-read RFQ_Checklist for THIS RFQ
+                 │  and rebuild colSvMailTo from it
+                 ▼
+          rtePreview   (buyer edits the HTML)
+                 │
+                 ▼
+          SendEmail.OnSelect
+                 │  re-reads the checklist and rebuilds colSvMailTo a third time
+                 │  refuses to send if there are no vendor addresses
+                 │  refuses to send if there is no requestor address
+                 ▼
+          SendRFQToVendors.Run(...)
+                 │
+                 ▼
+          Patch RFQ → status "RFQ sent out", AwaitingAction "Vendor",
+                      Assigned Buyer = the sender
+```
+
+The status is patched **after** the flow call, never before. If the buyer closes
+the preview without sending, the RFQ stays in their queue.
+
+---
+
+## Power Automate flow contracts
+
+Both flows take positional string arguments. The app passes them in this exact
+order; changing the order in Power Automate silently changes who gets the mail.
+
+### `SendRFQToVendors` (existing)
+
+| # | Argument | Example |
+|---|---|---|
+| 1 | Vendor emails, `;`-separated → **BCC** | `a@v1.com;b@v2.com` |
+| 2 | Requestor email → **CC** | `jane.doe@prattwhitney.com` |
+| 3 | Subject | `RFQ RFQ 202609 0042 . Reply by 12 Sep 2026` |
+| 4 | HTML body (buyer-edited) | `<p>Dear vendors, …` |
+| 5 | Buyer email → **From / Reply-To** | `buyer@prattwhitney.com` |
+| 6 | RFQ list item ID → used to fetch attachments | `42` |
+| 7 | RFQ number | `RFQ 202609 0042` |
+
+The flow is expected to put argument 1 on BCC, argument 2 on CC, leave To empty
+or set to the buyer, and attach every file from `RFQ` item `#6`.
+
+### `SendRFQNotification` (you need to create this)
+
+A single internal-notification flow, used by all seven non-vendor emails.
+
+| # | Argument | Type | Purpose |
+|---|---|---|---|
+| 1 | `to` | Text | One or more addresses, `;`-separated |
+| 2 | `cc` | Text | One address, may be blank |
+| 3 | `subject` | Text | Plain text |
+| 4 | `body` | Text | HTML fragment |
+| 5 | `rfqId` | Number | RFQ list item ID, for logging and for building links |
+
+Minimum viable definition:
+
+1. **Trigger** — *Power Apps (V2)*, with five inputs in the order above
+   (`to`, `cc`, `subject` and `body` as Text; `rfqId` as Number).
+2. **Action** — *Office 365 Outlook › Send an email (V2)*
+   - **To** `@{triggerBody()['text']}`
+   - **CC** `@{triggerBody()['text_1']}`
+   - **Subject** `@{triggerBody()['text_2']}`
+   - **Body** `@{triggerBody()['text_3']}` with *Is HTML* set to **Yes**
+   - Leave **Attachments** empty. Internal notifications link to the item
+     instead of copying files, which keeps Purview-labelled documents inside
+     SharePoint.
+
+Send it from a shared mailbox rather than the signed-in user if you want replies
+to reach the whole buying team; otherwise the default (send as the signed-in
+user) is correct and needs no extra configuration.
+
+> These are internal emails only. They contain prices and vendor names, so the
+> flow must not be given an external recipient parameter.
+
+---
+
+## What you need for this to work
+
+### 1. `App.OnStart` — **not in this repository**
+
+The screens depend on two globals that nothing here sets. Without them the app
+loads with no role and no deep link. Set them in `App.OnStart`:
+
+```powerfx
+// Resolve the signed-in user's role once. Absence from the list = Requestor.
+Set(
+    varRole,
+    Coalesce(
+        LookUp(
+            'PWS_SHQ Purchase Requisition SU',
+            Lower(ThisRecord.User.Email) = Lower(User().Email)
+        ).Role,
+        "Requestor"
+    )
+);
+
+// Deep link: .../play/e/<env>/a/<app>?rfq=42 opens straight to that RFQ.
+Set(varDeepLinkID, Value(Coalesce(Param("rfq"), "0")));
+
+Set(varSaving, false);
+Set(varConfirmAction, Blank());
+Set(varShowAlternate, false);
+```
+
+### 2. Connections
+
+Office 365 Users, SharePoint, and both Power Automate flows must be added to the
+app. `Office365Users.MyProfileV2()` builds the buyer's signature block in the
+vendor email; without that connection the signature renders blank.
+
+### 3. SharePoint lists
+
+The five lists above, on
+`https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW`. Give the app's users
+**Contribute** on `RFQ` and `RFQ_Checklist`, and **Read** on
+`SG Vendor Master List`, `Currency Rate` and the SU list. Admins need
+Contribute on the SU list.
+
+### 4. App settings
+
+Raise **Settings › General › Data row limit for non-delegable queries** from
+500 to **2000**. See the next section for why this matters.
+
+### 5. Seed data
+
+At least one `Admin` in the SU list (otherwise nobody can grant access, and
+nobody is emailed when an RFQ is raised), and one row per currency in
+`Currency Rate` — the quote comparison refuses to pick a winner if a rate is
+missing, rather than comparing unlike currencies.
+
+---
+
+## SharePoint limits and archiving
+
+**Yes — and there are two separate ceilings. The app hits the lower one first.**
+
+### The 5,000 item list view threshold
+
+SharePoint Online lists can hold up to 30 million items, but any single query
+that has to *scan* more than **5,000** items is throttled and fails. Filtering or
+sorting on a non-indexed column is what triggers it. Mitigations, in order:
+
+1. **Index the columns the app filters and sorts on** — on `RFQ`: `Requestor
+   Email`, `RFQ status`, `AwaitingAction`, `RFQduedate`, `Title`. On
+   `RFQ_Checklist`: `RFQID`. A list may have up to 20 indexed columns. Do this
+   *before* the list passes 5,000 items; indexing a list that is already over
+   the threshold is much harder.
+2. **Keep result sets under 5,000**, not just the list. An index lets you query
+   a large list, but the rows coming back must still be fewer than 5,000.
+3. **Archive** once the live list approaches the threshold.
+
+### The limit this app actually hits first: 500 / 2,000
+
+Power Apps caps how many rows a *non-delegable* query returns, at the
+**Data row limit** setting — 500 by default, 2,000 maximum. Over that limit rows
+are dropped **silently**, with no error.
+
+| Query | Where | Delegable? | Behaviour at scale |
+|---|---|---|---|
+| `Filter(RFQ, 'Requestor Email' = User().Email)` | `scrHome` | ✅ Yes | Fine. Filtered server-side, and one person's RFQs stay well under the cap. |
+| `ClearCollect(colBuyerRFQs, RFQ)` | `scrBuyerQueue` | ❌ No filter at all | **Breaks first.** Loads the whole list and truncates at the row limit. Once `RFQ` exceeds 500 items (2,000 after the settings change), RFQs vanish from the buyer queue with no warning. |
+| `ForAll('SG Vendor Master List', …)` | `scrSendRFQ` | ❌ `ForAll` is not delegable | Vendors past the row limit cannot be found in the picker. |
+| `Filter(SU list, Role = "Buyer" \|\| Role = "Admin")` | notifications | ✅ Yes | Fine — equality and `Or` are delegable, and the list is small. |
+
+So the practical order of work is: raise the row limit to 2,000, add the
+indexes, then archive to keep `RFQ` comfortably under 2,000 live items.
+
+### Recommended archive design
+
+Closed and cancelled RFQs are read-only history. Move them out.
+
+1. **Create `RFQ_Archive` and `RFQ_Checklist_Archive`** with identical columns to
+   the live lists, plus `ArchivedDate` (Date) and `OriginalID` (Number).
+2. **Schedule a Power Automate flow**, monthly:
+   - *Get items* from `RFQ` where
+     `RFQ status` is `RFQ closed/completed` **or** `RFQ cancelled`
+     **and** `Modified` is older than your retention window (12 months is a
+     reasonable default — long enough to answer an audit from the app, short
+     enough to keep the list small).
+   - For each: create the item in `RFQ_Archive`, copy attachments, copy the
+     matching `RFQ_Checklist` row to `RFQ_Checklist_Archive`, then delete both
+     originals.
+   - Use *Get items* with a **top count of 500** and let the flow page, so the
+     archiver itself never trips the 5,000 threshold.
+3. **Do not point the app at the archive.** Add a "View archived RFQs" button
+   that calls `Launch()` on the archive list's SharePoint view. Archived RFQs are
+   closed; nobody needs to edit them in the app, and keeping them out of the app
+   is the entire point.
+4. **Never archive an open RFQ.** Filter on status, not on age alone — a
+   long-running RFQ that is still `Re-RFQ` must stay live.
+
+The `ActivityLog` column already caps itself at 30,000 characters, so a
+long-lived RFQ cannot grow without bound.
+
+---
+
+## Known issues and follow-ups
+
+Ordered by impact. None of these are introduced by the email work; they are
+pre-existing and are listed here so they are not lost.
+
+### 1. Vendor emails are not read from the master list
+
+`scrSendRFQ.OnVisible` builds the picker with a hardcoded blank address:
+
+```powerfx
+ClearCollect(
+    colVendorList,
+    ForAll('SG Vendor Master List', { VendorName: field_2, VendorEmail: "" })
+)
+```
+
+`cboSvV1.OnChange` then does `Coalesce(cboSvV1.Selected.VendorEmail, …)`, which
+can never resolve to anything. **Selecting a vendor from the master list never
+fills in their email — the buyer retypes it every time**, which is the most
+likely way a wrong address reaches a vendor.
+
+The fix is one word, once the correct column is identified. Open
+`SG Vendor Master List` and find the email column's internal name (the other
+columns are `field_N`, so it is probably `field_3` or `field_4`), then:
+
+```powerfx
+{ VendorName: field_2, VendorEmail: field_3 }   // ← use the real column
+```
+
+This was left unchanged deliberately: guessing a column name that does not exist
+would break the vendor picker outright.
+
+### 2. `colBuyerRFQs` truncates silently
+
+See [the limits section](#the-limit-this-app-actually-hits-first-500--2000).
+Raising the row limit and archiving buys headroom; the durable fix is to filter
+`scrBuyerQueue` server-side on `AwaitingAction` (equality on a choice column is
+delegable) and re-query when the "Include closed and cancelled" toggle changes,
+rather than loading the list and filtering in memory. That is a data-layer
+change to the queue and should be tested against a copy of the list.
+
+### 3. Blank currency on save
+
+`btnCkSaveDraft` and `btnCkSubmit` patch
+`Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }` with no blank guard. If
+a currency has not been picked for a slot, this writes `{ Value: blank }` to a
+choice column. Guard it the way the vendor status fields already are:
+
+```powerfx
+Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title })
+```
+
+### 4. The requestor is never told the RFQ went out
+
+Transition #2 CCs the requestor on the vendor email, so they do see it — but
+they receive the full vendor-facing letter, including the "do not contact the
+requestor" instructions written *about* them. A short separate note would read
+better. Left as-is because changing it alters the CC behaviour that the
+confidentiality rules depend on.
+
+### 5. No reminder for overdue RFQs
+
+`scrHome` and `scrBuyerQueue` both show an overdue count, but nothing emails
+anyone. A scheduled flow over `RFQ` where `RFQduedate < today` and
+`AwaitingAction` is not `None` would close the loop, and belongs in Power
+Automate rather than in the app.
+
+---
+
+## Conventions
+
+**Column naming.** Three columns were previously referenced under two spellings
+each — `RFQduedate` / `'RFQ  due date'`, `ActivityLog` / `'ActivityLog '`, and
+`ReRFQCount` / `'ReRFQCount '` (note the double and trailing spaces). These are
+the SharePoint *internal* name and the *display* name of the same column; Power
+Apps resolves both, which is why the app worked. All screens now use the
+internal, space-free form. `Created By` is likewise used everywhere in place of
+its internal name `Author`. **Keep to one spelling** — a mismatch here reads as
+a blank field rather than as an error.
+
+**Never trust a collection built by another control.** The wrong-vendor bug this
+codebase used to have came from one button reading a collection that a different
+button had populated for a different RFQ. Recipient lists are rebuilt from the
+SharePoint row at the point of use, every time.
+
+**Patch the record you just looked up.** Every write re-reads the row into
+`varRFQRecord` first and checks it still exists, so an RFQ deleted by someone
+else produces a clear message instead of a silent failure.
+
+**Status changes after the side effect, never before.** An RFQ is only marked
+`RFQ sent out` once the mail has actually left.
