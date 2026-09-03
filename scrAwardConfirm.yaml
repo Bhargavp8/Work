@@ -425,7 +425,7 @@ Screens:
 
                       SendRFQNotification.Run(
                           varAwBuyer,
-                          User().Email,
+                          varMyMail,
                           "Re-quote requested: " & varSelectedRFQ.Title,
                           "<p>The requestor has asked for a different vendor on <strong>" & varSelectedRFQ.Title & "</strong>. It is back in your queue as a re-quote.</p>
                           <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
@@ -434,7 +434,7 @@ Screens:
                             <tr><td><strong>You recommended</strong></td><td>" & Switch(varChecklist.AwardVendor.Value, "Vendor 1", varChecklist.Vendor1Name, "Vendor 2", varChecklist.Vendor2Name, "Vendor 3", varChecklist.Vendor3Name, "Vendor 4", varChecklist.Vendor4Name, "not recorded") & "</td></tr>
                             <tr><td><strong>Requestor prefers</strong></td><td>" & Coalesce(Trim(txtAwPreferredVendor.Text), "no specific vendor named") & "</td></tr>
                             <tr><td><strong>Reason</strong></td><td>" & Trim(txtAwAlternateJust.Text) & "</td></tr>
-                            <tr><td><strong>Requestor</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                            <tr><td><strong>Requestor</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                             <tr><td><strong>Re-quote number</strong></td><td>" & (Coalesce(varRFQRecord.ReRFQCount, 0) + 1) & "</td></tr>
                           </table>
                           <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",
@@ -610,7 +610,7 @@ Screens:
 
                       SendRFQNotification.Run(
                           varAwBuyer,
-                          User().Email,
+                          varMyMail,
                           "Award confirmed: " & varSelectedRFQ.Title & "   (" & varAwVendorName & ")",
                           "<p>The requestor has accepted your recommendation on <strong>" & varSelectedRFQ.Title & "</strong>. The RFQ is now closed.</p>
                           <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
@@ -618,7 +618,7 @@ Screens:
                             <tr><td><strong>Quantity</strong></td><td>" & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & "</td></tr>
                             <tr><td><strong>Awarded to</strong></td><td>" & varAwVendorName & "</td></tr>
                             <tr><td><strong>Quoted total</strong></td><td>" & Text(varAwardedTotal, "#,##0.00") & "</td></tr>
-                            <tr><td><strong>Confirmed by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                            <tr><td><strong>Confirmed by</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                           </table>
                           <p>The requestor has been reminded to raise the purchase requisition.</p>
                           <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID & """>Open this RFQ in SharePoint</a></p>",

@@ -957,7 +957,7 @@ Screens:
 
                           SendRFQNotification.Run(
                               varCkRequestor,
-                              User().Email,
+                              varMyMail,
                               "Action needed: quote recommendation for " & varRFQRecord.Title,
                               "<p>The buyer has finished sourcing <strong>" & varRFQRecord.Title & "</strong> and needs your decision.</p>
                               <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
@@ -965,7 +965,7 @@ Screens:
                                 <tr><td><strong>Quantity</strong></td><td>" & varRFQRecord.Quantity & " " & Coalesce(varRFQRecord.UOM, "") & "</td></tr>
                                 <tr><td><strong>Recommended vendor</strong></td><td>" & cboCkAward.Selected.VendorName & "</td></tr>
                                 <tr><td><strong>Buyer justification</strong></td><td>" & Trim(txtCkNotes.Text) & "</td></tr>
-                                <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                                <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                               </table>
                               <p>Open the RFQ app and use <strong>Review buyer recommendation and respond</strong> to accept the award or ask for a different vendor. Nothing is ordered until you accept.</p>
                               <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varRFQRecord.ID & """>Open this RFQ in SharePoint</a></p>",
@@ -1236,7 +1236,7 @@ Screens:
                       !IsBlank(varCkRequestor),
                       SendRFQNotification.Run(
                           varCkRequestor,
-                          User().Email,
+                          varMyMail,
                           "Update on " & varRFQRecord.Title & ": no usable quotes, re-sourcing",
                           "<p>No usable quotes came back from the vendors approached for <strong>" & varRFQRecord.Title & "</strong>.</p>
                           <p>The buyer is now approaching a different set of vendors. There is nothing for you to do right now, and this RFQ has <em>not</em> been cancelled.</p>
@@ -1244,7 +1244,7 @@ Screens:
                             <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varRFQRecord.Description, "")) & "</td></tr>
                             <tr><td><strong>Originally needed by</strong></td><td>" & Text(varRFQRecord.RFQduedate, "dd mmm yyyy") & "</td></tr>
                             <tr><td><strong>Buyer note</strong></td><td>" & Coalesce(Trim(txtCkNotes.Text), "none") & "</td></tr>
-                            <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                            <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                           </table>
                           <p>If your due date can no longer be met, contact the buyer directly.</p>
                           <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varRFQRecord.ID & """>Open this RFQ in SharePoint</a></p>",

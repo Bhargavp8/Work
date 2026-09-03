@@ -85,15 +85,36 @@ Select the screen in the tree, choose the property in the formula bar, paste.
 ### App.OnStart
 
 ```powerfx
+// This tenant signs users in with an employee-ID UPN (E40124966@adxuser.com),
+// not a mailbox. Every address the app stores, sends to, or matches against the
+// access list has to be the real mailbox, so resolve both once here.
+Set(varMyUpn, Lower(User().Email));
+Set(varMyMail, Lower(Coalesce(Office365Users.MyProfileV2().mail, User().Email)));
+
+// Match on the mailbox, on the sign-in UPN, or on the login name inside the
+// person column's Claims - whichever the row happens to carry.
 Set(
     varRole,
     Switch(
-        Trim(Lower(Coalesce(LookUp('PWS_SHQ Purchase Requisition SU', Lower(ThisRecord.User.Email) = Lower(User().Email)).Role, ""))),
+        Trim(
+            Lower(
+                Coalesce(
+                    LookUp(
+                        'PWS_SHQ Purchase Requisition SU',
+                        Lower(ThisRecord.User.Email) = varMyMail
+                            || Lower(ThisRecord.User.Email) = varMyUpn
+                            || varMyUpn in Lower(ThisRecord.User.Claims)
+                    ).Role,
+                    ""
+                )
+            )
+        ),
         "admin", "Admin",
         "buyer", "Buyer",
         "Requestor"
     )
 );
+
 Set(varDeepLinkID, Value(Coalesce(Param("rfq"), "0")));
 Set(varSaving, false);
 Set(varConfirmAction, Blank());

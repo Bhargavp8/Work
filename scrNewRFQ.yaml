@@ -923,7 +923,7 @@ Screens:
                       RFQduedate: varNwDueDate,
                       'Sole Source': tglNwSoleSource.Value,
                       'Business Justification': If(tglNwSoleSource.Value, Trim(txtNwJustification.Text), Blank()),
-                      'Requestor Email': User().Email,
+                      'Requestor Email': varMyMail,
                       RequestorName: User().FullName,
                       ReRFQCount: 0,
                       ActivityLog: Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ raised with " & CountRows(attNwAttachments.Attachments) & " attachment(s)",
@@ -950,11 +950,11 @@ Screens:
 
                   SendRFQNotification.Run(
                       varNwBuyers,
-                      User().Email,
+                      varMyMail,
                       "New RFQ raised: " & varNwRFQNumber & "   (needed by " & Text(varNwDueDate, "dd mmm yyyy") & ")",
                       "<p><strong>" & varNwRFQNumber & "</strong> has been raised and is waiting in the buyer queue.</p>
                       <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
-                        <tr><td><strong>Raised by</strong></td><td>" & User().FullName & " (" & User().Email & ")</td></tr>
+                        <tr><td><strong>Raised by</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                         <tr><td><strong>Description</strong></td><td>" & Trim(txtNwDescription.Text) & "</td></tr>
                         <tr><td><strong>Quantity</strong></td><td>" & Trim(txtNwQuantity.Text) & " " & Trim(txtNwUOM.Text) & "</td></tr>
                         <tr><td><strong>Urgency</strong></td><td>" & varNwUrgency & "</td></tr>

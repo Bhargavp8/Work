@@ -364,10 +364,14 @@ The screens depend on two globals that nothing here sets. Without them the app
 loads with no role and no deep link. Set them in `App.OnStart`:
 
 ```powerfx
-// Resolve the signed-in user's role once, and canonicalise it. Role is a free
-// text column, so a row edited directly in SharePoint may hold "buyer", "ADMIN"
-// or " Admin ". Every screen compares varRole with an exact "Buyer" / "Admin",
-// so the normalising has to happen here, once.
+// This tenant signs users in with an employee-ID UPN (E40124966@adxuser.com),
+// not a mailbox. Every address the app stores, sends to, or matches against the
+// access list has to be the real mailbox, so resolve both once here.
+Set(varMyUpn, Lower(User().Email));
+Set(varMyMail, Lower(Coalesce(Office365Users.MyProfileV2().mail, User().Email)));
+
+// Match on the mailbox, on the sign-in UPN, or on the login name inside the
+// person column's Claims - whichever the row happens to carry.
 Set(
     varRole,
     Switch(
@@ -376,7 +380,9 @@ Set(
                 Coalesce(
                     LookUp(
                         'PWS_SHQ Purchase Requisition SU',
-                        Lower(ThisRecord.User.Email) = Lower(User().Email)
+                        Lower(ThisRecord.User.Email) = varMyMail
+                            || Lower(ThisRecord.User.Email) = varMyUpn
+                            || varMyUpn in Lower(ThisRecord.User.Claims)
                     ).Role,
                     ""
                 )
@@ -388,9 +394,7 @@ Set(
     )
 );
 
-// Deep link: .../play/e/<env>/a/<app>?rfq=42 opens straight to that RFQ.
 Set(varDeepLinkID, Value(Coalesce(Param("rfq"), "0")));
-
 Set(varSaving, false);
 Set(varConfirmAction, Blank());
 Set(varShowAlternate, false);

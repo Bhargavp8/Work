@@ -1391,7 +1391,7 @@ Screens:
               Buyer<br>
               O: " & Coalesce(Text(First(Office365Users.MyProfileV2().businessPhones).Value), "") & "<br>
               C: " & Coalesce(Text(Office365Users.MyProfileV2().mobilePhone), "") & "<br>
-              <a href=""mailto:" & User().Email & """>" & User().Email & "</a><br><br>
+              <a href=""mailto:" & varMyMail & """>" & varMyMail & "</a><br><br>
               <strong>Pratt &amp; Whitney | An RTX Business</strong><br>
               Pratt &amp; Whitney Component Solutions Pte Ltd<br>
               61 Seletar Aerospace View, Singapore 797560<br>
@@ -1482,7 +1482,7 @@ Screens:
                       varSvRequestor,
                       "RFQ " & varRFQRecord.Title & " . Reply by " & Text(varRFQRecord.RFQduedate, "dd mmm yyyy"),
                       rtePreview.HtmlText,
-                      User().Email,
+                      varMyMail,
                       varRFQRecord.ID,
                       varRFQRecord.Title
                   );
@@ -1493,7 +1493,7 @@ Screens:
                       {
                           'RFQ status': { Value: "RFQ sent out" },
                           AwaitingAction: { Value: "Vendor" },
-                          'Assigned Buyer': User().Email,
+                          'Assigned Buyer': varMyMail,
                           ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
                   );
