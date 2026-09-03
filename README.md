@@ -131,6 +131,7 @@ Exactly two columns, and **neither is required**:
 |---|---|---|
 | `User` | Person or Group | Absence from this list means Requestor. |
 | `Role` | Single line of text | `Buyer` or `Admin`. Free text, not a choice column. |
+| `LoginEmail` | Single line of text | The sign-in UPN, e.g. `E40124966@adxuser.com`. Matched first because it is exact and needs no connector. Manage Access fills it in automatically on each grant; fill it by hand for rows that already exist. |
 
 This list is also the **recipient list for new-RFQ notifications**, so a buyer
 who is not in it will not be told about new work.
@@ -365,15 +366,18 @@ loads with no role and no deep link. Set them in `App.OnStart`:
 
 ```powerfx
 // This tenant signs users in with an employee-ID UPN (E40124966@adxuser.com),
-// not a mailbox. Store both, in their natural case: a delegated SharePoint
-// filter compares case-insensitively server side, but Power Fx "=" evaluated
-// locally does not, so lowering these here would break those filters.
+// not a mailbox, so the sign-in identity and the address people actually email
+// are different strings. Keep both in their natural case: a delegated SharePoint
+// filter compares case-insensitively server side, Power Fx "=" locally does not.
 Set(varMyUpn, User().Email);
 Set(varMyMail, Coalesce(Office365Users.MyProfileV2().mail, User().Email));
 
-// Match the access list on the mailbox, the sign-in UPN, or the login name
-// inside the person column's Claims - whichever that row happens to carry.
-// Lower() sits on both sides here because this comparison runs locally.
+// Match the access list four ways, cheapest and most reliable first:
+//   1. LoginEmail, a plain text column holding the sign-in UPN. Deterministic,
+//      needs no connector, and is what Manage Access now fills in on every grant.
+//   2/3. the person column's mailbox against either identity.
+//   4. the login name inside the person column's Claims.
+// Lower() on both sides throughout because this comparison runs locally.
 Set(
     varRole,
     Switch(
@@ -382,9 +386,10 @@ Set(
                 Coalesce(
                     LookUp(
                         'PWS_SHQ Purchase Requisition SU',
-                        Lower(ThisRecord.User.Email) = Lower(varMyMail)
+                        (!IsBlank(ThisRecord.LoginEmail) && Lower(ThisRecord.LoginEmail) = Lower(varMyUpn))
+                            || Lower(ThisRecord.User.Email) = Lower(varMyMail)
                             || Lower(ThisRecord.User.Email) = Lower(varMyUpn)
-                            || Lower(varMyUpn) in Lower(ThisRecord.User.Claims)
+                            || Lower(varMyUpn) in Lower(Coalesce(ThisRecord.User.Claims, ""))
                     ).Role,
                     ""
                 )
