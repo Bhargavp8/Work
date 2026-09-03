@@ -67,8 +67,8 @@ Screens:
             Height: =64
             Size: =12
             Text: |-
-              =CountRows(Filter(colAppUsers, Role = "Buyer")) & " buyers   " &
-              CountRows(Filter(colAppUsers, Role = "Admin")) & " admins   " &
+              =CountRows(Filter(colAppUsers, Trim(Lower(Role)) = "buyer")) & " buyers   " &
+              CountRows(Filter(colAppUsers, Trim(Lower(Role)) = "admin")) & " admins   " &
               "everybody else is a requestor"
             Width: =460
             X: =860
@@ -235,9 +235,9 @@ Screens:
                   Set(varSaving, false),
 
                   !IsBlank(varAuSelected)
-                      && varAuSelected.Role = "Admin"
+                      && Trim(Lower(Coalesce(varAuSelected.Role, ""))) = "admin"
                       && cboAuRole.Selected.Value <> "Admin"
-                      && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Role = "Admin")) <= 1,
+                      && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Trim(Lower(Role)) = "admin")) <= 1,
                   Notify("This is the only administrator left. Promote somebody else first.", NotificationType.Error, 6000);
                   Set(varSaving, false),
 
@@ -444,9 +444,9 @@ Screens:
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
                     =Switch(
-                        ThisItem.Role,
-                        "Admin", ColorValue("#993C1D"),
-                        "Buyer", ColorValue("#185FA5"),
+                        Trim(Lower(Coalesce(ThisItem.Role, ""))),
+                        "admin", ColorValue("#993C1D"),
+                        "buyer", ColorValue("#185FA5"),
                         RGBA(150, 158, 172, 1)
                     )
                   Font: =Font.'Open Sans'
@@ -526,7 +526,7 @@ Screens:
                   Lower(varAuSelected.User.Email) = Lower(User().Email),
                   Notify("You cannot take away your own access. Ask another administrator.", NotificationType.Error, 5000),
 
-                  varAuSelected.Role = "Admin" && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Role = "Admin")) <= 1,
+                  Trim(Lower(Coalesce(varAuSelected.Role, ""))) = "admin" && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Trim(Lower(Role)) = "admin")) <= 1,
                   Notify("This is the only administrator left. Give somebody else admin access first.", NotificationType.Error, 6000),
 
                   Set(varAuConfirmDelete, true)
@@ -667,7 +667,7 @@ Screens:
             DefaultSelectedItems: |-
               =Filter(
                   Table({ Value: "Buyer" }, { Value: "Admin" }),
-                  Value = Coalesce(varAuSelected.Role, "Buyer")
+                  Trim(Lower(Value)) = Trim(Lower(Coalesce(varAuSelected.Role, "Buyer")))
               )
             DisplayFields: =["Value"]
             Font: =Font.'Open Sans'

@@ -121,9 +121,34 @@ requested`), `PreferredVendorName`, `RequestorJustification`.
 
 ### `PWS_SHQ Purchase Requisition SU` — access control
 
-`User` (Person) and `Role` (Text: `Buyer` or `Admin`). Absence from this list
-means Requestor. This list is also the **recipient list for new-RFQ
-notifications**, so a buyer who is not in it will not be told about new work.
+Exactly two columns, and **neither is required**:
+
+| Column | Type | Notes |
+|---|---|---|
+| `User` | Person or Group | Absence from this list means Requestor. |
+| `Role` | Single line of text | `Buyer` or `Admin`. Free text, not a choice column. |
+
+This list is also the **recipient list for new-RFQ notifications**, so a buyer
+who is not in it will not be told about new work.
+
+Two consequences follow from that schema, and the app defends against both:
+
+- **`Role` is free text, so its casing is not guaranteed.** The admin screen only
+  ever writes `Buyer` or `Admin` from a fixed picker, but anyone editing the list
+  in SharePoint can type `buyer`, `ADMIN` or `" Admin "`. Power Fx `=` on text is
+  case-sensitive while SharePoint's server-side `eq` is not, so an exact match
+  can behave differently depending on whether the query delegates. Every role
+  comparison therefore goes through `Trim(Lower(...))`, and `App.OnStart`
+  canonicalises `varRole` to exactly `Buyer` / `Admin` / `Requestor` so the
+  screens can keep comparing it directly. Getting this wrong locks a real buyer
+  out of their own queue, silently.
+- **`User` can be blank.** A row with a role but no person would contribute an
+  empty address, producing `a@x.com;;b@y.com` in a recipient string. The
+  notification filters drop rows whose `User.Email` is blank.
+
+Both filters use `Trim(Lower(...))`, which SharePoint cannot delegate. That is
+deliberate and safe here — this list holds a handful of people, far below the
+row limit. Do not "optimise" it back to a bare equality.
 
 ### `SG Vendor Master List` and `Currency Rate`
 
@@ -335,14 +360,26 @@ The screens depend on two globals that nothing here sets. Without them the app
 loads with no role and no deep link. Set them in `App.OnStart`:
 
 ```powerfx
-// Resolve the signed-in user's role once. Absence from the list = Requestor.
+// Resolve the signed-in user's role once, and canonicalise it. Role is a free
+// text column, so a row edited directly in SharePoint may hold "buyer", "ADMIN"
+// or " Admin ". Every screen compares varRole with an exact "Buyer" / "Admin",
+// so the normalising has to happen here, once.
 Set(
     varRole,
-    Coalesce(
-        LookUp(
-            'PWS_SHQ Purchase Requisition SU',
-            Lower(ThisRecord.User.Email) = Lower(User().Email)
-        ).Role,
+    Switch(
+        Trim(
+            Lower(
+                Coalesce(
+                    LookUp(
+                        'PWS_SHQ Purchase Requisition SU',
+                        Lower(ThisRecord.User.Email) = Lower(User().Email)
+                    ).Role,
+                    ""
+                )
+            )
+        ),
+        "admin", "Admin",
+        "buyer", "Buyer",
         "Requestor"
     )
 );

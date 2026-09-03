@@ -682,7 +682,7 @@ Screens:
                       );
                       // The specification changed after vendors were approached. Their quotes
                       // are now void, so the buyer must re-issue the RFQ.
-                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', (Trim(Lower(Role)) = "buyer" || Trim(Lower(Role)) = "admin") && !IsBlank(ThisRecord.User.Email)), ThisRecord.User.Email, ";")));
                       If(
                           !IsBlank(varEdBuyer),
                           SendRFQNotification.Run(
@@ -915,7 +915,7 @@ Screens:
                       );
                       // A cancelled RFQ may still be out with vendors. The buyer has to be
                       // told immediately so they can stand the vendors down.
-                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                      Set(varEdBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', (Trim(Lower(Role)) = "buyer" || Trim(Lower(Role)) = "admin") && !IsBlank(ThisRecord.User.Email)), ThisRecord.User.Email, ";")));
                       If(
                           !IsBlank(varEdBuyer),
                           SendRFQNotification.Run(

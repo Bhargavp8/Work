@@ -418,7 +418,7 @@ Screens:
                   );
                   // Hand the RFQ back to the buyer who worked it, or to the whole buyer
                   // group if no buyer has claimed it yet.
-                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', (Trim(Lower(Role)) = "buyer" || Trim(Lower(Role)) = "admin") && !IsBlank(ThisRecord.User.Email)), ThisRecord.User.Email, ";")));
                   If(
                       IsBlank(varAwBuyer),
                       Notify("Saved, but no buyer could be identified so nobody was emailed. Tell an administrator.", NotificationType.Warning, 8000),
@@ -593,7 +593,7 @@ Screens:
                   );
                   // Closing the RFQ is the buyer's cue to place the order. They are not
                   // watching this screen, so it has to be an email.
-                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";")));
+                  Set(varAwBuyer, Coalesce(varRFQRecord.'Assigned Buyer', Concat(Filter('PWS_SHQ Purchase Requisition SU', (Trim(Lower(Role)) = "buyer" || Trim(Lower(Role)) = "admin") && !IsBlank(ThisRecord.User.Email)), ThisRecord.User.Email, ";")));
                   Set(varAwVendorName,
                       Switch(
                           varChecklist.AwardVendor.Value,

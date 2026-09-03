@@ -605,7 +605,7 @@ Screens:
               );
               // Tell the buyers there is something in their queue. Without this the RFQ
               // sits unseen until somebody happens to open the Buyer Queue screen.
-              Set(varNwBuyers, Concat(Filter('PWS_SHQ Purchase Requisition SU', Role = "Buyer" || Role = "Admin"), ThisRecord.User.Email, ";"));
+              Set(varNwBuyers, Concat(Filter('PWS_SHQ Purchase Requisition SU', (Trim(Lower(Role)) = "buyer" || Trim(Lower(Role)) = "admin") && !IsBlank(ThisRecord.User.Email)), ThisRecord.User.Email, ";"));
               If(
                   IsBlank(varNwBuyers),
                   Notify("RFQ saved, but no buyer is listed in the access list so nobody could be emailed. Tell an administrator.", NotificationType.Warning, 8000),
