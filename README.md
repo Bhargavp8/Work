@@ -604,17 +604,31 @@ and a short remark saying why. The buyer sees all three on the vendor screen and
 loads any of them into a sourcing slot with one click.
 
 ```
-scrNewRFQ / scrEditRFQ                     scrSendRFQ
-┌───────────────────────────────┐          ┌────────────────────────────────────┐
-│ Vendors you suggest (up to 3) │          │ Vendor 1..4  (the buyer's own list) │
-│  1  name │ email              │          │  ...                                │
-│     why this vendor           │  ─────>  ├────────────────────────────────────┤
-│  2  name │ email              │  writes  │ Vendors the requestor suggested     │
-│     why this vendor           │  to RFQ  │  1  name  email  why   [Use this]   │
-│  3  name │ email              │  columns │  2  name  email  why   [Use this]   │
-│     why this vendor           │          │  3  name  email  why   [Use this]   │
-└───────────────────────────────┘          └────────────────────────────────────┘
+scrNewRFQ / scrEditRFQ                  scrSendRFQ                     scrChecklist
+┌──────────────────────────────┐        ┌───────────────────────────┐  ┌──────────────────┐
+│ Vendors you suggest (max 3)  │        │ Vendor 1..4 (buyer's list)│  │ Quotes 1..4      │
+│  1 [master list ▾] │ email   │        │  ...                      │  ├──────────────────┤
+│    why this vendor           │ ─────> ├───────────────────────────┤  │ What the         │
+│  2 [master list ▾] │ email   │ writes │ Requestor suggested       │  │ requestor        │
+│    why this vendor           │ to RFQ │  1 name email why [Use]   │  │ suggested        │
+│  3 [Not listed ▸] name│email │ columns│  2 name email why [Use]   │  │  (read only)     │
+│    why this vendor           │        │  3 name email why [Use]   │  │                  │
+└──────────────────────────────┘        └───────────────────────────┘  └──────────────────┘
 ```
+
+**The requestor picks from the same vendor master the buyer uses.** Each slot is a
+searchable picker over `SG Vendor Master List`, and choosing a vendor fills the
+email from `Emailcontact` — so a suggestion arrives with a working address rather
+than one the buyer has to retype. A **Not on the list?** toggle per slot swaps the
+picker for a free-text name box, for vendors that are not on the master yet. The
+email box stays editable either way. On the Edit screen the toggle is pre-set from
+the stored value: a saved vendor that is not on the master opens in manual mode.
+
+**The buyer sees the suggestions twice**: on `scrSendRFQ` while choosing who to
+approach, with a **Use this** button; and read-only on `scrChecklist` while
+entering quotes, where the remarks explain why a vendor was put forward. The
+checklist panel is deliberately read-only — the vendor list is changed in one
+place only, under *Add or remove vendors*.
 
 **"Use this" loads, it does not save.** It drops the name and email into the
 first free vendor slot (1 → 4) as a manual entry, because a suggested vendor is
@@ -632,6 +646,14 @@ it. If all four slots are full the button says so rather than overwriting one.
 
 All three suggestions, with emails and remarks, are included in the new-RFQ
 notification to the buyers, so they can size the job up from the email alone.
+
+### Text box sizing
+
+The long multi-line boxes were roughly halved so the denser screens fit the
+768px canvas without scrolling: description 180 → 90 on New and 104 → 56 on Edit,
+sole-source justification 160 → 80 and 64 → 44, buyer justification on the
+checklist 120 → 62. They scroll, so nothing is lost — there is simply less dead
+white space on a form where most entries are one or two lines.
 
 ## Sorting
 

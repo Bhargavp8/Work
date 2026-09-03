@@ -811,7 +811,7 @@ Screens:
             BorderColor: =RGBA(214, 221, 233, 1)
             Default: =PlainText(Coalesce(varChecklist.BuyerNotes, ""))
             Font: =Font.'Open Sans'
-            Height: =120
+            Height: =62
             HintText: ="Why this vendor, price, lead time, quality, existing agreement..."
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
@@ -985,18 +985,195 @@ Screens:
             Width: =298
             X: =1044
             Y: =564
+      - recCkRecCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =108
+            Width: =1000
+            X: =24
+            Y: =632
+      - recCkRecHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =26
+            Width: =1000
+            X: =24
+            Y: =632
+      - lblCkRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =8
+            Size: =9
+            Text: ="What the requestor suggested   ·   read only, change the vendor list under Add or remove vendors"
+            Width: =1000
+            X: =24
+            Y: =632
+      - lblCkRecEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(150, 158, 172, 1)
+            Font: =Font.'Open Sans'
+            Height: =40
+            PaddingLeft: =8
+            Size: =10
+            Text: ="The requestor did not suggest any vendors."
+            Visible: =!(!IsBlank(varSelectedRFQ.'Recommend Vendor') || !IsBlank(varSelectedRFQ.RecVendor2Name) || !IsBlank(varSelectedRFQ.RecVendor3Name))
+            Width: =1000
+            X: =24
+            Y: =664
+      - lblCkRec1Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.'Recommend Vendor', "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =200
+            X: =32
+            Y: =662
+      - lblCkRec1Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =240
+            X: =240
+            Y: =662
+      - lblCkRec1Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =528
+            X: =488
+            Y: =662
+      - lblCkRec2Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =200
+            X: =32
+            Y: =688
+      - lblCkRec2Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =240
+            X: =240
+            Y: =688
+      - lblCkRec2Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =528
+            X: =488
+            Y: =688
+      - lblCkRec3Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =200
+            X: =32
+            Y: =714
+      - lblCkRec3Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =240
+            X: =240
+            Y: =714
+      - lblCkRec3Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =528
+            X: =488
+            Y: =714
       - lblCkFooter:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =80
-            Size: =10
-            Text: ="Nothing here is final. Save a draft as often as you like, quotes reload exactly as you left them next time you open this RFQ. 'Undo row' restores a single vendor's figures to the last saved values. If the vendor list itself is wrong, use 'Add or remove vendors' at the top; existing quotes for vendors you keep are preserved."
-            Width: =1000
-            X: =24
-            Y: =640
+            Height: =104
+            Size: =9
+            Text: ="Nothing here is final. Save a draft as often as you like. Undo row restores one vendor's figures. To change the vendors themselves use Add or remove vendors, quotes for vendors you keep are preserved."
+            Width: =298
+            X: =1044
+            Y: =636
       - lblCkHResp:
           Control: Label@2.5.1
           Properties:
