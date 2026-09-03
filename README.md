@@ -23,6 +23,7 @@ in the Power Platform environment, not here — see
 - [What you need for this to work](#what-you-need-for-this-to-work)
 - [SharePoint limits and archiving](#sharepoint-limits-and-archiving)
 - [Known issues and follow-ups](#known-issues-and-follow-ups)
+- [Validation and gating](#validation-and-gating)
 - [Sorting](#sorting)
 - [Conventions](#conventions)
 
@@ -468,18 +469,7 @@ delegable) and re-query when the "Include closed and cancelled" toggle changes,
 rather than loading the list and filtering in memory. That is a data-layer
 change to the queue and should be tested against a copy of the list.
 
-### 3. Blank currency on save
-
-`btnCkSaveDraft` and `btnCkSubmit` patch
-`Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }` with no blank guard. If
-a currency has not been picked for a slot, this writes `{ Value: blank }` to a
-choice column. Guard it the way the vendor status fields already are:
-
-```powerfx
-Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title })
-```
-
-### 4. The requestor is never told the RFQ went out
+### 3. The requestor is never told the RFQ went out
 
 Transition #2 CCs the requestor on the vendor email, so they do see it — but
 they receive the full vendor-facing letter, including the "do not contact the
@@ -487,7 +477,7 @@ requestor" instructions written *about* them. A short separate note would read
 better. Left as-is because changing it alters the CC behaviour that the
 confidentiality rules depend on.
 
-### 5. No reminder for overdue RFQs
+### 4. No reminder for overdue RFQs
 
 `scrHome` and `scrBuyerQueue` both show an overdue count, but nothing emails
 anyone. A scheduled flow over `RFQ` where `RFQduedate < today` and
@@ -568,3 +558,42 @@ the screen did before the pickers existed, so nobody's habits break.
 To add an option, add a `{ Value: "..." }` row to the control's `Items` **and** a
 matching branch to the `Switch` in the gallery's `Items`. The string must match
 exactly; an unmatched value silently falls through to the default branch.
+
+---
+
+## Validation and gating
+
+Nothing that writes data or moves the workflow on is reachable without its
+preconditions being met. What each action refuses to do:
+
+| Action | Refuses when |
+|---|---|
+| **Raise RFQ** `btnNwSubmit` | Description or quantity blank · quantity not a number > 0 · sole source with no justification · due date blank or in the past |
+| **Save edits** `btnEdSave` | Greyed out on a closed or cancelled RFQ · description or quantity blank · quantity not a number > 0 · sole source with no justification · due date blank · due date moved into the past |
+| **Save vendor list** `btnSvSave` | No vendor entered · any vendor missing a valid address · the same vendor listed twice |
+| **Open send preview** `btnSvSend` | Greyed out until vendor 1 is saved · RFQ deleted meanwhile · no addresses stored |
+| **Email vendors** `SendEmail` | Greyed out on an empty body · RFQ deleted meanwhile · no vendor addresses · no requestor address |
+| **Recommend to requestor** `btnCkSubmit` | No vendor selected · no justification · recommended vendor has no total price · recommended vendor has no currency · RFQ deleted meanwhile |
+| **Request re-quote** `btnAwSubmitAlt` | No justification |
+| **Confirm award** `btnAwModalYes` | RFQ deleted meanwhile · no recommended vendor · recommended vendor has no price |
+| **Grant access** `btnAuSave` | Invalid email · no name · no role · person already listed · demoting yourself · removing the last admin |
+
+Two rules shape the ones that are easy to get wrong:
+
+**Validate where the work is done, not where it fails.** A buyer could once
+recommend a vendor with no price. The award screen refused it, so the requestor
+got an email about a recommendation they could not act on and had to bounce it
+back. The check belongs on the buyer's screen, and it names the vendor.
+
+**Leaving a screen must not destroy work.** Three screens hold unsaved input:
+
+- `scrEditRFQ` compares the form against the record and asks before discarding.
+- `scrChecklist` writes the same draft "Save draft" writes, then navigates.
+  Nothing is sent, so it does this without asking — which is what the screen's
+  own footer already promises.
+- `scrSendRFQ` asks. Auto-saving is wrong there: saving vendors re-runs
+  validation and resets vendor status or clears quotes for removed vendors, so
+  it must be deliberate.
+
+Back buttons that carry no unsaved state, and navigation *into* a screen, are
+deliberately not gated — a gate there only makes the app harder to use.
