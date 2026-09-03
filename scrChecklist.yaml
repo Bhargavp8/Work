@@ -32,7 +32,25 @@ Screens:
             Height: =36
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
-            OnSelect: =Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            OnSelect: |-
+              =If(
+                  IsBlank(varChecklist),
+                  false,
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Title }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Title }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Title }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          BuyerNotes: txtCkNotes.Text
+                      }
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Notify("Quotes kept as a draft.", NotificationType.Information, 2000)
+              );
+              Navigate(scrBuyerQueue, ScreenTransition.Fade)
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =12
@@ -62,7 +80,25 @@ Screens:
             Height: =36
             HoverColor: =RGBA(43, 33, 0, 1)
             HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
-            OnSelect: =Navigate(scrSendRFQ, ScreenTransition.Fade)
+            OnSelect: |-
+              =If(
+                  IsBlank(varChecklist),
+                  false,
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Title }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Title }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Title }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          BuyerNotes: txtCkNotes.Text
+                      }
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Notify("Quotes kept as a draft.", NotificationType.Information, 2000)
+              );
+              Navigate(scrSendRFQ, ScreenTransition.Fade)
             PressedColor: =RGBA(255, 191, 0, 1)
             PressedFill: =RGBA(43, 33, 0, 1)
             Size: =12
@@ -804,10 +840,10 @@ Screens:
                   RFQ_Checklist,
                   varChecklist,
                   {
-                      Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
-                      Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
-                      Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
-                      Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                      Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                      Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Title }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                      Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Title }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                      Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Title }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
 
                       Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
                       Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),
@@ -849,15 +885,47 @@ Screens:
                   IsBlank(Trim(txtCkNotes.Text)),
                   Notify("Add a justification, the requestor sees this when deciding.", NotificationType.Error),
 
+                  // The requestor cannot accept an award with no price: scrAwardConfirm
+                  // refuses it. Catch that here rather than sending them a dead end.
+                  IsBlank(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", txtCkV1Total.Text,
+                          "Vendor 2", txtCkV2Total.Text,
+                          "Vendor 3", txtCkV3Total.Text,
+                          "Vendor 4", txtCkV4Total.Text
+                      )
+                  ) || Value(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", txtCkV1Total.Text,
+                          "Vendor 2", txtCkV2Total.Text,
+                          "Vendor 3", txtCkV3Total.Text,
+                          "Vendor 4", txtCkV4Total.Text
+                      )
+                  ) <= 0,
+                  Notify("Enter a total price for " & cboCkAward.Selected.VendorName & " before recommending them. The requestor cannot accept an award with no price.", NotificationType.Error, 7000),
+
+                  IsBlank(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", cboCkV1Cur.Selected.Title,
+                          "Vendor 2", cboCkV2Cur.Selected.Title,
+                          "Vendor 3", cboCkV3Cur.Selected.Title,
+                          "Vendor 4", cboCkV4Cur.Selected.Title
+                      )
+                  ),
+                  Notify("Pick the currency for " & cboCkAward.Selected.VendorName & " before recommending them.", NotificationType.Error, 6000),
+
                   Set(varSaving, true);
                   Patch(
                       RFQ_Checklist,
                       varChecklist,
                       {
-                          Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
-                          Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
-                          Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
-                          Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Title }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Title }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Title }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Title }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
 
                           Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
                           Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),

@@ -616,6 +616,16 @@ Screens:
                   Notify("A sole source request needs a business justification.", NotificationType.Error);
                   Set(varSaving, false),
 
+                  IsBlank(dteEdDueDate.SelectedDate),
+                  Notify("Pick a date you need this by.", NotificationType.Error);
+                  Set(varSaving, false),
+
+                  // Same rule the New RFQ screen enforces. A due date in the past means
+                  // the buyer cannot tell a real deadline from a stale one.
+                  dteEdDueDate.SelectedDate < Today() && dteEdDueDate.SelectedDate <> varSelectedRFQ.RFQduedate,
+                  Notify("The new due date is in the past. Pick today or later.", NotificationType.Error);
+                  Set(varSaving, false),
+
                   Set(varMaterialChange,
                       Trim(txtEdDescription.Text) <> Coalesce(varSelectedRFQ.Description, "")
                           || Value(txtEdQuantity.Text) <> varSelectedRFQ.Quantity

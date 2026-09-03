@@ -30,6 +30,7 @@ Screens:
         Set(varSvV4Manual, !IsBlank(varSvV4Name) && CountRows(Filter(colVendorList, VendorName = varSvV4Name)) = 0);
         Set(varSaving, false);
         Set(varShowPreview, false);
+        Set(varSvConfirmLeave, false);
         // Requestor files stay as attachments on the RFQ list item. Sensitivity is
         // carried by the real Purview label the requestor applied before uploading,
         // not by a column in this app.
@@ -60,7 +61,20 @@ Screens:
             Height: =36
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
-            OnSelect: =Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            OnSelect: |-
+              =If(
+                  Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, ""))) <> Coalesce(varChecklist.Vendor1Name, "")
+                      || Trim(txtSvV1Email.Text) <> Coalesce(varChecklist.Vendor1Email, "")
+                      || Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, ""))) <> Coalesce(varChecklist.Vendor2Name, "")
+                      || Trim(txtSvV2Email.Text) <> Coalesce(varChecklist.Vendor2Email, "")
+                      || Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, ""))) <> Coalesce(varChecklist.Vendor3Name, "")
+                      || Trim(txtSvV3Email.Text) <> Coalesce(varChecklist.Vendor3Email, "")
+                      || Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, ""))) <> Coalesce(varChecklist.Vendor4Name, "")
+                      || Trim(txtSvV4Email.Text) <> Coalesce(varChecklist.Vendor4Email, ""),
+                  Set(varSvConfirmLeave, true),
+
+                  Navigate(scrBuyerQueue, ScreenTransition.Fade)
+              )
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =12
@@ -1500,3 +1514,93 @@ Screens:
             Width: =200
             X: =869
             Y: =608
+      - recSvLeaveScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 0.55)
+            Height: =768
+            OnSelect: =Set(varSvConfirmLeave, false)
+            Visible: =varSvConfirmLeave
+            Width: =1366
+      - recSvLeaveCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =240
+            Visible: =varSvConfirmLeave
+            Width: =520
+            X: =423
+            Y: =264
+      - lblSvLeaveTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =46
+            PaddingLeft: =28
+            Size: =16
+            Text: ="Leave without saving the vendor list?"
+            Visible: =varSvConfirmLeave
+            Width: =520
+            X: =423
+            Y: =288
+      - lblSvLeaveBody:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =84
+            PaddingLeft: =28
+            PaddingRight: =28
+            Size: =12
+            Text: ="The vendors on screen are not the ones saved against this RFQ. If you leave now those changes are lost, and nothing has been emailed to anybody."
+            Visible: =varSvConfirmLeave
+            Width: =520
+            X: =423
+            Y: =332
+      - btnSvLeaveStay:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: =Set(varSvConfirmLeave, false)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =12
+            Text: ="Stay and save"
+            Visible: =varSvConfirmLeave
+            Width: =200
+            X: =451
+            Y: =436
+      - btnSvLeaveGo:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(168, 0, 0, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(168, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(168, 0, 0, 1), -20%)
+            OnSelect: |-
+              =Set(varSvConfirmLeave, false);
+              Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            PressedColor: =RGBA(168, 0, 0, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Discard and leave"
+            Visible: =varSvConfirmLeave
+            Width: =200
+            X: =715
+            Y: =436
