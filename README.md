@@ -23,6 +23,7 @@ in the Power Platform environment, not here — see
 - [What you need for this to work](#what-you-need-for-this-to-work)
 - [SharePoint limits and archiving](#sharepoint-limits-and-archiving)
 - [Known issues and follow-ups](#known-issues-and-follow-ups)
+- [Sorting](#sorting)
 - [Conventions](#conventions)
 
 ---
@@ -94,7 +95,7 @@ that list is a Requestor.
 
 | Column | Type | Notes |
 |---|---|---|
-| `Title` | Text | RFQ number, generated as `RFQ yyyymm 0000` from the list ID. Unique by construction. |
+| `Title` | Text | RFQ number, generated as `RFQ 2026-0042` from the list ID. Unique by construction — the ID alone is unique, so the year is presentation only. RFQs raised before this format change keep their old `RFQ 202608 0006` titles. |
 | `Description`, `Quantity`, `UOM` | Text / Number / Text | Changing any of these after the RFQ has gone out forces a re-quote. |
 | `Urgency` | Choice | `Urgent`, `Not urgent`. Drives the default due date (+3 / +7 days). |
 | `RFQ Raise Date`, `RFQduedate` | Date | |
@@ -125,10 +126,12 @@ notifications**, so a buyer who is not in it will not be told about new work.
 
 ### `SG Vendor Master List` and `Currency Rate`
 
-The vendor master is read into `colVendorList` as `{ VendorName: field_2,
-VendorEmail: "" }` — see [issue 1](#1-vendor-emails-are-not-read-from-the-master-list).
-`Currency Rate` maps `Title` (currency code) to `field_1` (rate to USD) and is
-used to compare quotes on a common basis.
+The vendor master is read into `colVendorList` as
+`{ VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }`. **One vendor
+row may hold several addresses in `Emailcontact`, separated by semicolons**
+(`john@x.com; pete@y.com`); the app keeps them as one string all the way to the
+flow, which puts the lot on BCC. `Currency Rate` maps `Title` (currency code) to
+`field_1` (rate to USD) and is used to compare quotes on a common basis.
 
 ---
 
@@ -240,7 +243,7 @@ the preview without sending, the RFQ stays in their queue.
 Both flows take positional string arguments. The app passes them in this exact
 order; changing the order in Power Automate silently changes who gets the mail.
 
-### `SendRFQToVendors` (existing)
+### `SendRFQToVendors` (exists — 7 inputs)
 
 | # | Argument | Example |
 |---|---|---|
@@ -252,10 +255,44 @@ order; changing the order in Power Automate silently changes who gets the mail.
 | 6 | RFQ list item ID → used to fetch attachments | `42` |
 | 7 | RFQ number | `RFQ 202609 0042` |
 
-The flow is expected to put argument 1 on BCC, argument 2 on CC, leave To empty
-or set to the buyer, and attach every file from `RFQ` item `#6`.
+The deployed flow maps these correctly: `text` → **Bcc**, `text_1` → **Cc**,
+`text_4` → **To**, `text_2` → **Subject**, `text_3` → **Body**.
 
-### `SendRFQNotification` (you need to create this)
+**It does not attach anything.** The flow initialises an `EmailAttachments`
+array and calls *Get file properties*, then uses neither — while the send
+preview tells the buyer "Any files the requestor attached go out with this email
+automatically". Requestor drawings, specs and SOWs are silently not reaching
+vendors. Two changes fix it:
+
+1. *Get file properties* (`GetFileItem`) is the wrong operation — it reads
+   document-library properties, not list-item attachments. Replace it with
+   **Get attachments** (`GetAttachments`) against the same list and
+   `id: @{triggerBody()?['number']}`.
+2. Add an **Apply to each** over `@body('Get_attachments')` containing:
+   - **Get attachment content** (`GetAttachmentContent`), same list,
+     `id: @{triggerBody()?['number']}`, `fileId: @items('Apply_to_each')?['Id']`
+   - **Append to array variable** → `EmailAttachments`:
+     ```json
+     {
+       "Name": "@{items('Apply_to_each')?['DisplayName']}",
+       "ContentBytes": "@body('Get_attachment_content')"
+     }
+     ```
+   Then set the send action's **Attachments** to `@variables('EmailAttachments')`
+   and point its `runAfter` at the Apply to each.
+
+`text_5` (RFQNumber) is currently unused by the flow. That is harmless — the app
+still passes it, and it is useful if you later want it in the attachment names
+or in a logging step.
+
+### `SendRFQNotification` (you still need to create this — 5 inputs)
+
+> **Name check.** The 7-input flow above is the vendor flow. If it is currently
+> named `sendRFQNotification` in Power Automate, rename it to
+> **`SendRFQToVendors`** — that is the name `scrSendRFQ` calls — and build the
+> 5-input flow below under the name `SendRFQNotification`. The two contracts are
+> different lengths and different shapes (vendors on BCC vs. a person on To), so
+> one flow cannot serve both.
 
 A single internal-notification flow, used by all seven non-vendor emails.
 
@@ -414,32 +451,13 @@ long-lived RFQ cannot grow without bound.
 Ordered by impact. None of these are introduced by the email work; they are
 pre-existing and are listed here so they are not lost.
 
-### 1. Vendor emails are not read from the master list
+### 1. Vendor attachments never reach vendors
 
-`scrSendRFQ.OnVisible` builds the picker with a hardcoded blank address:
-
-```powerfx
-ClearCollect(
-    colVendorList,
-    ForAll('SG Vendor Master List', { VendorName: field_2, VendorEmail: "" })
-)
-```
-
-`cboSvV1.OnChange` then does `Coalesce(cboSvV1.Selected.VendorEmail, …)`, which
-can never resolve to anything. **Selecting a vendor from the master list never
-fills in their email — the buyer retypes it every time**, which is the most
-likely way a wrong address reaches a vendor.
-
-The fix is one word, once the correct column is identified. Open
-`SG Vendor Master List` and find the email column's internal name (the other
-columns are `field_N`, so it is probably `field_3` or `field_4`), then:
-
-```powerfx
-{ VendorName: field_2, VendorEmail: field_3 }   // ← use the real column
-```
-
-This was left unchanged deliberately: guessing a column name that does not exist
-would break the vendor picker outright.
+`SendRFQToVendors` fetches nothing and attaches nothing, but the send preview
+promises it does. See
+[the flow contract](#sendrfqtovendors-exists--7-inputs) for the fix. Until it is
+applied, buyers must attach requestor files to the outgoing mail by hand, or
+vendors will quote against a description with no drawing.
 
 ### 2. `colBuyerRFQs` truncates silently
 
@@ -480,6 +498,14 @@ Automate rather than in the app.
 
 ## Conventions
 
+**Vendor addresses are a list, not a value.** `Emailcontact` may hold several
+addresses separated by semicolons. The app normalises whatever the buyer types
+(splits on `;`, trims, drops empties, re-joins) before storing, validates every
+address in the list individually, and keeps the list intact through to the flow's
+BCC field. Selecting a different vendor **replaces** the address rather than
+keeping the previous one — keeping it is how one vendor's RFQ reaches another's
+inbox.
+
 **Column naming.** Three columns were previously referenced under two spellings
 each — `RFQduedate` / `'RFQ  due date'`, `ActivityLog` / `'ActivityLog '`, and
 `ReRFQCount` / `'ReRFQCount '` (note the double and trailing spaces). These are
@@ -500,3 +526,31 @@ else produces a clear message instead of a silent failure.
 
 **Status changes after the side effect, never before.** An RFQ is only marked
 `RFQ sent out` once the mail has actually left.
+
+---
+
+## Sorting
+
+Both list screens let the user choose the order. The filter runs once inside a
+`With()`, and the chosen `Switch` branch sorts that result — so changing the sort
+never re-runs the filter.
+
+Where a sort has a natural tie-breaker, two nested `Sort()` calls are used. Power
+Fx `Sort` is stable, so the inner ordering survives the outer pass: *Urgent
+first, then due date* sorts by due date, then floats the urgent ones up, and
+urgent RFQs stay in due-date order among themselves.
+
+**Home** (`cboHmSort`, default *Waiting on me first*) — Waiting on me first ·
+Due date soonest/latest · Recently updated · RFQ number newest/oldest · Status.
+
+**Buyer Queue** (`cboBqSort`, default *Due date, soonest first*) — Due date
+soonest/latest · Waiting on me first · Urgent first then due date · Overdue
+first · Status · Requestor name · Recently updated · RFQ number newest first.
+
+The two lists differ because the roles do: a requestor cares what is blocked on
+them, a buyer cares what is about to breach a due date. Both defaults match what
+the screen did before the pickers existed, so nobody's habits break.
+
+To add an option, add a `{ Value: "..." }` row to the control's `Items` **and** a
+matching branch to the `Switch` in the gallery's `Items`. The string must match
+exactly; an unmatched value silently falls through to the default branch.

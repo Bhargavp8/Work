@@ -533,7 +533,7 @@ Screens:
             Font: =Font.'Open Sans'
             Height: =48
             Size: =10
-            Text: ="The RFQ number is generated from the list ID, so two people submitting at the same time can never collide."
+            Text: ="The RFQ number is generated from the list ID (RFQ 2026-0042), so two people submitting at the same time can never collide."
             Width: =362
             X: =956
             Y: =692
@@ -578,7 +578,7 @@ Screens:
               Notify("The RFQ could not be saved. " & frmNwAttach.Error, NotificationType.Error, 8000)
             OnSuccess: |-
               =Set(varNewRFQ, frmNwAttach.LastSubmit);
-              Set(varNwRFQNumber, "RFQ " & Text(Today(), "yyyymm") & " " & Text(varNewRFQ.ID, "0000"));
+              Set(varNwRFQNumber, "RFQ " & Text(Today(), "yyyy") & "-" & Text(varNewRFQ.ID, "0000"));
               Patch(
                   RFQ,
                   varNewRFQ,

@@ -12,6 +12,7 @@ Screens:
         Reset(txtHmSearch);
         Reset(cboHmStatus);
         Reset(tglHmAwaitingMe);
+        Reset(cboHmSort);
         Set(varHmDeepGo, false);
         If(
             varDeepLinkID > 0 && !IsBlank(LookUp(RFQ, ID = varDeepLinkID)),
@@ -170,7 +171,7 @@ Screens:
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
             Size: =12
-            Width: =420
+            Width: =280
             X: =24
             Y: =152
       - lblHmAwaitingMe:
@@ -182,8 +183,8 @@ Screens:
             Height: =44
             Size: =12
             Text: ="Awaiting me"
-            Width: =104
-            X: =685
+            Width: =76
+            X: =722
             Y: =152
       - tglHmAwaitingMe:
           Control: Classic/Toggle@2.1.0
@@ -191,8 +192,8 @@ Screens:
             BorderColor: =RGBA(214, 221, 233, 1)
             Font: =Font.'Open Sans'
             TrueFill: =RGBA(56, 96, 178, 1)
-            Width: =86
-            X: =791
+            Width: =80
+            X: =800
             Y: =160
       - btnHmClearFilters:
           Control: Classic/Button@2.2.0
@@ -207,7 +208,8 @@ Screens:
             OnSelect: |-
               =Reset(txtHmSearch);
               Reset(cboHmStatus);
-              Reset(tglHmAwaitingMe)
+              Reset(tglHmAwaitingMe);
+              Reset(cboHmSort)
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(56, 96, 178, 1)
             Size: =12
@@ -295,17 +297,31 @@ Screens:
             BorderColor: =RGBA(214, 221, 233, 1)
             Height: =492
             Items: |-
-              =Sort(
-                  Filter(
-                      colMyRFQs,
-                      (IsBlank(txtHmSearch.Text)
-                          || StartsWith(Title, txtHmSearch.Text)
-                          || txtHmSearch.Text in Description),
-                      (IsBlank(cboHmStatus.Selected) || 'RFQ status'.Value = cboHmStatus.Selected.Value),
-                      (!tglHmAwaitingMe.Value || AwaitingAction.Value = "Requestor")
-                  ),
-                  Modified,
-                  SortOrder.Descending
+              =With(
+                  {
+                      base: Filter(
+                          colMyRFQs,
+                          (IsBlank(txtHmSearch.Text)
+                              || StartsWith(Title, txtHmSearch.Text)
+                              || txtHmSearch.Text in Description),
+                          (IsBlank(cboHmStatus.Selected) || 'RFQ status'.Value = cboHmStatus.Selected.Value),
+                          (!tglHmAwaitingMe.Value || AwaitingAction.Value = "Requestor")
+                      )
+                  },
+                  Switch(
+                      Coalesce(cboHmSort.Selected.Value, "Waiting on me first"),
+                      // Sort by due date underneath, then bring the ones that need the
+                      // requestor to the top. Power Fx Sort is stable, so both hold.
+                      "Waiting on me first",
+                          Sort(Sort(base, RFQduedate, SortOrder.Ascending), If(AwaitingAction.Value = "Requestor", 0, 1), SortOrder.Ascending),
+                      "Due date, soonest first", Sort(base, RFQduedate, SortOrder.Ascending),
+                      "Due date, latest first", Sort(base, RFQduedate, SortOrder.Descending),
+                      "Recently updated", Sort(base, Modified, SortOrder.Descending),
+                      "RFQ number, newest first", Sort(base, ID, SortOrder.Descending),
+                      "RFQ number, oldest first", Sort(base, ID, SortOrder.Ascending),
+                      "Status", Sort(Sort(base, RFQduedate, SortOrder.Ascending), 'RFQ status'.Value, SortOrder.Ascending),
+                      Sort(base, Modified, SortOrder.Descending)
+                  )
               )
             OnSelect: |-
               =Set(varSelectedRFQ, LookUp(RFQ, ID = ThisItem.ID));
@@ -631,6 +647,39 @@ Screens:
             Width: =336
             X: =1006
             Y: =648
+      - cboHmSort:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: |-
+              =Table({ Value: "Waiting on me first" })
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Sort by"
+            Items: |-
+              =Table(
+                  { Value: "Waiting on me first" },
+                  { Value: "Due date, soonest first" },
+                  { Value: "Due date, latest first" },
+                  { Value: "Recently updated" },
+                  { Value: "RFQ number, newest first" },
+                  { Value: "RFQ number, oldest first" },
+                  { Value: "Status" }
+              )
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Width: =214
+            X: =500
+            Y: =152
       - cboHmStatus:
           Control: Classic/ComboBox@2.4.0
           Properties:
@@ -650,8 +699,8 @@ Screens:
             SelectionColor: =RGBA(255, 255, 255, 1)
             SelectionFill: =RGBA(56, 96, 178, 1)
             Size: =12
-            Width: =220
-            X: =460
+            Width: =180
+            X: =312
             Y: =152
       - Image1:
           Control: Image@2.2.3
