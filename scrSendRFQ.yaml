@@ -16,8 +16,6 @@ Screens:
                 { VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }
             )
         );
-        // One address, or several separated by semicolons.
-        Set(varEmailListPattern, "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+\s*(;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+\s*)*$");
         Set(varSvV1Name, Coalesce(varChecklist.Vendor1Name, ""));
         Set(varSvV2Name, Coalesce(varChecklist.Vendor2Name, ""));
         Set(varSvV3Name, Coalesce(varChecklist.Vendor3Name, ""));
@@ -199,12 +197,12 @@ Screens:
               Set(varV2, Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, ""))));
               Set(varV3, Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, ""))));
               Set(varV4, Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, ""))));
-              // Split on ";", trim each address, drop empties, re-join. Whatever the
-              // buyer pasted in, what gets stored is a clean "a@x.com;b@y.com".
-              Set(varE1, Concat(Filter(ForAll(Split(txtSvV1Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A)), A, ";"));
-              Set(varE2, Concat(Filter(ForAll(Split(txtSvV2Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A)), A, ";"));
-              Set(varE3, Concat(Filter(ForAll(Split(txtSvV3Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A)), A, ";"));
-              Set(varE4, Concat(Filter(ForAll(Split(txtSvV4Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A)), A, ";"));
+              // Stored as typed, minus outer whitespace. Several addresses may share one
+              // field, separated by semicolons; the check below validates every one of them.
+              Set(varE1, Trim(txtSvV1Email.Text));
+              Set(varE2, Trim(txtSvV2Email.Text));
+              Set(varE3, Trim(txtSvV3Email.Text));
+              Set(varE4, Trim(txtSvV4Email.Text));
               ClearCollect(
                   colSvSlots,
                   { Slot: "Vendor 1", VName: varV1, VEmail: varE1 },
@@ -217,7 +215,7 @@ Screens:
                   CountRows(colSvFilled) = 0,
                   Notify("Add at least one vendor before saving.", NotificationType.Error);
                   Set(varSaving, false),
-                  CountRows(Filter(colSvFilled, IsBlank(VEmail) || !IsMatch(VEmail, varEmailListPattern))) > 0,
+                  CountRows(Filter(colSvFilled, IsBlank(VEmail) || !IsMatch(VEmail, "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"))) > 0,
                   Notify("Every vendor you list needs at least one valid email address. Separate multiple addresses with a semicolon.", NotificationType.Error);
                   Set(varSaving, false),
                   CountRows(colSvFilled) <> CountRows(Distinct(colSvFilled, Lower(VName))),
@@ -615,7 +613,7 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: |-
               =If(
-                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))) || IsBlank(Trim(txtSvV1Email.Text)) || !IsMatch(Trim(txtSvV1Email.Text), varEmailListPattern),
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))) || IsBlank(Trim(txtSvV1Email.Text)) || !IsMatch(Trim(txtSvV1Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"),
                   ColorValue("#A32D2D"),
                   ColorValue("#3B6D11")
               )
@@ -626,8 +624,8 @@ Screens:
               =If(
                   IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))), "Vendor 1 is required, pick one from the list or enter it manually.",
                   IsBlank(Trim(txtSvV1Email.Text)), "Add an email address for this vendor.",
-                  !IsMatch(Trim(txtSvV1Email.Text), varEmailListPattern), "Check the address. Separate multiple addresses with a semicolon.",
-                  "Ready to save. " & CountRows(Filter(ForAll(Split(txtSvV1Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A))) & " address(es) on BCC."
+                  !IsMatch(Trim(txtSvV1Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"), "Check the address. Separate multiple addresses with a semicolon.",
+                  "Ready to save. " & (Len(Trim(txtSvV1Email.Text)) - Len(Substitute(Trim(txtSvV1Email.Text), ";", "")) + 1) & " address(es) on BCC."
               )
             Width: =427
             X: =924
@@ -774,8 +772,8 @@ Screens:
               =If(
                   IsBlank(Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, "")))), "Empty slot, leave it blank if you only need one vendor.",
                   IsBlank(Trim(txtSvV2Email.Text)), "Add an email address for this vendor.",
-                  !IsMatch(Trim(txtSvV2Email.Text), varEmailListPattern), "Check the address. Separate multiple addresses with a semicolon.",
-                  "Ready to save. " & CountRows(Filter(ForAll(Split(txtSvV2Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A))) & " address(es) on BCC."
+                  !IsMatch(Trim(txtSvV2Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"), "Check the address. Separate multiple addresses with a semicolon.",
+                  "Ready to save. " & (Len(Trim(txtSvV2Email.Text)) - Len(Substitute(Trim(txtSvV2Email.Text), ";", "")) + 1) & " address(es) on BCC."
               )
             Width: =431
             X: =924
@@ -922,8 +920,8 @@ Screens:
               =If(
                   IsBlank(Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, "")))), "Empty slot, leave it blank if not needed.",
                   IsBlank(Trim(txtSvV3Email.Text)), "Add an email address for this vendor.",
-                  !IsMatch(Trim(txtSvV3Email.Text), varEmailListPattern), "Check the address. Separate multiple addresses with a semicolon.",
-                  "Ready to save. " & CountRows(Filter(ForAll(Split(txtSvV3Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A))) & " address(es) on BCC."
+                  !IsMatch(Trim(txtSvV3Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"), "Check the address. Separate multiple addresses with a semicolon.",
+                  "Ready to save. " & (Len(Trim(txtSvV3Email.Text)) - Len(Substitute(Trim(txtSvV3Email.Text), ";", "")) + 1) & " address(es) on BCC."
               )
             Width: =430
             X: =924
@@ -1070,8 +1068,8 @@ Screens:
               =If(
                   IsBlank(Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, "")))), "Empty slot, leave it blank if not needed.",
                   IsBlank(Trim(txtSvV4Email.Text)), "Add an email address for this vendor.",
-                  !IsMatch(Trim(txtSvV4Email.Text), varEmailListPattern), "Check the address. Separate multiple addresses with a semicolon.",
-                  "Ready to save. " & CountRows(Filter(ForAll(Split(txtSvV4Email.Text, ";") As P, { A: Trim(P.Result) }), !IsBlank(A))) & " address(es) on BCC."
+                  !IsMatch(Trim(txtSvV4Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"), "Check the address. Separate multiple addresses with a semicolon.",
+                  "Ready to save. " & (Len(Trim(txtSvV4Email.Text)) - Len(Substitute(Trim(txtSvV4Email.Text), ";", "")) + 1) & " address(es) on BCC."
               )
             Width: =430
             X: =924

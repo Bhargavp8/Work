@@ -499,12 +499,26 @@ Automate rather than in the app.
 ## Conventions
 
 **Vendor addresses are a list, not a value.** `Emailcontact` may hold several
-addresses separated by semicolons. The app normalises whatever the buyer types
-(splits on `;`, trims, drops empties, re-joins) before storing, validates every
-address in the list individually, and keeps the list intact through to the flow's
-BCC field. Selecting a different vendor **replaces** the address rather than
-keeping the previous one — keeping it is how one vendor's RFQ reaches another's
-inbox.
+addresses separated by semicolons. The field is stored as typed (minus outer
+whitespace) and passed through to the flow's BCC field intact — Outlook accepts
+`a@x.com; b@y.com` as-is, so there is nothing to normalise. What guarantees the
+field is usable is the validation regex, which accepts one address or a
+semicolon-separated list and rejects empty entries, leading/trailing separators
+and doubled separators. Selecting a different vendor **replaces** the address
+rather than keeping the previous one — keeping it is how one vendor's RFQ
+reaches another's inbox.
+
+Two Power Fx constraints shape how that check is written, and both bite if you
+edit it:
+
+- **`IsMatch` needs a literal pattern.** Passing a variable fails to compile with
+  *"Regular expression must be a constant value"*, so the pattern is written out
+  in full at each of the six call sites. Change one, change all six.
+- **`Split()` returns a `Value` column, not `Result`.** Referencing `Result`
+  fails with *"Name isn't valid"*, and anything wrapping it then reports invalid
+  arguments. The address count avoids `Split` altogether: it counts separators
+  with `Len(x) - Len(Substitute(x, ";", "")) + 1`, which is exact because it only
+  renders after the pattern has matched, and the pattern rejects a trailing `;`.
 
 **Column naming.** Three columns were previously referenced under two spellings
 each — `RFQduedate` / `'RFQ  due date'`, `ActivityLog` / `'ActivityLog '`, and
