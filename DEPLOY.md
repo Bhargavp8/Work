@@ -1,10 +1,12 @@
 # Deploying this branch into Power Apps Studio
 
-Written for the **paste-controls-in-Studio** route. Screen-level properties do
-not travel with a control paste, so those are reproduced in full below.
+Route: **paste every screen**, rather than hand-editing the lightly changed ones.
+More paste work, but every screen ends up matching the repo exactly, so there is
+no question later about which formulas were updated and which were missed.
 
-Work top to bottom. Everything in Part 1 must be true before you paste a single
-control, otherwise Studio fills with red that tells you nothing.
+Tenant is **GCC High** (`apps.high.powerapps.us`). Nothing here needs a preview
+feature: every control reuses a type and version already in your app, and the
+formulas use only long-standing functions.
 
 ---
 
@@ -12,66 +14,73 @@ control, otherwise Studio fills with red that tells you nothing.
 
 | # | Do this | Why |
 |---|---|---|
-| 1 | Note the current version under **Settings -> Versions** | Your rollback point. Eight screens is too much to unwind by hand. |
-| 2 | Create **`SendRFQNotification`** and add it to the app | 7 call sites across 4 screens. Until the flow is added, every one fails to resolve. |
-| 3 | Confirm your 7-input flow is named **`SendRFQToVendors`** | The send screen calls that name. Rename it in Power Automate if it is still called `sendRFQNotification`. |
-| 4 | **Data pane -> RFQ -> Refresh** | Publishes the seven new `RecVendor*` columns to the app. |
-| 5 | Confirm **`Emailcontact`** resolves on `SG Vendor Master List` | Six vendor pickers read it. A different display name breaks all six at once. |
-| 6 | Set **`App.OnStart`** (see Part 4) | Nothing in these screens creates `varRole` or `varDeepLinkID`. Without it everyone is a Requestor. |
+| 1 | Note the current version under **Settings -> Versions** | Your rollback point. |
+| 2 | Create **`SendRFQNotification`** and add it to the app | 7 call sites across 4 screens. Until the flow is added every one fails to resolve. |
+| 3 | Confirm your 7-input flow is named **`SendRFQToVendors`** | The send screen calls that name. |
+| 4 | **Data pane -> RFQ -> Refresh** | Publishes the seven new `RecVendor*` columns. |
+| 5 | Confirm **`Emailcontact`** resolves on `SG Vendor Master List` | Six vendor pickers read it. |
+| 6 | Set **`App.OnStart`** (Part 4) | Nothing in these screens creates `varRole` or `varDeepLinkID`. |
+| 7 | Prove paste works on a **blank throwaway screen** first | Two minutes. Do not clear a real screen until you have seen a paste land. |
 
 ---
 
-## Part 2 — paste order, screen by screen
+## Part 2 — the two things that bite
 
-**The trap:** pasting a control whose name already exists on the screen makes
-Studio rename it `btnSvBack_1`, and every formula that referenced the original
-keeps pointing at the old one. So for any screen you re-paste: **select all the
-existing controls on that screen and delete them first**, then paste.
+**Clear each screen before pasting into it.** Pasting a control whose name already
+exists makes Studio rename the new one `btnSvBack_1`, while every formula keeps
+pointing at the old control. The screen looks right and behaves wrong. Select all
+controls in the tree for that screen, delete, then paste.
 
-Paste the `Children:` list in file order. Later entries sit on top, which is what
+Safe to do: all 489 controls were checked and **no control is referenced from
+another screen**, so clearing one screen cannot break a different one.
+
+**Screen properties do not travel with a control paste.** Every screen below needs
+its `OnVisible` (and `Fill` / `LoadingSpinnerColor`) set by hand from Part 4.
+
+Paste the `Children:` list in file order — later entries sit on top, which is what
 keeps the confirm dialogs and the send preview above the rest of the screen.
 
-| Screen | Changed lines | Action | OnVisible |
+---
+
+## Part 3 — screens, in a sensible order
+
+Order between screens does not matter. This one front-loads the small screens so
+you confirm the workflow on something cheap before the 100-control screen.
+
+| Order | Screen | Controls | Notes |
 |---|---|---|---|
-| `scrAdminUsers` | 18 | Hand-edit the few formulas (see Part 3) | unchanged |
-| `scrAwardConfirm` | 71 | Hand-edit the few formulas (see Part 3) | unchanged |
-| `scrBuyerQueue` | 83 | Hand-edit the few formulas (see Part 3) | **Yes — repaste it** |
-| `scrChecklist` | 333 | Full re-paste | unchanged |
-| `scrEditRFQ` | 539 | Full re-paste | **Yes — repaste it** |
-| `scrHome` | 87 | Hand-edit the few formulas (see Part 3) | **Yes — repaste it** |
-| `scrNewRFQ` | 520 | Full re-paste | **Yes — repaste it** |
-| `scrSendRFQ` | 576 | Full re-paste | **Yes — repaste it** |
+| 1 | `scrBuyerQueue` | 21 | Start here. Smallest. New `cboBqSort`; gallery Items now wrapped in With/Switch. |
+| 2 | `scrAwardConfirm` | 33 | Two OnSelect blocks now call `SendRFQNotification`. |
+| 3 | `scrAdminUsers` | 36 | Only the `Role` comparisons changed, but paste it whole for consistency. |
+| 4 | `scrHome` | 36 | New `cboHmSort`; filter row re-laid out; two galleries to verify. |
+| 5 | `scrNewRFQ` | 68 | Card C rebuilt: 3 vendor pickers + toggles. **Check `frmNwAttach` and its attachment card after paste.** |
+| 6 | `scrChecklist` | 74 | New read-only suggestions panel; footer moved right. |
+| 7 | `scrEditRFQ` | 84 | Form card re-flowed; 3 pickers. **Check `frmEdAttach`.** |
+| 8 | `scrSendRFQ` | 100 | Largest. New suggestions panel + leave-confirm dialog. **Check `rtePreview` keeps its Default.** |
 
-Order does not matter between screens, only within one. Publish once at the end.
+### Verify these by hand after their screen is pasted
 
----
+Composite controls are the ones most likely to come across incomplete:
 
-## Part 3 — the light-touch screens
+| Control | Screen | Check |
+|---|---|---|
+| `frmNwAttach` | scrNewRFQ | `DataSource` is `RFQ`, `Item` is `Defaults(RFQ)`, and the attachment card still has `DataField: "{Attachments}"` |
+| `frmEdAttach` | scrEditRFQ | Same, with `Item` bound to the selected RFQ |
+| `rtePreview` | scrSendRFQ | The long HTML `Default` survived — this is the vendor letter |
+| `htmNwLabelSteps` | scrNewRFQ | `HtmlText` still populated |
+| `galHmRFQs`, `galHmAttention` | scrHome | `Items` and the `OnSelect` on each |
+| `galBqQueue` | scrBuyerQueue | `Items` (With/Switch sort) and `OnSelect` |
+| `galSvDocs` | scrSendRFQ | `Items` bound to `colSvDocs` |
+| `galAuUsers` | scrAdminUsers | `Items` and `OnSelect` |
 
-`scrAdminUsers`, `scrAwardConfirm` and `scrBuyerQueue` changed too little to be
-worth clearing and re-pasting. Open each formula and edit in place:
-
-### scrAdminUsers
-
-- **Every comparison against the `Role` column** — `Role = "Admin"` becomes `Trim(Lower(Role)) = "admin"` (and the same for `"buyer"`). Six places: the two last-admin guards, the header counts, the row colour Switch, and the picker's DefaultSelectedItems. `Role` is free text, so a row typed straight into SharePoint as `admin` would otherwise not count — which let the final administrator be removed.
-
-### scrAwardConfirm
-
-- **`btnAwSubmitAlt.OnSelect` and `btnAwModalYes.OnSelect`** — Both gained a `SendRFQNotification.Run(...)` block so the buyer is told the requestor answered. Copy each OnSelect wholesale from the file.
-- **Column names** — `'RFQ  due date'` -> `RFQduedate`, `'ActivityLog '` -> `ActivityLog`, `'ReRFQCount '` -> `ReRFQCount`.
-
-### scrBuyerQueue
-
-- **Screen `OnVisible`** — Adds `Reset(cboBqSort)`. Repaste from Part 4.
-- **`galBqQueue.Items`** — Wrapped in `With()` + `Switch()` for the sort picker.
-- **New control `cboBqSort`** — Paste just this one control, then set the gallery Items.
-- **Column names** — `'RFQ  due date'` -> `RFQduedate` in four places.
+Also confirm the four `Image1_*` controls still point at the `image` media
+resource. Media lives at app level, so it survives, but the binding is worth a look.
 
 ---
 
-## Part 4 — screen properties to paste by hand
+## Part 4 — every screen property, to paste by hand
 
-Select the screen in the tree, pick the property in the formula bar, paste.
+Select the screen in the tree, choose the property in the formula bar, paste.
 
 ### App.OnStart
 
@@ -91,7 +100,12 @@ Set(varConfirmAction, Blank());
 Set(varShowAlternate, false);
 ```
 
-### scrBuyerQueue.OnVisible
+### scrBuyerQueue
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
 
 ```powerfx
 Set(varBqDenied, false);
@@ -109,7 +123,135 @@ If(
 )
 ```
 
-### scrEditRFQ.OnVisible
+### scrAwardConfirm
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
+
+```powerfx
+Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+Set(varShowAlternate, false);
+Set(varAwardConfirm, Blank());
+Set(varSaving, false);
+Reset(txtAwPreferredVendor);
+Reset(txtAwAlternateJust)
+```
+
+### scrAdminUsers
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
+
+```powerfx
+Set(varAuDenied, false);
+Set(varAuDenied, Coalesce(varRole, "Requestor") <> "Admin");
+If(
+    varAuDenied,
+    Notify("Only an administrator can change who has access. Taking you back to the home screen.", NotificationType.Error, 4000),
+    Refresh('PWS_SHQ Purchase Requisition SU');
+    ClearCollect(colAppUsers, 'PWS_SHQ Purchase Requisition SU');
+    Set(varAuSelected, Blank());
+    Set(varAuConfirmDelete, false);
+    Set(varSaving, false);
+    Reset(txtAuSearch);
+    Reset(txtAuEmail);
+    Reset(txtAuName);
+    Reset(cboAuRole)
+)
+```
+
+### scrHome
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
+
+```powerfx
+Set(varConfirmAction, Blank());
+Set(varShowAlternate, false);
+Set(varSaving, false);
+Refresh(RFQ);
+ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email));
+Reset(txtHmSearch);
+Reset(cboHmStatus);
+Reset(tglHmAwaitingMe);
+Reset(cboHmSort);
+Set(varHmDeepGo, false);
+If(
+    varDeepLinkID > 0 && !IsBlank(LookUp(RFQ, ID = varDeepLinkID)),
+    Set(varSelectedRFQ, LookUp(RFQ, ID = varDeepLinkID));
+    Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varDeepLinkID));
+    Set(varDeepLinkID, 0);
+    Set(varHmDeepGo, true)
+)
+```
+
+### scrNewRFQ
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
+
+```powerfx
+UpdateContext({ varShowLabelInstructions: false });
+Set(varSaving, false);
+Set(varNwUrgentDays, 3);
+Set(varNwNormalDays, 7);
+Set(varNwUrgency, "Not urgent");
+Set(varNwDueDate, Today() + varNwNormalDays);
+// Same vendor master the buyer sees, so a suggestion arrives with an address
+// already attached instead of the buyer retyping it.
+ClearCollect(
+    colVendorList,
+    ForAll(
+        'SG Vendor Master List',
+        { VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }
+    )
+);
+Set(varNwRec1Name, ""); Set(varNwRec1Email, ""); Set(varNwRec1Manual, false);
+Set(varNwRec2Name, ""); Set(varNwRec2Email, ""); Set(varNwRec2Manual, false);
+Set(varNwRec3Name, ""); Set(varNwRec3Email, ""); Set(varNwRec3Manual, false);
+Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
+Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
+Reset(tglNwRec1Manual); Reset(cboNwRec1); Reset(txtNwRec1Name); Reset(txtNwRec1Email); Reset(txtNwRec1Remarks);
+Reset(tglNwRec2Manual); Reset(cboNwRec2); Reset(txtNwRec2Name); Reset(txtNwRec2Email); Reset(txtNwRec2Remarks);
+Reset(tglNwRec3Manual); Reset(cboNwRec3); Reset(txtNwRec3Name); Reset(txtNwRec3Email); Reset(txtNwRec3Remarks);
+Reset(txtNwRemarks)
+```
+
+### scrChecklist
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
+
+```powerfx
+Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
+Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+Set(varCheapestVendor, Blank());
+Set(varSaving, false);
+Reset(cboCkV1Cur); Reset(txtCkV1Unit); Reset(txtCkV1Total); Reset(txtCkV1Lead);
+Reset(cboCkV2Cur); Reset(txtCkV2Unit); Reset(txtCkV2Total); Reset(txtCkV2Lead);
+Reset(cboCkV3Cur); Reset(txtCkV3Unit); Reset(txtCkV3Total); Reset(txtCkV3Lead);
+Reset(cboCkV4Cur); Reset(txtCkV4Unit); Reset(txtCkV4Total); Reset(txtCkV4Lead);
+Reset(cboCkV1Resp); Reset(cboCkV2Resp); Reset(cboCkV3Resp); Reset(cboCkV4Resp);
+Reset(cboCkAward); Reset(txtCkNotes)
+```
+
+### scrEditRFQ
+
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
+
+`OnVisible`:
 
 ```powerfx
 Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
@@ -149,58 +291,12 @@ Reset(tglEdRec3Manual); Reset(cboEdRec3); Reset(txtEdRec3Name); Reset(txtEdRec3E
 Reset(txtEdRemarks)
 ```
 
-### scrHome.OnVisible
+### scrSendRFQ
 
-```powerfx
-Set(varConfirmAction, Blank());
-Set(varShowAlternate, false);
-Set(varSaving, false);
-Refresh(RFQ);
-ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email));
-Reset(txtHmSearch);
-Reset(cboHmStatus);
-Reset(tglHmAwaitingMe);
-Reset(cboHmSort);
-Set(varHmDeepGo, false);
-If(
-    varDeepLinkID > 0 && !IsBlank(LookUp(RFQ, ID = varDeepLinkID)),
-    Set(varSelectedRFQ, LookUp(RFQ, ID = varDeepLinkID));
-    Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varDeepLinkID));
-    Set(varDeepLinkID, 0);
-    Set(varHmDeepGo, true)
-)
-```
+`Fill` = `RGBA(238, 242, 248, 1)`  
+`LoadingSpinnerColor` = `RGBA(56, 96, 178, 1)`  
 
-### scrNewRFQ.OnVisible
-
-```powerfx
-UpdateContext({ varShowLabelInstructions: false });
-Set(varSaving, false);
-Set(varNwUrgentDays, 3);
-Set(varNwNormalDays, 7);
-Set(varNwUrgency, "Not urgent");
-Set(varNwDueDate, Today() + varNwNormalDays);
-// Same vendor master the buyer sees, so a suggestion arrives with an address
-// already attached instead of the buyer retyping it.
-ClearCollect(
-    colVendorList,
-    ForAll(
-        'SG Vendor Master List',
-        { VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }
-    )
-);
-Set(varNwRec1Name, ""); Set(varNwRec1Email, ""); Set(varNwRec1Manual, false);
-Set(varNwRec2Name, ""); Set(varNwRec2Email, ""); Set(varNwRec2Manual, false);
-Set(varNwRec3Name, ""); Set(varNwRec3Email, ""); Set(varNwRec3Manual, false);
-Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
-Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
-Reset(tglNwRec1Manual); Reset(cboNwRec1); Reset(txtNwRec1Name); Reset(txtNwRec1Email); Reset(txtNwRec1Remarks);
-Reset(tglNwRec2Manual); Reset(cboNwRec2); Reset(txtNwRec2Name); Reset(txtNwRec2Email); Reset(txtNwRec2Remarks);
-Reset(tglNwRec3Manual); Reset(cboNwRec3); Reset(txtNwRec3Name); Reset(txtNwRec3Email); Reset(txtNwRec3Remarks);
-Reset(txtNwRemarks)
-```
-
-### scrSendRFQ.OnVisible
+`OnVisible`:
 
 ```powerfx
 Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
@@ -248,29 +344,35 @@ Reset(dteSvSentDate)
 
 ## Part 5 — after pasting
 
-Expect **blue delegation warnings** on `Trim(Lower(Role))` over the access list
-and on `ForAll` over the vendor master. Both are deliberate: those lists hold a
-handful of rows, far below the limit. Do not rewrite them to plain equality —
-that is what reintroduces the role-casing bug.
+**Expected, deliberate, leave alone:** blue delegation warnings on
+`Trim(Lower(Role))` over the access list and `ForAll` over the vendor master.
+Both lists hold a handful of rows. Rewriting them to plain equality is what
+reintroduces the role-casing bug.
 
-Red errors are real. The most likely causes, in order:
+**Red errors are real.** Most likely causes, in order:
 
-1. `SendRFQNotification` not added to the app (7 sites light up at once)
-2. `RFQ` not refreshed after adding the columns (`RecVendor*` unresolved)
-3. `Emailcontact` named differently on the vendor master (6 pickers at once)
-4. A control renamed to `_1` because the old one was not deleted first
+1. `SendRFQNotification` not added to the app — about 7 sites light up at once
+2. `RFQ` not refreshed — every `RecVendor*` unresolved
+3. `Emailcontact` named differently on the vendor master — 6 pickers at once
+4. A control renamed `_1` because the screen was not cleared first
+5. A screen property left unset — usually shows as a blank screen on open
 
 ### Smoke test
 
 | # | Do | Expect |
 |---|---|---|
-| 1 | Raise an RFQ with 3 suggestions: one from the picker, one via **Not on the list?**, one blank | Every Buyer/Admin gets an email listing both vendors with emails and remarks |
-| 2 | Buyer Queue -> open it | Suggestions panel lists exactly the two filled slots |
-| 3 | **Use this** on a suggestion | Lands in Vendor 1 with its address, marked as manual entry |
-| 4 | Save vendor list -> Review and send -> close the preview **without** sending | Status stays *RFQ pending*. This is the bug that used to mark it sent |
-| 5 | Send for real | Vendors on BCC, requestor on CC, attachments present, status now *RFQ sent out* |
-| 6 | Checklist: enter quotes, press Back without saving | Returns with a *Quotes kept as a draft* toast, figures intact |
-| 7 | Recommend a vendor with no price | Refused, naming the vendor |
-| 8 | Recommend properly | Requestor gets the email |
-| 9 | Requestor accepts | Buyer gets the email, RFQ closes |
-| 10 | Open an RFQ raised before this change | Old title format and single suggested vendor still display |
+| 1 | Sign in as a Buyer | Buyer Queue button visible on Home. If not, `App.OnStart` or the `Role` value |
+| 2 | Raise an RFQ with 3 suggestions: one from the picker, one via **Not on the list?**, one blank | Picker fills the email itself; buyers get an email listing both vendors |
+| 3 | Buyer Queue -> open it | Suggestions panel shows exactly the two filled slots |
+| 4 | **Use this** on a suggestion | Lands in Vendor 1 with its address, flagged as manual entry |
+| 5 | Save vendor list -> Review and send -> **close without sending** | Status stays *RFQ pending*. This is the bug that used to mark it sent |
+| 6 | Send for real | Vendors on BCC, requestor on CC, **attachments present**, status now *RFQ sent out* |
+| 7 | Checklist: type quotes, press Back without saving | Returns with *Quotes kept as a draft*, figures intact |
+| 8 | Recommend a vendor with no price | Refused, naming the vendor |
+| 9 | Recommend properly | Requestor gets the email |
+| 10 | Requestor accepts | Buyer gets the email, RFQ closes |
+| 11 | Open an RFQ raised before this change | Old title format and single suggested vendor still display |
+
+Step 6's attachment check is the one that catches the Power Automate gap: if the
+vendor email arrives without the requestor's drawings, the flow still needs
+`GetAttachments` wiring (see the README).
