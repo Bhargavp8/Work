@@ -587,7 +587,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
+            Default: =Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
@@ -602,7 +602,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+            Default: =Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
@@ -617,7 +617,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecVendor2Email, "")
+            Default: =Coalesce(varSelectedRFQ.RecVendor2Email, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
@@ -632,7 +632,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+            Default: =Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
@@ -647,7 +647,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecVendor3Email, "")
+            Default: =Coalesce(varSelectedRFQ.RecVendor3Email, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
@@ -662,7 +662,7 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: ==Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
+            Default: =Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Height: =28
