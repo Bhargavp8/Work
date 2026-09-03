@@ -161,7 +161,7 @@ Screens:
               "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.'Created By'.DisplayName, "Unknown") & Char(10) &
               "Contact: " & Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.'Created By'.Email, "no email on record") & Char(10) & Char(10) &
               If(varSelectedRFQ.'Sole Source', "SOLE SOURCE" & Char(10) & PlainText(Coalesce(varSelectedRFQ.'Business Justification', "")) & Char(10) & Char(10), "") &
-              If(!IsBlank(varSelectedRFQ.'Recommend Vendor'), "Requestor suggests: " & varSelectedRFQ.'Recommend Vendor' & " (" & Coalesce(varSelectedRFQ.RecommendVendorEmail, "no email") & ")" & Char(10), "") &
+              If(!IsBlank(varSelectedRFQ.'Recommend Vendor') || !IsBlank(varSelectedRFQ.RecVendor2Name) || !IsBlank(varSelectedRFQ.RecVendor3Name), "Requestor suggested " & CountRows(Filter(Table({ N: Coalesce(varSelectedRFQ.'Recommend Vendor', "") }, { N: Coalesce(varSelectedRFQ.RecVendor2Name, "") }, { N: Coalesce(varSelectedRFQ.RecVendor3Name, "") }), !IsBlank(N))) & " vendor(s), see the panel below" & Char(10), "") &
               If(!IsBlank(varChecklist.PreferredVendorName), "Requestor asked for: " & varChecklist.PreferredVendorName & Char(10) & PlainText(Coalesce(varChecklist.RequestorJustification, "")), "")
             Width: =324
             X: =24
@@ -1514,6 +1514,335 @@ Screens:
             Width: =200
             X: =869
             Y: =608
+      - recSvRecCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =124
+            Width: =983
+            X: =372
+            Y: =576
+      - recSvRecHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =30
+            Width: =983
+            X: =372
+            Y: =576
+      - lblSvRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =30
+            PaddingLeft: =8
+            Size: =10
+            Text: ="Vendors the requestor suggested   ·   Use this loads one into the first free slot above"
+            Width: =983
+            X: =372
+            Y: =576
+      - lblSvRecEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(150, 158, 172, 1)
+            Font: =Font.'Open Sans'
+            Height: =60
+            Size: =10
+            Text: ="The requestor did not suggest any vendors."
+            Visible: =IsBlank(varSelectedRFQ.'Recommend Vendor') && IsBlank(varSelectedRFQ.RecVendor2Name) && IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =983
+            X: =372
+            Y: =616
+      - lblSvRec1Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.'Recommend Vendor', "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =220
+            X: =380
+            Y: =610
+      - lblSvRec1Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =250
+            X: =606
+            Y: =610
+      - lblSvRec1Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =330
+            X: =862
+            Y: =610
+      - btnSvRec1Use:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varSelectedRFQ.'Recommend Vendor'), DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =Switch(
+                  true,
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))),
+                      Set(varSvV1Name, Trim(varSelectedRFQ.'Recommend Vendor'));
+                      Set(varSvV1Email, Trim(Coalesce(varSelectedRFQ.RecommendVendorEmail, "")));
+                      Set(varSvV1Manual, true);
+                      Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
+                      Notify(Trim(varSelectedRFQ.'Recommend Vendor') & " loaded into Vendor 1. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, "")))),
+                      Set(varSvV2Name, Trim(varSelectedRFQ.'Recommend Vendor'));
+                      Set(varSvV2Email, Trim(Coalesce(varSelectedRFQ.RecommendVendorEmail, "")));
+                      Set(varSvV2Manual, true);
+                      Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
+                      Notify(Trim(varSelectedRFQ.'Recommend Vendor') & " loaded into Vendor 2. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, "")))),
+                      Set(varSvV3Name, Trim(varSelectedRFQ.'Recommend Vendor'));
+                      Set(varSvV3Email, Trim(Coalesce(varSelectedRFQ.RecommendVendorEmail, "")));
+                      Set(varSvV3Manual, true);
+                      Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
+                      Notify(Trim(varSelectedRFQ.'Recommend Vendor') & " loaded into Vendor 3. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, "")))),
+                      Set(varSvV4Name, Trim(varSelectedRFQ.'Recommend Vendor'));
+                      Set(varSvV4Email, Trim(Coalesce(varSelectedRFQ.RecommendVendorEmail, "")));
+                      Set(varSvV4Manual, true);
+                      Reset(tglSvV4Manual); Reset(cboSvV4); Reset(txtSvV4Name); Reset(txtSvV4Email);
+                      Notify(Trim(varSelectedRFQ.'Recommend Vendor') & " loaded into Vendor 4. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  Notify("All four vendor slots are full. Clear one first, then load this suggestion.", NotificationType.Warning, 5000)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =9
+            Text: ="Use this"
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =100
+            X: =1240
+            Y: =611
+      - lblSvRec2Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =220
+            X: =380
+            Y: =638
+      - lblSvRec2Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =250
+            X: =606
+            Y: =638
+      - lblSvRec2Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =330
+            X: =862
+            Y: =638
+      - btnSvRec2Use:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varSelectedRFQ.RecVendor2Name), DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =Switch(
+                  true,
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))),
+                      Set(varSvV1Name, Trim(varSelectedRFQ.RecVendor2Name));
+                      Set(varSvV1Email, Trim(Coalesce(varSelectedRFQ.RecVendor2Email, "")));
+                      Set(varSvV1Manual, true);
+                      Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor2Name) & " loaded into Vendor 1. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, "")))),
+                      Set(varSvV2Name, Trim(varSelectedRFQ.RecVendor2Name));
+                      Set(varSvV2Email, Trim(Coalesce(varSelectedRFQ.RecVendor2Email, "")));
+                      Set(varSvV2Manual, true);
+                      Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor2Name) & " loaded into Vendor 2. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, "")))),
+                      Set(varSvV3Name, Trim(varSelectedRFQ.RecVendor2Name));
+                      Set(varSvV3Email, Trim(Coalesce(varSelectedRFQ.RecVendor2Email, "")));
+                      Set(varSvV3Manual, true);
+                      Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor2Name) & " loaded into Vendor 3. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, "")))),
+                      Set(varSvV4Name, Trim(varSelectedRFQ.RecVendor2Name));
+                      Set(varSvV4Email, Trim(Coalesce(varSelectedRFQ.RecVendor2Email, "")));
+                      Set(varSvV4Manual, true);
+                      Reset(tglSvV4Manual); Reset(cboSvV4); Reset(txtSvV4Name); Reset(txtSvV4Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor2Name) & " loaded into Vendor 4. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  Notify("All four vendor slots are full. Clear one first, then load this suggestion.", NotificationType.Warning, 5000)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =9
+            Text: ="Use this"
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =100
+            X: =1240
+            Y: =639
+      - lblSvRec3Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =220
+            X: =380
+            Y: =666
+      - lblSvRec3Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =10
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =250
+            X: =606
+            Y: =666
+      - lblSvRec3Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =26
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =330
+            X: =862
+            Y: =666
+      - btnSvRec3Use:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(214, 221, 233, 1)
+            DisabledColor: =RGBA(150, 158, 172, 1)
+            DisabledFill: =RGBA(232, 236, 243, 1)
+            DisplayMode: =If(IsBlank(varSelectedRFQ.RecVendor3Name), DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =Switch(
+                  true,
+                  IsBlank(Trim(If(tglSvV1Manual.Value, txtSvV1Name.Text, Coalesce(cboSvV1.Selected.VendorName, "")))),
+                      Set(varSvV1Name, Trim(varSelectedRFQ.RecVendor3Name));
+                      Set(varSvV1Email, Trim(Coalesce(varSelectedRFQ.RecVendor3Email, "")));
+                      Set(varSvV1Manual, true);
+                      Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor3Name) & " loaded into Vendor 1. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV2Manual.Value, txtSvV2Name.Text, Coalesce(cboSvV2.Selected.VendorName, "")))),
+                      Set(varSvV2Name, Trim(varSelectedRFQ.RecVendor3Name));
+                      Set(varSvV2Email, Trim(Coalesce(varSelectedRFQ.RecVendor3Email, "")));
+                      Set(varSvV2Manual, true);
+                      Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor3Name) & " loaded into Vendor 2. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV3Manual.Value, txtSvV3Name.Text, Coalesce(cboSvV3.Selected.VendorName, "")))),
+                      Set(varSvV3Name, Trim(varSelectedRFQ.RecVendor3Name));
+                      Set(varSvV3Email, Trim(Coalesce(varSelectedRFQ.RecVendor3Email, "")));
+                      Set(varSvV3Manual, true);
+                      Reset(tglSvV3Manual); Reset(cboSvV3); Reset(txtSvV3Name); Reset(txtSvV3Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor3Name) & " loaded into Vendor 3. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  IsBlank(Trim(If(tglSvV4Manual.Value, txtSvV4Name.Text, Coalesce(cboSvV4.Selected.VendorName, "")))),
+                      Set(varSvV4Name, Trim(varSelectedRFQ.RecVendor3Name));
+                      Set(varSvV4Email, Trim(Coalesce(varSelectedRFQ.RecVendor3Email, "")));
+                      Set(varSvV4Manual, true);
+                      Reset(tglSvV4Manual); Reset(cboSvV4); Reset(txtSvV4Name); Reset(txtSvV4Email);
+                      Notify(Trim(varSelectedRFQ.RecVendor3Name) & " loaded into Vendor 4. Check it, then Save vendor list.", NotificationType.Success, 4000),
+                  Notify("All four vendor slots are full. Clear one first, then load this suggestion.", NotificationType.Warning, 5000)
+              )
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =9
+            Text: ="Use this"
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =100
+            X: =1240
+            Y: =667
       - recSvLeaveScrim:
           Control: Rectangle@2.3.0
           Properties:

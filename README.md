@@ -24,6 +24,7 @@ in the Power Platform environment, not here — see
 - [SharePoint limits and archiving](#sharepoint-limits-and-archiving)
 - [Known issues and follow-ups](#known-issues-and-follow-ups)
 - [Validation and gating](#validation-and-gating)
+- [Suggested vendors](#suggested-vendors)
 - [Sorting](#sorting)
 - [Conventions](#conventions)
 
@@ -106,7 +107,10 @@ that list is a Requestor.
 | `RFQ status` | Choice | `RFQ pending`, `RFQ sent out`, `Re-RFQ`, `RFQ closed/completed`, `RFQ cancelled`. |
 | `AwaitingAction` | Choice | `Requestor`, `Buyer`, `Vendor`, `None`. Drives every "waiting on you" view. |
 | `ReRFQCount` | Number | Incremented on each re-quote. |
-| `Recommend Vendor`, `RecommendVendorEmail`, `Remarks` | Text | Requestor's suggestion to the buyer. |
+| `Recommend Vendor`, `RecommendVendorEmail`, `RecommendVendorRemarks` | Text | Suggested vendor **1**. The first two are the original columns, kept so existing RFQs stay readable. |
+| `RecVendor2Name`, `RecVendor2Email`, `RecVendor2Remarks` | Text | Suggested vendor **2**. |
+| `RecVendor3Name`, `RecVendor3Email`, `RecVendor3Remarks` | Text | Suggested vendor **3**. |
+| `Remarks` | Multiline text | Additional notes to the buyer. The hint text prompts for ECAR#, project schedule and catering details. |
 | `ActivityLog` | Multiline text | Newest entry first, capped at 30,000 characters by `Left(...)`. |
 | `Attachments` | Attachments | Requestor's drawings, specs, SOW. Sent with the vendor email by the flow. |
 
@@ -411,7 +415,30 @@ Contribute on the SU list.
 Raise **Settings › General › Data row limit for non-delegable queries** from
 500 to **2000**. See the next section for why this matters.
 
-### 5. Seed data
+### 5. Columns to add before deploying this version
+
+The three-suggestion feature needs **seven new columns on the `RFQ` list**.
+Suggested vendor 1 reuses the two columns that already exist, so no existing RFQ
+data is lost and nothing needs migrating.
+
+| Column | Type |
+|---|---|
+| `RecommendVendorRemarks` | Multiple lines of text — **Plain text** |
+| `RecVendor2Name` | Single line of text |
+| `RecVendor2Email` | Single line of text |
+| `RecVendor2Remarks` | Multiple lines of text — **Plain text** |
+| `RecVendor3Name` | Single line of text |
+| `RecVendor3Email` | Single line of text |
+| `RecVendor3Remarks` | Multiple lines of text — **Plain text** |
+
+Set the multiline columns to **Plain text**, not Enhanced rich text. Enhanced
+rich text returns HTML, which would appear as raw markup in the buyer's screen
+and in the notification email.
+
+After adding them, refresh the `RFQ` data source in the app (Data pane → `RFQ` →
+Refresh) so the new columns resolve, otherwise every reference reads as an error.
+
+### 6. Seed data
 
 At least one `Admin` in the SU list (otherwise nobody can grant access, and
 nobody is emailed when an RFQ is raised), and one row per currency in
@@ -569,6 +596,42 @@ else produces a clear message instead of a silent failure.
 `RFQ sent out` once the mail has actually left.
 
 ---
+
+## Suggested vendors
+
+A requestor can put forward up to **three** vendors, each with a name, an email
+and a short remark saying why. The buyer sees all three on the vendor screen and
+loads any of them into a sourcing slot with one click.
+
+```
+scrNewRFQ / scrEditRFQ                     scrSendRFQ
+┌───────────────────────────────┐          ┌────────────────────────────────────┐
+│ Vendors you suggest (up to 3) │          │ Vendor 1..4  (the buyer's own list) │
+│  1  name │ email              │          │  ...                                │
+│     why this vendor           │  ─────>  ├────────────────────────────────────┤
+│  2  name │ email              │  writes  │ Vendors the requestor suggested     │
+│     why this vendor           │  to RFQ  │  1  name  email  why   [Use this]   │
+│  3  name │ email              │  columns │  2  name  email  why   [Use this]   │
+│     why this vendor           │          │  3  name  email  why   [Use this]   │
+└───────────────────────────────┘          └────────────────────────────────────┘
+```
+
+**"Use this" loads, it does not save.** It drops the name and email into the
+first free vendor slot (1 → 4) as a manual entry, because a suggested vendor is
+often not on the master list. The buyer still reviews it and presses **Save
+vendor list**, so a suggestion can never reach a vendor without a buyer choosing
+it. If all four slots are full the button says so rather than overwriting one.
+
+**Rules the requestor is held to**, on both the New and Edit screens:
+
+- a suggested vendor must have an email, or the buyer cannot contact them;
+- an email with no vendor name is rejected rather than saved as an orphan;
+- addresses are validated with the same pattern the buyer's vendor list uses, so
+  `a@x.com; b@y.com` is accepted in one field;
+- the same vendor cannot be suggested twice.
+
+All three suggestions, with emails and remarks, are included in the new-RFQ
+notification to the buyers, so they can size the job up from the email alone.
 
 ## Sorting
 

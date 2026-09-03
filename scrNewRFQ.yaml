@@ -12,7 +12,10 @@ Screens:
         Set(varNwDueDate, Today() + varNwNormalDays);
         Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
         Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
-        Reset(txtNwRecVendor); Reset(txtNwRecVendorEmail); Reset(txtNwRemarks)
+        Reset(txtNwRec1Name); Reset(txtNwRec1Email); Reset(txtNwRec1Remarks);
+        Reset(txtNwRec2Name); Reset(txtNwRec2Email); Reset(txtNwRec2Remarks);
+        Reset(txtNwRec3Name); Reset(txtNwRec3Email); Reset(txtNwRec3Remarks);
+        Reset(txtNwRemarks)
     Children:
       - recNwTopBar:
           Control: Rectangle@2.3.0
@@ -376,89 +379,219 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =38
             PaddingLeft: =16
-            Text: ="3.  Suggestions and notes"
+            Text: ="3.  Vendors you suggest and notes"
             Width: =410
             X: =932
             Y: =88
-      - lblNwLblRecVendor:
+      - lblNwRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =16
+            FontWeight: =FontWeight.Semibold
+            Size: =10
+            Text: ="Vendors you suggest to the buyer (optional, up to 3)"
+            Width: =386
+            X: =944
+            Y: =128
+      - lblNwRec1Head:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Vendor you would recommend (optional)"
-            Width: =362
-            X: =956
-            Y: =144
-      - txtNwRecVendor:
+            Height: =13
+            Size: =9
+            Text: ="Vendor 1"
+            Width: =120
+            X: =944
+            Y: =148
+      - txtNwRec1Name:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
             Default: =""
             Font: =Font.'Open Sans'
-            Height: =38
+            Height: =26
             HintText: ="Vendor name"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
-            Width: =362
-            X: =956
-            Y: =168
-      - lblNwLblRecEmail:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(96, 106, 126, 1)
-            Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Their email (optional)"
-            Width: =362
-            X: =956
-            Y: =222
-      - txtNwRecVendorEmail:
+            Size: =10
+            Width: =186
+            X: =944
+            Y: =163
+      - txtNwRec1Email:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
             Default: =""
             Font: =Font.'Open Sans'
-            Height: =38
+            Height: =26
             HintText: ="name@vendor.com"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
-            Width: =362
-            X: =956
-            Y: =246
+            Size: =10
+            Width: =194
+            X: =1136
+            Y: =163
+      - txtNwRec1Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="Why this vendor, part they supply, past job..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =386
+            X: =944
+            Y: =191
+      - lblNwRec2Head:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =13
+            Size: =9
+            Text: ="Vendor 2"
+            Width: =120
+            X: =944
+            Y: =223
+      - txtNwRec2Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="Vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =186
+            X: =944
+            Y: =238
+      - txtNwRec2Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =194
+            X: =1136
+            Y: =238
+      - txtNwRec2Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="Why this vendor, part they supply, past job..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =386
+            X: =944
+            Y: =266
+      - lblNwRec3Head:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =13
+            Size: =9
+            Text: ="Vendor 3"
+            Width: =120
+            X: =944
+            Y: =298
+      - txtNwRec3Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="Vendor name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =186
+            X: =944
+            Y: =313
+      - txtNwRec3Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =194
+            X: =1136
+            Y: =313
+      - txtNwRec3Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: =""
+            Font: =Font.'Open Sans'
+            Height: =26
+            HintText: ="Why this vendor, part they supply, past job..."
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =386
+            X: =944
+            Y: =341
       - lblNwLblRemarks:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(96, 106, 126, 1)
+            Color: =RGBA(43, 54, 78, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Anything else the buyer should know"
-            Width: =362
-            X: =956
-            Y: =300
+            Height: =16
+            FontWeight: =FontWeight.Semibold
+            Size: =10
+            Text: ="Additional notes to the buyer"
+            Width: =386
+            X: =944
+            Y: =376
       - txtNwRemarks:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
             Default: =""
             Font: =Font.'Open Sans'
-            Height: =180
-            HintText: ="Budget code, delivery point, project reference..."
+            Height: =196
+            HintText: |-
+              ="1.  ECAR#
+              2.  Project schedule
+              3.  Catering requirements:
+                   Theme Buffet/Bento: ___;  Date & Time & Venue: ___;
+                   Qty: ___ (halal)  ___ (vege);  Dietary restriction: ___;
+                   Estimated budget: SGD ___"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
             Mode: =TextMode.MultiLine
-            Size: =12
-            Width: =362
-            X: =956
-            Y: =324
+            Size: =10
+            Width: =386
+            X: =944
+            Y: =394
       - btnNwSubmit:
           Control: Classic/Button@2.2.0
           Properties:
@@ -470,7 +603,7 @@ Screens:
             DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
             Fill: =RGBA(56, 96, 178, 1)
             Font: =Font.'Open Sans'
-            Height: =64
+            Height: =46
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
             OnSelect: |-
@@ -487,6 +620,27 @@ Screens:
                   IsBlank(varNwDueDate) || varNwDueDate < Today(),
                   Notify("Pick a due date of today or later.", NotificationType.Error),
 
+                  // A suggested vendor the buyer cannot contact is not a suggestion.
+                  (!IsBlank(Trim(txtNwRec1Name.Text)) && IsBlank(Trim(txtNwRec1Email.Text)))
+                      || (!IsBlank(Trim(txtNwRec2Name.Text)) && IsBlank(Trim(txtNwRec2Email.Text)))
+                      || (!IsBlank(Trim(txtNwRec3Name.Text)) && IsBlank(Trim(txtNwRec3Email.Text))),
+                  Notify("Every vendor you suggest needs an email address, otherwise the buyer cannot contact them.", NotificationType.Error, 6000),
+
+                  (!IsBlank(Trim(txtNwRec1Email.Text)) && IsBlank(Trim(txtNwRec1Name.Text)))
+                      || (!IsBlank(Trim(txtNwRec2Email.Text)) && IsBlank(Trim(txtNwRec2Name.Text)))
+                      || (!IsBlank(Trim(txtNwRec3Email.Text)) && IsBlank(Trim(txtNwRec3Name.Text))),
+                  Notify("You have entered a vendor email with no vendor name. Add the name or clear the email.", NotificationType.Error, 6000),
+
+                  (!IsBlank(Trim(txtNwRec1Email.Text)) && !IsMatch(Trim(txtNwRec1Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"))
+                      || (!IsBlank(Trim(txtNwRec2Email.Text)) && !IsMatch(Trim(txtNwRec2Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"))
+                      || (!IsBlank(Trim(txtNwRec3Email.Text)) && !IsMatch(Trim(txtNwRec3Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$")),
+                  Notify("Check the email address on the vendors you suggested. Separate multiple addresses with a semicolon.", NotificationType.Error, 6000),
+
+                  (!IsBlank(Trim(txtNwRec1Name.Text)) && Lower(Trim(txtNwRec1Name.Text)) = Lower(Trim(txtNwRec2Name.Text)))
+                      || (!IsBlank(Trim(txtNwRec1Name.Text)) && Lower(Trim(txtNwRec1Name.Text)) = Lower(Trim(txtNwRec3Name.Text)))
+                      || (!IsBlank(Trim(txtNwRec2Name.Text)) && Lower(Trim(txtNwRec2Name.Text)) = Lower(Trim(txtNwRec3Name.Text))),
+                  Notify("You have suggested the same vendor twice. Remove the duplicate.", NotificationType.Error, 6000),
+
                   // The record has to be created by the form, not by Patch, or the
                   // Attachments control has nothing to upload to. Everything else is
                   // patched onto the new record in frmNwAttach.OnSuccess.
@@ -495,11 +649,11 @@ Screens:
               )
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
-            Size: =14
+            Size: =13
             Text: ="Submit RFQ"
-            Width: =362
-            X: =956
-            Y: =560
+            Width: =386
+            X: =944
+            Y: =598
       - btnNwClearForm:
           Control: Classic/Button@2.2.0
           Properties:
@@ -507,7 +661,7 @@ Screens:
             Color: =RGBA(56, 96, 178, 1)
             Fill: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
-            Height: =44
+            Height: =32
             HoverColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(240, 244, 251, 1)
             OnSelect: |-
@@ -515,28 +669,31 @@ Screens:
               Set(varNwDueDate, Today() + varNwNormalDays);
               Reset(txtNwDescription); Reset(txtNwQuantity); Reset(txtNwUOM);
               Reset(radNwUrgency); Reset(dteNwDueDate); Reset(tglNwSoleSource); Reset(txtNwJustification);
-              Reset(txtNwRecVendor); Reset(txtNwRecVendorEmail); Reset(txtNwRemarks);
+              Reset(txtNwRec1Name); Reset(txtNwRec1Email); Reset(txtNwRec1Remarks);
+              Reset(txtNwRec2Name); Reset(txtNwRec2Email); Reset(txtNwRec2Remarks);
+              Reset(txtNwRec3Name); Reset(txtNwRec3Email); Reset(txtNwRec3Remarks);
+              Reset(txtNwRemarks);
               ResetForm(frmNwAttach);
               Notify("Form cleared.", NotificationType.Information, 2000)
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(56, 96, 178, 1)
-            Size: =12
+            Size: =11
             Text: ="Clear the form"
-            Width: =362
-            X: =956
-            Y: =636
+            Width: =386
+            X: =944
+            Y: =650
       - lblNwFooter:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =48
-            Size: =10
+            Height: =50
+            Size: =9
             Text: ="The RFQ number is generated from the list ID (RFQ 2026-0042), so two people submitting at the same time can never collide."
-            Width: =362
-            X: =956
-            Y: =692
+            Width: =386
+            X: =944
+            Y: =688
       - dteNwDueDate:
           Control: Classic/DatePicker@2.6.0
           Properties:
@@ -598,8 +755,15 @@ Screens:
                       ActivityLog: Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ raised with " & CountRows(attNwAttachments.Attachments) & " attachment(s)",
                       'RFQ status': { Value: "RFQ pending" },
                       AwaitingAction: { Value: "Buyer" },
-                      'Recommend Vendor': Trim(txtNwRecVendor.Text),
-                      RecommendVendorEmail: Trim(txtNwRecVendorEmail.Text),
+                      'Recommend Vendor': Trim(txtNwRec1Name.Text),
+                      RecommendVendorEmail: Trim(txtNwRec1Email.Text),
+                      RecommendVendorRemarks: Trim(txtNwRec1Remarks.Text),
+                      RecVendor2Name: Trim(txtNwRec2Name.Text),
+                      RecVendor2Email: Trim(txtNwRec2Email.Text),
+                      RecVendor2Remarks: Trim(txtNwRec2Remarks.Text),
+                      RecVendor3Name: Trim(txtNwRec3Name.Text),
+                      RecVendor3Email: Trim(txtNwRec3Email.Text),
+                      RecVendor3Remarks: Trim(txtNwRec3Remarks.Text),
                       Remarks: Trim(txtNwRemarks.Text)
                   }
               );
@@ -622,7 +786,13 @@ Screens:
                         <tr><td><strong>Urgency</strong></td><td>" & varNwUrgency & "</td></tr>
                         <tr><td><strong>Needed by</strong></td><td>" & Text(varNwDueDate, "dd mmm yyyy") & "</td></tr>
                         <tr><td><strong>Sole source</strong></td><td>" & If(tglNwSoleSource.Value, "Yes. " & Trim(txtNwJustification.Text), "No") & "</td></tr>
-                        <tr><td><strong>Suggested vendor</strong></td><td>" & Coalesce(Trim(txtNwRecVendor.Text), "none given") & "</td></tr>
+                        <tr><td><strong>Suggested vendors</strong></td><td>" &
+                        If(IsBlank(Trim(txtNwRec1Name.Text)) && IsBlank(Trim(txtNwRec2Name.Text)) && IsBlank(Trim(txtNwRec3Name.Text)),
+                            "none given",
+                            If(IsBlank(Trim(txtNwRec1Name.Text)), "", "1. " & Trim(txtNwRec1Name.Text) & " (" & Trim(txtNwRec1Email.Text) & ")" & If(IsBlank(Trim(txtNwRec1Remarks.Text)), "", " - " & Trim(txtNwRec1Remarks.Text)) & "<br>") &
+                            If(IsBlank(Trim(txtNwRec2Name.Text)), "", "2. " & Trim(txtNwRec2Name.Text) & " (" & Trim(txtNwRec2Email.Text) & ")" & If(IsBlank(Trim(txtNwRec2Remarks.Text)), "", " - " & Trim(txtNwRec2Remarks.Text)) & "<br>") &
+                            If(IsBlank(Trim(txtNwRec3Name.Text)), "", "3. " & Trim(txtNwRec3Name.Text) & " (" & Trim(txtNwRec3Email.Text) & ")" & If(IsBlank(Trim(txtNwRec3Remarks.Text)), "", " - " & Trim(txtNwRec3Remarks.Text)))
+                        ) & "</td></tr>
                         <tr><td><strong>Attachments</strong></td><td>" & CountRows(attNwAttachments.Attachments) & "</td></tr>
                       </table>
                       <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varNewRFQ.ID & """>Open this RFQ in SharePoint</a></p>",

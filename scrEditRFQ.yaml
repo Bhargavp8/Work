@@ -19,8 +19,9 @@ Screens:
         Reset(dteEdDueDate);
         Reset(tglEdSoleSource);
         Reset(txtEdJustification);
-        Reset(txtEdRecVendor);
-        Reset(txtEdRecVendorEmail);
+        Reset(txtEdRec1Name); Reset(txtEdRec1Email); Reset(txtEdRec1Remarks);
+        Reset(txtEdRec2Name); Reset(txtEdRec2Email); Reset(txtEdRec2Remarks);
+        Reset(txtEdRec3Name); Reset(txtEdRec3Email); Reset(txtEdRec3Remarks);
         Reset(txtEdRemarks)
     Children:
       - recEdTopBar:
@@ -49,7 +50,17 @@ Screens:
                           || radEdUrgency.Selected.Value <> varSelectedRFQ.Urgency.Value
                           || dteEdDueDate.SelectedDate <> varSelectedRFQ.RFQduedate
                           || tglEdSoleSource.Value <> Coalesce(varSelectedRFQ.'Sole Source', false)
-                          || Trim(txtEdRemarks.Text) <> Coalesce(varSelectedRFQ.Remarks, "")),
+                              || Trim(txtEdRemarks.Text) <> Coalesce(varSelectedRFQ.Remarks, "")
+                          || Trim(txtEdJustification.Text) <> Coalesce(varSelectedRFQ.'Business Justification', "")
+                          || Trim(txtEdRec1Name.Text) <> Coalesce(varSelectedRFQ.'Recommend Vendor', "")
+                          || Trim(txtEdRec1Email.Text) <> Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
+                          || Trim(txtEdRec1Remarks.Text) <> Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+                          || Trim(txtEdRec2Name.Text) <> Coalesce(varSelectedRFQ.RecVendor2Name, "")
+                          || Trim(txtEdRec2Email.Text) <> Coalesce(varSelectedRFQ.RecVendor2Email, "")
+                          || Trim(txtEdRec2Remarks.Text) <> Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+                          || Trim(txtEdRec3Name.Text) <> Coalesce(varSelectedRFQ.RecVendor3Name, "")
+                          || Trim(txtEdRec3Email.Text) <> Coalesce(varSelectedRFQ.RecVendor3Email, "")
+                          || Trim(txtEdRec3Remarks.Text) <> Coalesce(varSelectedRFQ.RecVendor3Remarks, "")),
                   Set(varConfirmAction, "leave"),
                   Navigate(scrHome, ScreenTransition.Fade)
               )
@@ -141,12 +152,12 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Description *"
             Width: =300
             X: =48
-            Y: =142
+            Y: =126
       - txtEdDescription:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -154,27 +165,27 @@ Screens:
             Default: =varSelectedRFQ.Description
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =104
+            Height: =76
             HintText: ="Describe the request"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
             Mode: =TextMode.MultiLine
-            Size: =12
+            Size: =11
             Width: =572
             X: =48
-            Y: =166
+            Y: =144
       - lblEdLblQty:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Quantity *"
             Width: =180
             X: =48
-            Y: =288
+            Y: =228
       - txtEdQuantity:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -183,26 +194,26 @@ Screens:
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
             Format: =TextFormat.Number
-            Height: =36
+            Height: =30
             HintText: ="0"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
+            Size: =11
             Width: =180
             X: =48
-            Y: =312
+            Y: =246
       - lblEdLblUOM:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Unit of measure"
             Width: =160
             X: =248
-            Y: =288
+            Y: =228
       - txtEdUOM:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -210,26 +221,26 @@ Screens:
             Default: =varSelectedRFQ.UOM
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =36
+            Height: =30
             HintText: ="e.g. EA"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
+            Size: =11
             Width: =160
             X: =248
-            Y: =312
+            Y: =246
       - lblEdLblUrgency:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Urgency"
             Width: =192
             X: =428
-            Y: =288
+            Y: =228
       - radEdUrgency:
           Control: Classic/Radio@2.3.0
           Properties:
@@ -238,7 +249,7 @@ Screens:
             Default: =varSelectedRFQ.Urgency.Value
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =106
+            Height: =34
             Items: =["Urgent", "Not urgent"]
             Items.Value: =Value
             Layout: =Layout.Horizontal
@@ -247,19 +258,19 @@ Screens:
             Size: =11
             Width: =192
             X: =428
-            Y: =312
+            Y: =246
       - lblEdLblDue:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Required by (due date)"
             Width: =250
             X: =48
-            Y: =370
+            Y: =286
       - dteEdDueDate:
           Control: Classic/DatePicker@2.6.0
           Properties:
@@ -267,25 +278,25 @@ Screens:
             DefaultDate: =varSelectedRFQ.RFQduedate
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =36
+            Height: =30
             IconBackground: =RGBA(56, 96, 178, 1)
             IconFill: =RGBA(255, 255, 255, 1)
-            Size: =12
+            Size: =11
             Width: =250
             X: =48
-            Y: =394
+            Y: =304
       - lblEdLblSole:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Sole source?"
             Width: =180
             X: =318
-            Y: =370
+            Y: =286
       - tglEdSoleSource:
           Control: Classic/Toggle@2.1.0
           Properties:
@@ -296,20 +307,20 @@ Screens:
             TrueFill: =RGBA(56, 96, 178, 1)
             Width: =95
             X: =318
-            Y: =398
+            Y: =306
       - lblEdLblJust:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
+            Height: =16
+            Size: =10
             Text: ="Business justification for sole source *"
             Visible: =tglEdSoleSource.Value
             Width: =400
             X: =48
-            Y: =444
+            Y: =342
       - txtEdJustification:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -317,82 +328,212 @@ Screens:
             Default: =varSelectedRFQ.'Business Justification'
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =64
+            Height: =52
             HintText: ="Why is this the only possible source?"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
             Mode: =TextMode.MultiLine
-            Size: =12
+            Size: =11
             Visible: =tglEdSoleSource.Value
             Width: =572
             X: =48
-            Y: =468
-      - lblEdLblRecVendor:
+            Y: =360
+      - lblEdRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(43, 54, 78, 1)
+            Font: =Font.'Open Sans'
+            Height: =16
+            FontWeight: =FontWeight.Semibold
+            Size: =10
+            Text: ="Vendors you suggest to the buyer (optional, up to 3)"
+            Width: =572
+            X: =48
+            Y: =418
+      - lblEdRecColName:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Recommended vendor (optional)"
-            Width: =280
+            Height: =14
+            Size: =9
+            Text: ="Name"
+            Width: =168
             X: =48
-            Y: =546
-      - txtEdRecVendor:
+            Y: =436
+      - lblEdRecColEmail:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =14
+            Size: =9
+            Text: ="Email"
+            Width: =178
+            X: =222
+            Y: =436
+      - lblEdRecColRemarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =14
+            Size: =9
+            Text: ="Remarks"
+            Width: =214
+            X: =406
+            Y: =436
+      - txtEdRec1Name:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: =varSelectedRFQ.'Recommend Vendor'
+            Default: ==Coalesce(varSelectedRFQ.'Recommend Vendor', "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =36
-            HintText: ="Vendor name"
+            Height: =28
+            HintText: ="Vendor 1 name"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
-            Width: =280
+            Size: =10
+            Width: =168
             X: =48
-            Y: =570
-      - lblEdLblRecEmail:
-          Control: Label@2.5.1
-          Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(96, 106, 126, 1)
-            Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Vendor email (optional)"
-            Width: =280
-            X: =340
-            Y: =546
-      - txtEdRecVendorEmail:
+            Y: =452
+      - txtEdRec1Email:
           Control: Classic/TextInput@2.3.2
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Default: =varSelectedRFQ.RecommendVendorEmail
+            Default: ==Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =36
+            Height: =28
             HintText: ="name@vendor.com"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
-            Size: =12
-            Width: =280
-            X: =340
-            Y: =570
+            Size: =10
+            Width: =178
+            X: =222
+            Y: =452
+      - txtEdRec1Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="Why this vendor"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =214
+            X: =406
+            Y: =452
+      - txtEdRec2Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor2Name, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="Vendor 2 name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =168
+            X: =48
+            Y: =484
+      - txtEdRec2Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor2Email, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =178
+            X: =222
+            Y: =484
+      - txtEdRec2Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="Why this vendor"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =214
+            X: =406
+            Y: =484
+      - txtEdRec3Name:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor3Name, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="Vendor 3 name"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =168
+            X: =48
+            Y: =516
+      - txtEdRec3Email:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor3Email, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="name@vendor.com"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =178
+            X: =222
+            Y: =516
+      - txtEdRec3Remarks:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Default: ==Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
+            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HintText: ="Why this vendor"
+            HoverBorderColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(246, 249, 253, 1)
+            Size: =10
+            Width: =214
+            X: =406
+            Y: =516
       - lblEdLblRemarks:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =24
-            Size: =11
-            Text: ="Remarks"
+            Height: =16
+            Size: =10
+            Text: ="Additional notes to the buyer"
             Width: =280
             X: =48
-            Y: =622
+            Y: =552
       - txtEdRemarks:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -400,15 +541,15 @@ Screens:
             Default: =varSelectedRFQ.Remarks
             DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
             Font: =Font.'Open Sans'
-            Height: =78
-            HintText: ="Any comments for the buyer"
+            Height: =152
+            HintText: ="1.  ECAR#   2.  Project schedule   3.  Catering requirements"
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
             Mode: =TextMode.MultiLine
-            Size: =12
+            Size: =10
             Width: =572
             X: =48
-            Y: =646
+            Y: =570
       - recEdProgressCard:
           Control: Rectangle@2.3.0
           Properties:
@@ -626,6 +767,30 @@ Screens:
                   Notify("The new due date is in the past. Pick today or later.", NotificationType.Error);
                   Set(varSaving, false),
 
+                  (!IsBlank(Trim(txtEdRec1Name.Text)) && IsBlank(Trim(txtEdRec1Email.Text)))
+                      || (!IsBlank(Trim(txtEdRec2Name.Text)) && IsBlank(Trim(txtEdRec2Email.Text)))
+                      || (!IsBlank(Trim(txtEdRec3Name.Text)) && IsBlank(Trim(txtEdRec3Email.Text))),
+                  Notify("Every vendor you suggest needs an email address, otherwise the buyer cannot contact them.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  (!IsBlank(Trim(txtEdRec1Email.Text)) && IsBlank(Trim(txtEdRec1Name.Text)))
+                      || (!IsBlank(Trim(txtEdRec2Email.Text)) && IsBlank(Trim(txtEdRec2Name.Text)))
+                      || (!IsBlank(Trim(txtEdRec3Email.Text)) && IsBlank(Trim(txtEdRec3Name.Text))),
+                  Notify("You have entered a vendor email with no vendor name. Add the name or clear the email.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  (!IsBlank(Trim(txtEdRec1Email.Text)) && !IsMatch(Trim(txtEdRec1Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"))
+                      || (!IsBlank(Trim(txtEdRec2Email.Text)) && !IsMatch(Trim(txtEdRec2Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$"))
+                      || (!IsBlank(Trim(txtEdRec3Email.Text)) && !IsMatch(Trim(txtEdRec3Email.Text), "^\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+(\s*;\s*[^@;\s]+@[^@;\s]+\.[^@;\s]+)*\s*$")),
+                  Notify("Check the email address on the vendors you suggested. Separate multiple addresses with a semicolon.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
+                  (!IsBlank(Trim(txtEdRec1Name.Text)) && Lower(Trim(txtEdRec1Name.Text)) = Lower(Trim(txtEdRec2Name.Text)))
+                      || (!IsBlank(Trim(txtEdRec1Name.Text)) && Lower(Trim(txtEdRec1Name.Text)) = Lower(Trim(txtEdRec3Name.Text)))
+                      || (!IsBlank(Trim(txtEdRec2Name.Text)) && Lower(Trim(txtEdRec2Name.Text)) = Lower(Trim(txtEdRec3Name.Text))),
+                  Notify("You have suggested the same vendor twice. Remove the duplicate.", NotificationType.Error, 6000);
+                  Set(varSaving, false),
+
                   Set(varMaterialChange,
                       Trim(txtEdDescription.Text) <> Coalesce(varSelectedRFQ.Description, "")
                           || Value(txtEdQuantity.Text) <> varSelectedRFQ.Quantity
@@ -649,8 +814,15 @@ Screens:
                           RFQduedate: dteEdDueDate.SelectedDate,
                           'Sole Source': tglEdSoleSource.Value,
                           'Business Justification': If(tglEdSoleSource.Value, Trim(txtEdJustification.Text), Blank()),
-                          'Recommend Vendor': Trim(txtEdRecVendor.Text),
-                          RecommendVendorEmail: Trim(txtEdRecVendorEmail.Text),
+                          'Recommend Vendor': Trim(txtEdRec1Name.Text),
+                          RecommendVendorEmail: Trim(txtEdRec1Email.Text),
+                          RecommendVendorRemarks: Trim(txtEdRec1Remarks.Text),
+                          RecVendor2Name: Trim(txtEdRec2Name.Text),
+                          RecVendor2Email: Trim(txtEdRec2Email.Text),
+                          RecVendor2Remarks: Trim(txtEdRec2Remarks.Text),
+                          RecVendor3Name: Trim(txtEdRec3Name.Text),
+                          RecVendor3Email: Trim(txtEdRec3Email.Text),
+                          RecVendor3Remarks: Trim(txtEdRec3Remarks.Text),
                           Remarks: Trim(txtEdRemarks.Text),
                           ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   requestor edited the RFQ" & If(varMaterialChange, " (specification changed)", "") & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
                       }
@@ -738,8 +910,9 @@ Screens:
               Reset(dteEdDueDate);
               Reset(tglEdSoleSource);
               Reset(txtEdJustification);
-              Reset(txtEdRecVendor);
-              Reset(txtEdRecVendorEmail);
+              Reset(txtEdRec1Name); Reset(txtEdRec1Email); Reset(txtEdRec1Remarks);
+              Reset(txtEdRec2Name); Reset(txtEdRec2Email); Reset(txtEdRec2Remarks);
+              Reset(txtEdRec3Name); Reset(txtEdRec3Email); Reset(txtEdRec3Remarks);
               Reset(txtEdRemarks);
               Notify("Unsaved edits discarded.", NotificationType.Information, 2500)
             PressedColor: =RGBA(255, 255, 255, 1)
