@@ -8,7 +8,7 @@ Screens:
         Set(varShowAlternate, false);
         Set(varSaving, false);
         Refresh(RFQ);
-        ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = varMyMail || 'Requestor Email' = varMyUpn));
+        ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail));
         Reset(txtHmSearch);
         Reset(cboHmStatus);
         Reset(tglHmAwaitingMe);
@@ -65,7 +65,7 @@ Screens:
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
             OnSelect: |-
               =Refresh(RFQ);
-              ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = varMyMail || 'Requestor Email' = varMyUpn));
+              ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail));
               Notify("RFQ list refreshed.", NotificationType.Success, 2000)
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)

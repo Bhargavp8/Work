@@ -229,7 +229,7 @@ Screens:
                   Set(varSaving, false),
 
                   !IsBlank(varAuSelected)
-                      && (Lower(varAuSelected.User.Email) = varMyMail || Lower(varAuSelected.User.Email) = varMyUpn)
+                      && (Lower(varAuSelected.User.Email) = Lower(varMyMail) || Lower(varAuSelected.User.Email) = Lower(varMyUpn))
                       && cboAuRole.Selected.Value <> "Admin",
                   Notify("You cannot downgrade your own administrator access. Ask another administrator to do it.", NotificationType.Error, 6000);
                   Set(varSaving, false),
@@ -423,7 +423,7 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =12
-                  Text: =Coalesce(ThisItem.User.DisplayName, "No name recorded") & If(Lower(ThisItem.User.Email) = varMyMail || Lower(ThisItem.User.Email) = varMyUpn, "  (you)", "")
+                  Text: =Coalesce(ThisItem.User.DisplayName, "No name recorded") & If(Lower(ThisItem.User.Email) = Lower(varMyMail) || Lower(ThisItem.User.Email) = Lower(varMyUpn), "  (you)", "")
                   Width: =240
             - lblAuRowEmail:
                 Control: Label@2.5.1
@@ -523,7 +523,7 @@ Screens:
             HoverFill: =RGBA(168, 0, 0, 1)
             OnSelect: |-
               =If(
-                  (Lower(varAuSelected.User.Email) = varMyMail || Lower(varAuSelected.User.Email) = varMyUpn),
+                  (Lower(varAuSelected.User.Email) = Lower(varMyMail) || Lower(varAuSelected.User.Email) = Lower(varMyUpn)),
                   Notify("You cannot take away your own access. Ask another administrator.", NotificationType.Error, 5000),
 
                   Trim(Lower(Coalesce(varAuSelected.Role, ""))) = "admin" && CountRows(Filter('PWS_SHQ Purchase Requisition SU', Trim(Lower(Role)) = "admin")) <= 1,

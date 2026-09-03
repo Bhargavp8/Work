@@ -86,13 +86,15 @@ Select the screen in the tree, choose the property in the formula bar, paste.
 
 ```powerfx
 // This tenant signs users in with an employee-ID UPN (E40124966@adxuser.com),
-// not a mailbox. Every address the app stores, sends to, or matches against the
-// access list has to be the real mailbox, so resolve both once here.
-Set(varMyUpn, Lower(User().Email));
-Set(varMyMail, Lower(Coalesce(Office365Users.MyProfileV2().mail, User().Email)));
+// not a mailbox. Store both, in their natural case: a delegated SharePoint
+// filter compares case-insensitively server side, but Power Fx "=" evaluated
+// locally does not, so lowering these here would break those filters.
+Set(varMyUpn, User().Email);
+Set(varMyMail, Coalesce(Office365Users.MyProfileV2().mail, User().Email));
 
-// Match on the mailbox, on the sign-in UPN, or on the login name inside the
-// person column's Claims - whichever the row happens to carry.
+// Match the access list on the mailbox, the sign-in UPN, or the login name
+// inside the person column's Claims - whichever that row happens to carry.
+// Lower() sits on both sides here because this comparison runs locally.
 Set(
     varRole,
     Switch(
@@ -101,9 +103,9 @@ Set(
                 Coalesce(
                     LookUp(
                         'PWS_SHQ Purchase Requisition SU',
-                        Lower(ThisRecord.User.Email) = varMyMail
-                            || Lower(ThisRecord.User.Email) = varMyUpn
-                            || varMyUpn in Lower(ThisRecord.User.Claims)
+                        Lower(ThisRecord.User.Email) = Lower(varMyMail)
+                            || Lower(ThisRecord.User.Email) = Lower(varMyUpn)
+                            || Lower(varMyUpn) in Lower(ThisRecord.User.Claims)
                     ).Role,
                     ""
                 )
