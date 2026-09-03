@@ -254,10 +254,7 @@ Screens:
                               JobTitle: "",
                               Picture: ""
                           },
-                          Role: cboAuRole.Selected.Value,
-                          // Sign-in identity in this tenant is an employee-ID UPN, not the
-                          // mailbox. Resolve and store it so role lookup never has to guess.
-                          LoginEmail: Coalesce(Office365Users.UserProfileV2(varAuEmail).userPrincipalName, varAuEmail)
+                          Role: cboAuRole.Selected.Value
                       }
                   );
                   Refresh('PWS_SHQ Purchase Requisition SU');

@@ -85,19 +85,15 @@ Select the screen in the tree, choose the property in the formula bar, paste.
 ### App.OnStart
 
 ```powerfx
-// This tenant signs users in with an employee-ID UPN (E40124966@adxuser.com),
-// not a mailbox, so the sign-in identity and the address people actually email
-// are different strings. Keep both in their natural case: a delegated SharePoint
-// filter compares case-insensitively server side, Power Fx "=" locally does not.
+// Identity, resolved the same way the Purchase Requisition app resolves it
+// against this same list. User().Email here is an employee-ID UPN
+// (E40124966@adxuser.com), not a mailbox, so the person column is matched on
+// MyProfileV2().mail. Kept as a stored record, and compared without Lower() or
+// ThisRecord, because that is the form already proven against this tenant.
+Set(varCurrentUser, Office365Users.MyProfileV2());
+Set(varMyMail, Coalesce(varCurrentUser.mail, User().Email));
 Set(varMyUpn, User().Email);
-Set(varMyMail, Coalesce(Office365Users.MyProfileV2().mail, User().Email));
 
-// Match the access list four ways, cheapest and most reliable first:
-//   1. LoginEmail, a plain text column holding the sign-in UPN. Deterministic,
-//      needs no connector, and is what Manage Access now fills in on every grant.
-//   2/3. the person column's mailbox against either identity.
-//   4. the login name inside the person column's Claims.
-// Lower() on both sides throughout because this comparison runs locally.
 Set(
     varRole,
     Switch(
@@ -106,10 +102,7 @@ Set(
                 Coalesce(
                     LookUp(
                         'PWS_SHQ Purchase Requisition SU',
-                        (!IsBlank(ThisRecord.LoginEmail) && Lower(ThisRecord.LoginEmail) = Lower(varMyUpn))
-                            || Lower(ThisRecord.User.Email) = Lower(varMyMail)
-                            || Lower(ThisRecord.User.Email) = Lower(varMyUpn)
-                            || Lower(varMyUpn) in Lower(Coalesce(ThisRecord.User.Claims, ""))
+                        User.Email = varCurrentUser.mail
                     ).Role,
                     ""
                 )
@@ -121,7 +114,17 @@ Set(
     )
 );
 
-Set(varDeepLinkID, Value(Coalesce(Param("rfq"), "0")));
+// The Purchase Requisition app is handed an RFQ by Title, not by ID, so accept
+// either: a number is an ID, anything else is looked up as a Title.
+Set(
+    varDeepLinkID,
+    If(
+        IsBlank(Param("rfq")), 0,
+        IsNumeric(Param("rfq")), Value(Param("rfq")),
+        Coalesce(LookUp(RFQ, Title = Param("rfq")).ID, 0)
+    )
+);
+
 Set(varSaving, false);
 Set(varConfirmAction, Blank());
 Set(varShowAlternate, false);
