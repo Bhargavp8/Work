@@ -19,7 +19,7 @@ Screens:
             colVendorList,
             ForAll(
                 'SG Vendor Master List' As V,
-                { VendorName: V.field_2, VendorEmail: Coalesce(V.Emailcontact0, "") }
+                { VendorName: V.field_2, VendorEmail: Coalesce(V.'Email contact (Emailcontact0)', "") }
             )
         );
         Set(varNwRec1Name, ""); Set(varNwRec1Email, ""); Set(varNwRec1Manual, false);
@@ -471,7 +471,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboNwRec1.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec1.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec1.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -588,7 +588,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboNwRec2.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec2.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec2.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -705,7 +705,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboNwRec3.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec3.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec3.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );

@@ -19,7 +19,7 @@ Screens:
             colVendorList,
             ForAll(
                 'SG Vendor Master List' As V,
-                { VendorName: V.field_2, VendorEmail: Coalesce(V.Emailcontact0, "") }
+                { VendorName: V.field_2, VendorEmail: Coalesce(V.'Email contact (Emailcontact0)', "") }
             )
         );
         Set(varEdRec1Name, Coalesce(varSelectedRFQ.'Recommend Vendor', ""));
@@ -429,7 +429,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboEdRec1.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec1.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec1.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -495,7 +495,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboEdRec2.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec2.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec2.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -561,7 +561,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboEdRec3.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec3.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboEdRec3.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );

@@ -16,7 +16,7 @@ Screens:
             colVendorList,
             ForAll(
                 'SG Vendor Master List' As V,
-                { VendorName: V.field_2, VendorEmail: Coalesce(V.Emailcontact0, "") }
+                { VendorName: V.field_2, VendorEmail: Coalesce(V.'Email contact (Emailcontact0)', "") }
             )
         );
         Set(varSvV1Name, Coalesce(varChecklist.Vendor1Name, ""));
@@ -1192,7 +1192,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboSvV1.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV1.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV1.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -1229,7 +1229,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboSvV2.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV2.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV2.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -1266,7 +1266,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboSvV3.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV3.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV3.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
@@ -1303,7 +1303,7 @@ Screens:
                       // vendor row straight from SharePoint: a single-item LookUp
                       // returns field content that a bulk read can leave blank.
                       cboSvV4.Selected.VendorEmail,
-                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV4.Selected.VendorName).Emailcontact0,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboSvV4.Selected.VendorName).'Email contact (Emailcontact0)',
                       ""
                   )
               );
