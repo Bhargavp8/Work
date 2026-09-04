@@ -18,8 +18,8 @@ Screens:
         ClearCollect(
             colVendorList,
             ForAll(
-                'SG Vendor Master List',
-                { VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }
+                'SG Vendor Master List' As V,
+                { VendorName: V.field_2, VendorEmail: Coalesce(V.Emailcontact, "") }
             )
         );
         Set(varNwRec1Name, ""); Set(varNwRec1Email, ""); Set(varNwRec1Manual, false);
@@ -464,7 +464,17 @@ Screens:
             InputTextPlaceholder: ="Search the vendor master list"
             Items: =colVendorList
             OnChange: |-
-              =Set(varNwRec1Email, Coalesce(cboNwRec1.Selected.VendorEmail, ""));
+              =Set(
+                  varNwRec1Email,
+                  Coalesce(
+                      // The cached list first. If that came back empty, read the one
+                      // vendor row straight from SharePoint: a single-item LookUp
+                      // returns field content that a bulk read can leave blank.
+                      cboNwRec1.Selected.VendorEmail,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec1.Selected.VendorName).Emailcontact,
+                      ""
+                  )
+              );
               Reset(txtNwRec1Email)
             SearchFields: =["VendorName"]
             SelectMultiple: =false
@@ -571,7 +581,17 @@ Screens:
             InputTextPlaceholder: ="Search the vendor master list"
             Items: =colVendorList
             OnChange: |-
-              =Set(varNwRec2Email, Coalesce(cboNwRec2.Selected.VendorEmail, ""));
+              =Set(
+                  varNwRec2Email,
+                  Coalesce(
+                      // The cached list first. If that came back empty, read the one
+                      // vendor row straight from SharePoint: a single-item LookUp
+                      // returns field content that a bulk read can leave blank.
+                      cboNwRec2.Selected.VendorEmail,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec2.Selected.VendorName).Emailcontact,
+                      ""
+                  )
+              );
               Reset(txtNwRec2Email)
             SearchFields: =["VendorName"]
             SelectMultiple: =false
@@ -678,7 +698,17 @@ Screens:
             InputTextPlaceholder: ="Search the vendor master list"
             Items: =colVendorList
             OnChange: |-
-              =Set(varNwRec3Email, Coalesce(cboNwRec3.Selected.VendorEmail, ""));
+              =Set(
+                  varNwRec3Email,
+                  Coalesce(
+                      // The cached list first. If that came back empty, read the one
+                      // vendor row straight from SharePoint: a single-item LookUp
+                      // returns field content that a bulk read can leave blank.
+                      cboNwRec3.Selected.VendorEmail,
+                      LookUp('SG Vendor Master List' As V, V.field_2 = cboNwRec3.Selected.VendorName).Emailcontact,
+                      ""
+                  )
+              );
               Reset(txtNwRec3Email)
             SearchFields: =["VendorName"]
             SelectMultiple: =false
