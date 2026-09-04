@@ -12,6 +12,9 @@ Screens:
         ClearCollect(colEdDocs, ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value }));
         Set(varConfirmAction, Blank());
         Set(varSaving, false);
+        // Without this the app can serve a cached copy of the master list taken
+        // before Emailcontact was populated, so vendors arrive with no address.
+        Refresh('SG Vendor Master List');
         ClearCollect(
             colVendorList,
             ForAll(

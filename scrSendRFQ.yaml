@@ -9,6 +9,9 @@ Screens:
         // One vendor row can carry several addresses in Emailcontact, written as
         // "john@x.com; pete@y.com". They stay one string all the way to the flow,
         // which puts the whole lot on BCC.
+        // Without this the app can serve a cached copy of the master list taken
+        // before Emailcontact was populated, so vendors arrive with no address.
+        Refresh('SG Vendor Master List');
         ClearCollect(
             colVendorList,
             ForAll(

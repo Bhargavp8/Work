@@ -12,6 +12,9 @@ Screens:
         Set(varNwDueDate, Today() + varNwNormalDays);
         // Same vendor master the buyer sees, so a suggestion arrives with an address
         // already attached instead of the buyer retyping it.
+        // Without this the app can serve a cached copy of the master list taken
+        // before Emailcontact was populated, so vendors arrive with no address.
+        Refresh('SG Vendor Master List');
         ClearCollect(
             colVendorList,
             ForAll(
