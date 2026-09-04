@@ -157,8 +157,8 @@ row limit. Do not "optimise" it back to a bare equality.
 ### `SG Vendor Master List` and `Currency Rate`
 
 The vendor master is read into `colVendorList` as
-`{ VendorName: field_2, VendorEmail: Coalesce(Emailcontact, "") }`. **One vendor
-row may hold several addresses in `Emailcontact`, separated by semicolons**
+`{ VendorName: field_2, VendorEmail: Coalesce(Emailcontact0, "") }`. **One vendor
+row may hold several addresses in `Emailcontact0`, separated by semicolons**
 (`john@x.com; pete@y.com`); the app keeps them as one string all the way to the
 flow, which puts the lot on BCC. `Currency Rate` maps `Title` (currency code) to
 `field_1` (rate to USD) and is used to compare quotes on a common basis.
@@ -573,7 +573,7 @@ a value that only changes at midnight.
 
 ## Conventions
 
-**Vendor addresses are a list, not a value.** `Emailcontact` may hold several
+**Vendor addresses are a list, not a value.** `Emailcontact0` may hold several
 addresses separated by semicolons. The field is stored as typed (minus outer
 whitespace) and passed through to the flow's BCC field intact — Outlook accepts
 `a@x.com; b@y.com` as-is, so there is nothing to normalise. What guarantees the
@@ -639,7 +639,7 @@ scrNewRFQ / scrEditRFQ                  scrSendRFQ                     scrCheckl
 
 **The requestor picks from the same vendor master the buyer uses.** Each slot is a
 searchable picker over `SG Vendor Master List`, and choosing a vendor fills the
-email from `Emailcontact` — so a suggestion arrives with a working address rather
+email from `Emailcontact0` — so a suggestion arrives with a working address rather
 than one the buyer has to retype. A **Not on the list?** toggle per slot swaps the
 picker for a free-text name box, for vendors that are not on the master yet. The
 email box stays editable either way. On the Edit screen the toggle is pre-set from
