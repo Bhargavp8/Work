@@ -8,7 +8,27 @@ Screens:
         Set(varShowAlternate, false);
         Set(varSaving, false);
         Refresh(RFQ);
-        ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail));
+        // Urgency is worked out from the due date each time this loads, so a request
+        // raised weeks ahead still climbs the list as its due date approaches.
+        //   0 overdue | 1 due today | 2 due within 3 days | 3 later | 8 no date | 9 closed
+        ClearCollect(
+            colMyRFQs,
+            AddColumns(
+                AddColumns(
+                    Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail),
+                    DaysLeft, If(IsBlank(RFQduedate), 9999, DateDiff(Today(), RFQduedate, TimeUnit.Days))
+                ),
+                UrgRank,
+                    If(
+                        'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], 9,
+                        IsBlank(RFQduedate), 8,
+                        DaysLeft < 0, 0,
+                        DaysLeft = 0, 1,
+                        DaysLeft <= 3, 2,
+                        3
+                    )
+            )
+        );
         Reset(txtHmSearch);
         Reset(cboHmStatus);
         Reset(tglHmAwaitingMe);
@@ -65,7 +85,24 @@ Screens:
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
             OnSelect: |-
               =Refresh(RFQ);
-              ClearCollect(colMyRFQs, Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail));
+              ClearCollect(
+                  colMyRFQs,
+                  AddColumns(
+                      AddColumns(
+                          Filter(RFQ, 'Requestor Email' = User().Email || 'Requestor Email' = varMyMail),
+                          DaysLeft, If(IsBlank(RFQduedate), 9999, DateDiff(Today(), RFQduedate, TimeUnit.Days))
+                      ),
+                      UrgRank,
+                          If(
+                              'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], 9,
+                              IsBlank(RFQduedate), 8,
+                              DaysLeft < 0, 0,
+                              DaysLeft = 0, 1,
+                              DaysLeft <= 3, 2,
+                              3
+                          )
+                  )
+              );
               Notify("RFQ list refreshed.", NotificationType.Success, 2000)
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
@@ -156,7 +193,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =48
             Size: =11
-            Text: ="PAST DUE DATE      " & CountRows(Filter(colMyRFQs, RFQduedate < Today(), !('RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"])))
+            Text: ="PAST DUE DATE      " & CountRows(Filter(colMyRFQs, UrgRank = 0))
             Width: =216
             X: =752
             Y: =88
@@ -314,6 +351,8 @@ Screens:
                       // requestor to the top. Power Fx Sort is stable, so both hold.
                       "Waiting on me first",
                           Sort(Sort(base, RFQduedate, SortOrder.Ascending), If(AwaitingAction.Value = "Requestor", 0, 1), SortOrder.Ascending),
+                      "Most urgent first",
+                          Sort(Sort(base, RFQduedate, SortOrder.Ascending), UrgRank, SortOrder.Ascending),
                       "Due date, soonest first", Sort(base, RFQduedate, SortOrder.Ascending),
                       "Due date, latest first", Sort(base, RFQduedate, SortOrder.Descending),
                       "Recently updated", Sort(base, Modified, SortOrder.Descending),
@@ -360,10 +399,12 @@ Screens:
                 Properties:
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
-                    =If(
-                        ThisItem.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
-                        ThisItem.RFQduedate < Today(), ColorValue("#A32D2D"),
-                        ThisItem.RFQduedate <= Today() + 2, ColorValue("#854F0B"),
+                    =Switch(
+                        ThisItem.UrgRank,
+                        0, ColorValue("#A32D2D"),
+                        1, ColorValue("#A32D2D"),
+                        2, ColorValue("#854F0B"),
+                        9, RGBA(96, 106, 126, 1),
                         RGBA(43, 54, 78, 1)
                     )
                   Font: =Font.'Open Sans'
@@ -371,7 +412,9 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =Text(ThisItem.RFQduedate, "dd mmm yyyy")
+                  Text: |-
+                    =Text(ThisItem.RFQduedate, "dd mmm yyyy") &
+                    Switch(ThisItem.UrgRank, 0, Char(10) & "OVERDUE", 1, Char(10) & "DUE TODAY", 2, Char(10) & "URGENT", "")
                   Width: =120
                   X: =150
             - lblHmRowStatus:
@@ -665,6 +708,7 @@ Screens:
             Items: |-
               =Table(
                   { Value: "Waiting on me first" },
+                  { Value: "Most urgent first" },
                   { Value: "Due date, soonest first" },
                   { Value: "Due date, latest first" },
                   { Value: "Recently updated" },

@@ -156,7 +156,17 @@ Screens:
             Text: |-
               =PlainText(Coalesce(varSelectedRFQ.Description, "")) & Char(10) & Char(10) &
               "Quantity: " & varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") & Char(10) &
-              "Urgency: " & varSelectedRFQ.Urgency.Value & Char(10) &
+              "Urgency: " & With(
+                  { d: DateDiff(Today(), varSelectedRFQ.RFQduedate, TimeUnit.Days) },
+                  If(
+                      varSelectedRFQ.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], "Closed",
+                      IsBlank(varSelectedRFQ.RFQduedate), "No due date set",
+                      d < 0, "OVERDUE by " & Abs(d) & If(Abs(d) = 1, " day", " days"),
+                      d = 0, "DUE TODAY",
+                      d <= 3, "URGENT, due in " & d & If(d = 1, " day", " days"),
+                      "Due in " & d & " days"
+                  )
+              ) & Char(10) &
               "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & Char(10) &
               "Raised by: " & Coalesce(varSelectedRFQ.RequestorName, varSelectedRFQ.'Created By'.DisplayName, "Unknown") & Char(10) &
               "Contact: " & Coalesce(varSelectedRFQ.'Requestor Email', varSelectedRFQ.'Created By'.Email, "no email on record") & Char(10) & Char(10) &
@@ -1347,7 +1357,7 @@ Screens:
                 </tr>
                 <tr>
                   <td valign=""top"">" & PlainText(Coalesce(Text(varSelectedRFQ.Description), "")) & "</td>
-                  <td valign=""top"">Quantity: " & Text(varSelectedRFQ.Quantity) & " " & Coalesce(Text(varSelectedRFQ.UOM), "") & "<br>Urgency: " & Text(varSelectedRFQ.Urgency.Value) & "<br>" & PlainText(Coalesce(Text(varSelectedRFQ.Remarks), "")) & "</td>
+                  <td valign=""top"">Quantity: " & Text(varSelectedRFQ.Quantity) & " " & Coalesce(Text(varSelectedRFQ.UOM), "") & "<br>Urgency: " & If(DateDiff(Today(), varSelectedRFQ.RFQduedate, TimeUnit.Days) <= 3, "Urgent", "Standard") & "<br>" & PlainText(Coalesce(Text(varSelectedRFQ.Remarks), "")) & "</td>
                 </tr>
               </table>
               <p>Please contact <strong>" & Coalesce(Text(varSelectedRFQ.RequestorName), Text(varSelectedRFQ.'Created By'.DisplayName), "the requestor") & "</strong> (see email) for more details, if you need any other info. Their email address is as per cc-ed.</p>

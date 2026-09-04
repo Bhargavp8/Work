@@ -63,7 +63,6 @@ Screens:
                       && (Trim(txtEdDescription.Text) <> Coalesce(varSelectedRFQ.Description, "")
                           || Trim(txtEdQuantity.Text) <> Text(varSelectedRFQ.Quantity)
                           || Trim(txtEdUOM.Text) <> Coalesce(varSelectedRFQ.UOM, "")
-                          || radEdUrgency.Selected.Value <> varSelectedRFQ.Urgency.Value
                           || dteEdDueDate.SelectedDate <> varSelectedRFQ.RFQduedate
                           || tglEdSoleSource.Value <> Coalesce(varSelectedRFQ.'Sole Source', false)
                               || Trim(txtEdRemarks.Text) <> Coalesce(varSelectedRFQ.Remarks, "")
@@ -253,7 +252,7 @@ Screens:
             Font: =Font.'Open Sans'
             Height: =16
             Size: =10
-            Text: ="Urgency"
+            Text: ="Urgency (from due date)"
             Width: =192
             X: =428
             Y: =210
@@ -262,8 +261,8 @@ Screens:
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
             Color: =RGBA(43, 54, 78, 1)
-            Default: =varSelectedRFQ.Urgency.Value
-            DisplayMode: =If(varCanEdit, DisplayMode.Edit, DisplayMode.View)
+            Default: =If(DateDiff(Today(), dteEdDueDate.SelectedDate, TimeUnit.Days) <= 3, "Urgent", "Not urgent")
+            DisplayMode: =DisplayMode.View
             Font: =Font.'Open Sans'
             Height: =34
             Items: =["Urgent", "Not urgent"]
@@ -738,7 +737,17 @@ Screens:
               ="Currently waiting on: " & Coalesce(varSelectedRFQ.AwaitingAction.Value, "nobody, this RFQ is finished") &
               Char(10) & "Assigned buyer: " & Coalesce(varSelectedRFQ.'Assigned Buyer', "not assigned yet") &
               Char(10) & "Raised: " & Text(varSelectedRFQ.'RFQ Raise Date', "dd mmm yyyy") & "     Last updated: " & Text(varSelectedRFQ.Modified, "dd mmm yyyy hh:mm") &
-              Char(10) & "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & If(varSelectedRFQ.RFQduedate < Today() && varCanEdit, "   (past due)", "")
+              Char(10) & "Due: " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") & "     " & With(
+                  { d: DateDiff(Today(), varSelectedRFQ.RFQduedate, TimeUnit.Days) },
+                  If(
+                      varSelectedRFQ.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], "Closed",
+                      IsBlank(varSelectedRFQ.RFQduedate), "No due date set",
+                      d < 0, "OVERDUE by " & Abs(d) & If(Abs(d) = 1, " day", " days"),
+                      d = 0, "DUE TODAY",
+                      d <= 3, "URGENT, due in " & d & If(d = 1, " day", " days"),
+                      "Due in " & d & " days"
+                  )
+              )
             Width: =674
             X: =668
             Y: =130
@@ -961,7 +970,7 @@ Screens:
                           Description: Trim(txtEdDescription.Text),
                           Quantity: Value(txtEdQuantity.Text),
                           UOM: Trim(txtEdUOM.Text),
-                          Urgency: { Value: radEdUrgency.Selected.Value },
+                          Urgency: { Value: If(DateDiff(Today(), dteEdDueDate.SelectedDate, TimeUnit.Days) <= 3, "Urgent", "Not urgent") },
                           RFQduedate: dteEdDueDate.SelectedDate,
                           'Sole Source': tglEdSoleSource.Value,
                           'Business Justification': If(tglEdSoleSource.Value, Trim(txtEdJustification.Text), Blank()),

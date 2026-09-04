@@ -72,7 +72,17 @@ Screens:
             Text: |-
               =varSelectedRFQ.Description & Char(10) &
               varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
-              "     ·     " & varSelectedRFQ.Urgency.Value &
+              "     ·     " & With(
+                  { d: DateDiff(Today(), varSelectedRFQ.RFQduedate, TimeUnit.Days) },
+                  If(
+                      varSelectedRFQ.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], "Closed",
+                      IsBlank(varSelectedRFQ.RFQduedate), "No due date set",
+                      d < 0, "OVERDUE by " & Abs(d) & If(Abs(d) = 1, " day", " days"),
+                      d = 0, "DUE TODAY",
+                      d <= 3, "URGENT, due in " & d & If(d = 1, " day", " days"),
+                      "Due in " & d & " days"
+                  )
+              ) &
               "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
               "     ·     Buyer: " & Coalesce(varSelectedRFQ.'Assigned Buyer', "not assigned")
             Width: =1318

@@ -99,7 +99,7 @@ that list is a Requestor.
 |---|---|---|
 | `Title` | Text | RFQ number, generated as `RFQ 2026-0042` from the list ID. Unique by construction — the ID alone is unique, so the year is presentation only. RFQs raised before this format change keep their old `RFQ 202608 0006` titles. |
 | `Description`, `Quantity`, `UOM` | Text / Number / Text | Changing any of these after the RFQ has gone out forces a re-quote. |
-| `Urgency` | Choice | `Urgent`, `Not urgent`. Drives the default due date (+3 / +7 days). |
+| `Urgency` | Choice | `Urgent`, `Not urgent`. Written at raise time and kept in step with the due date on save, but **nothing in the app reads it back** — see *Urgency is derived, not stored* below. Retained for SharePoint views and reporting. |
 | `RFQ Raise Date`, `RFQduedate` | Date | |
 | `Sole Source`, `Business Justification` | Yes/No, Text | Justification is required when the toggle is on. |
 | `Requestor Email`, `RequestorName` | Text | Set from `User()` at raise time. **Every email path depends on `Requestor Email`.** |
@@ -561,6 +561,14 @@ anyone. A scheduled flow over `RFQ` where `RFQduedate < today` and
 `AwaitingAction` is not `None` would close the loop, and belongs in Power
 Automate rather than in the app.
 
+### 5. Urgency bands are only as fresh as the last screen load
+
+`UrgRank` is computed when a screen's `OnVisible` runs or the Refresh button is
+pressed, because `Today()` is evaluated at that moment. An app left open
+overnight shows yesterday's bands until the user navigates or refreshes. Making
+it tick live would need a `Timer`, which is not worth the screen-wide recalc for
+a value that only changes at midnight.
+
 ---
 
 ## Conventions
@@ -675,20 +683,65 @@ Both list screens let the user choose the order. The filter runs once inside a
 never re-runs the filter.
 
 Where a sort has a natural tie-breaker, two nested `Sort()` calls are used. Power
-Fx `Sort` is stable, so the inner ordering survives the outer pass: *Urgent
-first, then due date* sorts by due date, then floats the urgent ones up, and
-urgent RFQs stay in due-date order among themselves.
+Fx `Sort` is stable, so the inner ordering survives the outer pass: *Most urgent
+first* sorts by due date, then floats the pressing ones up, and RFQs sharing a
+band stay in due-date order among themselves.
 
 **Home** (`cboHmSort`, default *Waiting on me first*) — Waiting on me first ·
-Due date soonest/latest · Recently updated · RFQ number newest/oldest · Status.
+Most urgent first · Due date soonest/latest · Recently updated · RFQ number
+newest/oldest · Status.
 
-**Buyer Queue** (`cboBqSort`, default *Due date, soonest first*) — Due date
-soonest/latest · Waiting on me first · Urgent first then due date · Overdue
-first · Status · Requestor name · Recently updated · RFQ number newest first.
+**Buyer Queue** (`cboBqSort`, default *Most urgent first*) — Most urgent first ·
+Due date soonest/latest · Waiting on me first · Overdue first · Status ·
+Requestor name · Recently updated · RFQ number newest first.
 
 The two lists differ because the roles do: a requestor cares what is blocked on
-them, a buyer cares what is about to breach a due date. Both defaults match what
-the screen did before the pickers existed, so nobody's habits break.
+them, a buyer cares what is about to breach a due date. Home keeps its old
+default so requestors' habits do not break; the Buyer Queue now opens on *Most
+urgent first*, because triage is the whole point of that screen.
+
+---
+
+## Urgency is derived, not stored
+
+Urgency answers "what should the buyer look at now", so it is recomputed from
+the due date every time a list loads. Nothing reads the stored `Urgency` choice
+column any more.
+
+Both list screens build their collection through a nested `AddColumns` that
+attaches two fields to every row:
+
+| Field | Meaning |
+|---|---|
+| `DaysLeft` | `DateDiff(Today(), RFQduedate, TimeUnit.Days)`; negative once past due, `9999` when no due date is set |
+| `UrgRank` | `0` overdue · `1` due today · `2` due within 3 days · `3` later · `8` no due date · `9` closed or cancelled |
+
+`UrgRank` is a single number, so sorting is `Sort(base, UrgRank)` and the
+overdue count is `CountRows(Filter(col, UrgRank = 0))` — no repeated date
+arithmetic, and one place to change the thresholds.
+
+Three details worth knowing:
+
+- **Closed and cancelled RFQs rank 9**, so finished work never shows as overdue
+  and never floats to the top of a triage sort.
+- **`DateDiff(..., TimeUnit.Days)` is used rather than `RFQduedate < Today()`**
+  so a stray time component on the SharePoint date cannot flip a comparison.
+- **A blank due date ranks 8, not 0.** `Blank() < Today()` is true in Power Fx,
+  so the previous count reported an RFQ with no due date as overdue.
+
+The single-record screens (Checklist, Send RFQ, Award, Edit) have no collection
+to hang columns off, so they inline the same bands through a `With()` that binds
+`d` once.
+
+**The vendor email is deliberately different.** It reports only `Urgent` or
+`Standard`, never `OVERDUE`, because slippage is internal — a vendor being told
+the RFQ they are about to quote is already 9 days late invites the wrong
+conclusions about the buyer. See `scrSendRFQ`, the HTML body.
+
+The stored column is still written on save, and both the New and Edit screens
+now derive that written value from the due date, so it cannot contradict the
+picker. On Edit the urgency radio is `DisplayMode.View` — a read-out of the due
+date rather than an independent control, which is what it had silently become.
 
 To add an option, add a `{ Value: "..." }` row to the control's `Items` **and** a
 matching branch to the `Switch` in the gallery's `Items`. The string must match
