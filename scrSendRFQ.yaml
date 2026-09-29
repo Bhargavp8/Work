@@ -36,9 +36,18 @@ Screens:
         // carried by the real Purview label the requestor applied before uploading,
         // not by a column in this app.
         // Include starts off: a file only goes to the vendors if the buyer ticks it.
+        // FileLink is the file's real SharePoint address (Value only works inside the
+        // app); if it is missing, fall back to the RFQ item page, which lists its files.
         ClearCollect(
             colSvDocs,
-            ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value, Include: false })
+            ForAll(
+                varSelectedRFQ.Attachments As Att,
+                {
+                    FileName: Att.DisplayName,
+                    FileLink: Coalesce(Att.AbsoluteUri, "https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varSelectedRFQ.ID),
+                    Include: false
+                }
+            )
         );
         Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
         Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
