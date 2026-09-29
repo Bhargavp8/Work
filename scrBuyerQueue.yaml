@@ -10,11 +10,32 @@ Screens:
             varBqDenied,
             Notify("Buyer access only. Taking you back to the home screen.", NotificationType.Error, 4000),
             Refresh(RFQ);
-            ClearCollect(colBuyerRFQs, RFQ);
+            // Urgency is worked out from the due date each time this loads, so a request
+            // raised weeks ahead still climbs the list as its due date approaches.
+            //   0 overdue | 1 due today | 2 due within 3 days | 3 later | 8 no date | 9 closed
+            ClearCollect(
+                colBuyerRFQs,
+                AddColumns(
+                    AddColumns(
+                        RFQ,
+                        DaysLeft, If(IsBlank('RFQ  due date'), 9999, DateDiff(Today(), 'RFQ  due date', TimeUnit.Days))
+                    ),
+                    UrgRank,
+                        If(
+                            'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], 9,
+                            IsBlank('RFQ  due date'), 8,
+                            DaysLeft < 0, 0,
+                            DaysLeft = 0, 1,
+                            DaysLeft <= 3, 2,
+                            3
+                        )
+                )
+            );
             Set(varConfirmAction, Blank());
             Set(varSaving, false);
             Reset(txtBqSearch);
-            Reset(tglBqShowClosed)
+            Reset(tglBqShowClosed);
+            Reset(cboBqSort)
         )
     Children:
       - recBqTopBar:
@@ -65,8 +86,9 @@ Screens:
             Size: =11
             Text: |-
               ="Waiting on you: " & CountRows(Filter(colBuyerRFQs, AwaitingAction.Value = "Buyer")) &
-              "     ·     Out with vendors: " & CountRows(Filter(colBuyerRFQs, RFQstatus.Value = "RFQ sent out")) &
-              "     ·     Overdue: " & CountRows(Filter(colBuyerRFQs, RFQduedate < Today(), !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"])))
+              "     ·     Out with vendors: " & CountRows(Filter(colBuyerRFQs, 'RFQ status'.Value = "RFQ sent out")) &
+              "     ·     Due within 3 days: " & CountRows(Filter(colBuyerRFQs, UrgRank = 1 || UrgRank = 2)) &
+              "     ·     Overdue: " & CountRows(Filter(colBuyerRFQs, UrgRank = 0))
             Width: =760
             X: =570
       - txtBqSearch:
@@ -99,11 +121,48 @@ Screens:
           Control: Classic/Toggle@2.1.0
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
+            FalseText: ="No"
             Font: =Font.'Open Sans'
             TrueFill: =RGBA(56, 96, 178, 1)
+            TrueText: ="Yes"
             Width: =96
             X: =700
             Y: =96
+      - cboBqSort:
+          Control: Classic/ComboBox@2.4.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            ChevronBackground: =RGBA(255, 255, 255, 1)
+            ChevronFill: =RGBA(56, 96, 178, 1)
+            ChevronHoverBackground: =RGBA(240, 244, 251, 1)
+            ChevronHoverFill: =RGBA(56, 96, 178, 1)
+            DefaultSelectedItems: |-
+              =Table({ Value: "Recently updated" })
+            DisplayFields: =["Value"]
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverFill: =RGBA(246, 249, 253, 1)
+            InputTextPlaceholder: ="Sort by"
+            Items: |-
+              =Table(
+                  { Value: "Most urgent first" },
+                  { Value: "Due date, soonest first" },
+                  { Value: "Due date, latest first" },
+                  { Value: "Waiting on me first" },
+                  { Value: "Overdue first" },
+                  { Value: "Status" },
+                  { Value: "Requestor name" },
+                  { Value: "Recently updated" },
+                  { Value: "RFQ number, newest first" }
+              )
+            SearchFields: =["Value"]
+            SelectMultiple: =false
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Size: =11
+            Width: =300
+            X: =812
+            Y: =88
       - btnBqRefresh:
           Control: Classic/Button@2.2.0
           Properties:
@@ -116,7 +175,24 @@ Screens:
             HoverFill: =RGBA(240, 244, 251, 1)
             OnSelect: |-
               =Refresh(RFQ);
-              ClearCollect(colBuyerRFQs, RFQ);
+              ClearCollect(
+                  colBuyerRFQs,
+                  AddColumns(
+                      AddColumns(
+                          RFQ,
+                          DaysLeft, If(IsBlank('RFQ  due date'), 9999, DateDiff(Today(), 'RFQ  due date', TimeUnit.Days))
+                      ),
+                      UrgRank,
+                          If(
+                              'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], 9,
+                              IsBlank('RFQ  due date'), 8,
+                              DaysLeft < 0, 0,
+                              DaysLeft = 0, 1,
+                              DaysLeft <= 3, 2,
+                              3
+                          )
+                  )
+              );
               Notify("Queue refreshed.", NotificationType.Success, 2000)
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(56, 96, 178, 1)
@@ -150,6 +226,7 @@ Screens:
       - lblBqH2:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -163,6 +240,7 @@ Screens:
       - lblBqH3:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -183,7 +261,7 @@ Screens:
             PaddingLeft: =10
             Size: =11
             Text: ="AWAITING"
-            Width: =140
+            Width: =86
             X: =484
             Y: =152
       - lblBqH5:
@@ -197,11 +275,12 @@ Screens:
             Size: =11
             Text: ="URGENCY"
             Width: =110
-            X: =624
+            X: =614
             Y: =152
       - lblBqH6:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -219,16 +298,33 @@ Screens:
             BorderColor: =RGBA(214, 221, 233, 1)
             Height: =552
             Items: |-
-              =Sort(
-                  Filter(
-                      colBuyerRFQs,
-                      (IsBlank(txtBqSearch.Text)
-                          || StartsWith(Title, txtBqSearch.Text)
-                          || txtBqSearch.Text in Description),
-                      (tglBqShowClosed.Value || !(RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"]))
-                  ),
-                  RFQduedate,
-                  SortOrder.Ascending
+              =With(
+                  {
+                      base: Filter(
+                          colBuyerRFQs,
+                          (IsBlank(txtBqSearch.Text)
+                              || txtBqSearch.Text in Title
+                              || txtBqSearch.Text in Description),
+                          (tglBqShowClosed.Value || !('RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"]))
+                      )
+                  },
+                  Switch(
+                      Coalesce(cboBqSort.Selected.Value, "Most urgent first"),
+                      "Due date, soonest first", Sort(base, 'RFQ  due date', SortOrder.Ascending),
+                      "Due date, latest first", Sort(base, 'RFQ  due date', SortOrder.Descending),
+                      // Sort is stable, so the inner due-date order survives the outer pass.
+                      "Waiting on me first",
+                          Sort(Sort(base, 'RFQ  due date', SortOrder.Ascending), If(AwaitingAction.Value = "Buyer", 0, 1), SortOrder.Ascending),
+                      "Most urgent first",
+                          Sort(Sort(base, 'RFQ  due date', SortOrder.Ascending), UrgRank, SortOrder.Ascending),
+                      "Overdue first",
+                          Sort(Sort(base, 'RFQ  due date', SortOrder.Ascending), If(UrgRank = 0, 0, 1), SortOrder.Ascending),
+                      "Status", Sort(Sort(base, 'RFQ  due date', SortOrder.Ascending), 'RFQ status'.Value, SortOrder.Ascending),
+                      "Requestor name", Sort(base, Coalesce(RequestorName, 'Created By'.DisplayName, ""), SortOrder.Ascending),
+                      "Recently updated", Sort(base, Modified, SortOrder.Descending),
+                      "RFQ number, newest first", Sort(base, ID, SortOrder.Descending),
+                      Sort(base, 'RFQ  due date', SortOrder.Ascending)
+                  )
               )
             OnSelect: |-
               =Set(varSelectedRFQ, LookUp(RFQ, ID = ThisItem.ID));
@@ -251,7 +347,7 @@ Screens:
                   Fill: |-
                     =If(
                         ThisItem.AwaitingAction.Value = "Buyer", RGBA(255, 191, 0, 1),
-                        ThisItem.RFQstatus.Value = "RFQ sent out", RGBA(24, 95, 165, 1),
+                        ThisItem.'RFQ status'.Value = "RFQ sent out", RGBA(24, 95, 165, 1),
                         RGBA(255, 255, 255, 0)
                     )
                   Height: =46
@@ -273,12 +369,13 @@ Screens:
             - lblBqRowDue:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
                     =If(
-                        ThisItem.RFQstatus.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
-                        ThisItem.RFQduedate < Today(), ColorValue("#A32D2D"),
-                        ThisItem.RFQduedate <= Today() + 2, ColorValue("#854F0B"),
+                        ThisItem.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], RGBA(96, 106, 126, 1),
+                        ThisItem.'RFQ  due date' < Today(), ColorValue("#A32D2D"),
+                        ThisItem.'RFQ  due date' <= Today() + 2, ColorValue("#854F0B"),
                         ColorValue("#3B6D11")
                     )
                   Font: =Font.'Open Sans'
@@ -286,16 +383,17 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =Text(ThisItem.RFQduedate, "dd mmm yyyy")
+                  Text: =Text(ThisItem.'RFQ  due date', "dd mmm yyyy")
                   Width: =130
                   X: =160
             - lblBqRowStatus:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: |-
                     =Switch(
-                        ThisItem.RFQstatus.Value,
+                        ThisItem.'RFQ status'.Value,
                         "RFQ pending", ColorValue("#854F0B"),
                         "RFQ sent out", ColorValue("#185FA5"),
                         "Re-RFQ", ColorValue("#993C1D"),
@@ -309,12 +407,13 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =Switch(ThisItem.RFQstatus.Value, "Re-RFQ", "Re quote requested", ThisItem.RFQstatus.Value)
+                  Text: =Switch(ThisItem.'RFQ status'.Value, "Re-RFQ", "Re quote requested", ThisItem.'RFQ status'.Value)
                   Width: =170
                   X: =290
             - lblBqRowAwaiting:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: =If(ThisItem.AwaitingAction.Value = "Buyer", ColorValue("#854F0B"), RGBA(96, 106, 126, 1))
                   Font: =Font.'Open Sans'
@@ -328,19 +427,38 @@ Screens:
             - lblBqRowUrgency:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
-                  Color: =If(ThisItem.Urgency.Value = "Urgent", ColorValue("#A32D2D"), RGBA(96, 106, 126, 1))
+                  Color: |-
+                    =Switch(
+                        ThisItem.UrgRank,
+                        0, ColorValue("#A32D2D"),
+                        1, ColorValue("#A32D2D"),
+                        2, ColorValue("#854F0B"),
+                        RGBA(96, 106, 126, 1)
+                    )
                   Font: =Font.'Open Sans'
+                  FontWeight: =If(ThisItem.UrgRank <= 1, FontWeight.Semibold, FontWeight.Normal)
                   Height: =46
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =ThisItem.Urgency.Value
+                  Text: |-
+                    =Switch(
+                        ThisItem.UrgRank,
+                        0, "OVERDUE " & Abs(ThisItem.DaysLeft) & "d",
+                        1, "DUE TODAY",
+                        2, "URGENT " & ThisItem.DaysLeft & "d",
+                        8, "No due date",
+                        9, "",
+                        ThisItem.DaysLeft & " days"
+                    )
                   Width: =110
-                  X: =600
+                  X: =584
             - lblBqRowDesc:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: =RGBA(43, 54, 78, 1)
                   Font: =Font.'Open Sans'
@@ -354,6 +472,7 @@ Screens:
             - lblBqRowRequestor:
                 Control: Label@2.5.1
                 Properties:
+                  Align: =Align.Center
                   BorderColor: =RGBA(0, 18, 107, 1)
                   Color: =RGBA(96, 106, 126, 1)
                   Font: =Font.'Open Sans'
@@ -361,7 +480,7 @@ Screens:
                   OnSelect: =Select(Parent)
                   PaddingLeft: =10
                   Size: =11
-                  Text: =Coalesce(ThisItem.RequestorName, ThisItem.Author.DisplayName, "Unknown")
+                  Text: =Coalesce(ThisItem.RequestorName, ThisItem.'Created By'.DisplayName, "Unknown")
                   Width: =160
                   X: =990
             - btnBqRowVendors:
@@ -425,6 +544,7 @@ Screens:
       - lblBqH7:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
