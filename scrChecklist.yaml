@@ -996,9 +996,9 @@ Screens:
                               <p>Open the RFQ app and use <strong>Review buyer recommendation and respond</strong> to accept the award or ask for a different vendor. Nothing is ordered until you accept.</p>
                               <p><a href=""https://apps.high.powerapps.us/play/e/default-7a18110d-ef9b-4274-acef-e62ab0fe28ed/a/f10e37a1-8749-4da3-b215-296067d473b9?tenantId=7a18110d-ef9b-4274-acef-e62ab0fe28ed&hint=0a981de1-457b-499f-97a7-69ba1a42b560&sourcetime=1790640842577" & """>Open on Power Apps</a></p>",
                               varRFQRecord.ID,
-                              // Optional buyer files, "[]" when none. The flow turns each
-                              // entry into an email attachment.
-                              JSON(ForAll(attCkFiles.Attachments, { Name: ThisRecord.Name, ContentBytes: ThisRecord.Value }), JSONFormat.IncludeBinaryData)
+                              // Optional flow inputs go in a record keyed by the input name.
+                              // text_4 = buyer files as JSON, "[]" when none.
+                              { text_4: JSON(ForAll(attCkFiles.Attachments As F, { Name: F.Name, ContentBytes: F.Value }), JSONFormat.IncludeBinaryData) }
                           )
                       )
                   );

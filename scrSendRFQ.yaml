@@ -1983,9 +1983,9 @@ Screens:
                       varMyMail,
                       varRFQRecord.ID,
                       varRFQRecord.Title,
-                      // Only the ticked files. Pipe separated with a pipe at each end so the
-                      // flow can match "|name|" exactly; "||" means attach nothing.
-                      "|" & Concat(Filter(colSvDocs, Include), FileName, "|") & "|"
+                      // Optional flow input text_6: only the ticked files, pipe separated with a
+                      // pipe at each end so the flow can match "|name|" exactly; "||" means none.
+                      { text_6: "|" & Concat(Filter(colSvDocs, Include), FileName, "|") & "|" }
                   );
                   // Status only moves once the mail has actually gone out.
                   Patch(
