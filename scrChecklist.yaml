@@ -32,7 +32,25 @@ Screens:
             Height: =36
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
-            OnSelect: =Navigate(scrBuyerQueue, ScreenTransition.Fade)
+            OnSelect: |-
+              =If(
+                  IsBlank(varChecklist),
+                  false,
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Currency }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Currency }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Currency }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Currency }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          BuyerNotes: txtCkNotes.Text
+                      }
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Notify("Quotes kept as a draft.", NotificationType.Information, 2000)
+              );
+              Navigate(scrBuyerQueue, ScreenTransition.Fade)
             PressedColor: =RGBA(56, 96, 178, 1)
             PressedFill: =RGBA(255, 255, 255, 1)
             Size: =12
@@ -62,7 +80,25 @@ Screens:
             Height: =36
             HoverColor: =RGBA(43, 33, 0, 1)
             HoverFill: =ColorFade(RGBA(255, 191, 0, 1), -15%)
-            OnSelect: =Navigate(scrSendRFQ, ScreenTransition.Fade)
+            OnSelect: |-
+              =If(
+                  IsBlank(varChecklist),
+                  false,
+                  Patch(
+                      RFQ_Checklist,
+                      varChecklist,
+                      {
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Currency }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Currency }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Currency }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Currency }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          BuyerNotes: txtCkNotes.Text
+                      }
+                  );
+                  Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
+                  Notify("Quotes kept as a draft.", NotificationType.Information, 2000)
+              );
+              Navigate(scrSendRFQ, ScreenTransition.Fade)
             PressedColor: =RGBA(255, 191, 0, 1)
             PressedFill: =RGBA(43, 33, 0, 1)
             Size: =12
@@ -93,9 +129,19 @@ Screens:
             Text: |-
               =PlainText(Coalesce(varSelectedRFQ.Description, "")) & Char(10) &
               varSelectedRFQ.Quantity & " " & Coalesce(varSelectedRFQ.UOM, "") &
-              "     ·     Requested by " & varSelectedRFQ.RequestorEmail &
-              "     ·     " & varSelectedRFQ.Urgency.Value &
-              "     ·     Due " & Text(varSelectedRFQ.RFQduedate, "dd mmm yyyy") &
+              "     ·     Requested by " & varSelectedRFQ.'Requestor Email' &
+              "     ·     " & With(
+                  { d: DateDiff(Today(), varSelectedRFQ.'RFQ  due date', TimeUnit.Days) },
+                  If(
+                      varSelectedRFQ.'RFQ status'.Value in ["RFQ closed/completed", "RFQ cancelled"], "Closed",
+                      IsBlank(varSelectedRFQ.'RFQ  due date'), "No due date set",
+                      d < 0, "OVERDUE by " & Abs(d) & If(Abs(d) = 1, " day", " days"),
+                      d = 0, "DUE TODAY",
+                      d <= 3, "URGENT, due in " & d & If(d = 1, " day", " days"),
+                      "Due in " & d & " days"
+                  )
+              ) &
+              "     ·     Due " & Text(varSelectedRFQ.'RFQ  due date', "dd mmm yyyy") &
               "     ·     Sent " & If(IsBlank(varChecklist.RFQSentDate), "not recorded", Text(varChecklist.RFQSentDate, "dd mmm yyyy"))
             Width: =1318
             X: =24
@@ -125,6 +171,7 @@ Screens:
       - lblCkH2:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -137,6 +184,7 @@ Screens:
       - lblCkH3:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -148,6 +196,7 @@ Screens:
       - lblCkH4:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -159,6 +208,7 @@ Screens:
       - lblCkH5:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -171,6 +221,7 @@ Screens:
       - lblCkH6:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -260,10 +311,11 @@ Screens:
       - lblCkV1Usd:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: |-
               =If(
-                  !IsBlank(cboCkV1Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1 = 0),
+                  !IsBlank(cboCkV1Cur.Selected) && (IsBlank(LookUp('Currency Rate', Currency = cboCkV1Cur.Selected.Currency).CurrencyRate) || LookUp('Currency Rate', Currency = cboCkV1Cur.Selected.Currency).CurrencyRate = 0),
                   RGBA(168, 0, 0, 1),
                   RGBA(43, 54, 78, 1)
               )
@@ -272,11 +324,11 @@ Screens:
             Size: =11
             Text: |-
               =With(
-                  { r: LookUp('Currency Rate', Title = cboCkV1Cur.Selected.Title).field_1 },
+                  { r: LookUp('Currency Rate', Currency = cboCkV1Cur.Selected.Currency).CurrencyRate },
                   If(
                       IsBlank(txtCkV1Total.Text) || !IsNumeric(txtCkV1Total.Text), "no total entered yet",
                       IsBlank(cboCkV1Cur.Selected), "pick a currency",
-                      IsBlank(r) || r = 0, "no rate for " & cboCkV1Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV1Cur.Selected.Currency & ". Add it to the Currency Rate list.",
                       Text(Value(txtCkV1Total.Text) * r, "#,##0.00") & " USD"
                   )
               )
@@ -385,10 +437,11 @@ Screens:
       - lblCkV2Usd:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: |-
               =If(
-                  !IsBlank(cboCkV2Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1 = 0),
+                  !IsBlank(cboCkV2Cur.Selected) && (IsBlank(LookUp('Currency Rate', Currency = cboCkV2Cur.Selected.Currency).CurrencyRate) || LookUp('Currency Rate', Currency = cboCkV2Cur.Selected.Currency).CurrencyRate = 0),
                   RGBA(168, 0, 0, 1),
                   RGBA(43, 54, 78, 1)
               )
@@ -397,11 +450,11 @@ Screens:
             Size: =11
             Text: |-
               =With(
-                  { r: LookUp('Currency Rate', Title = cboCkV2Cur.Selected.Title).field_1 },
+                  { r: LookUp('Currency Rate', Currency = cboCkV2Cur.Selected.Currency).CurrencyRate },
                   If(
                       IsBlank(txtCkV2Total.Text) || !IsNumeric(txtCkV2Total.Text), "no total entered yet",
                       IsBlank(cboCkV2Cur.Selected), "pick a currency",
-                      IsBlank(r) || r = 0, "no rate for " & cboCkV2Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV2Cur.Selected.Currency & ". Add it to the Currency Rate list.",
                       Text(Value(txtCkV2Total.Text) * r, "#,##0.00") & " USD"
                   )
               )
@@ -510,10 +563,11 @@ Screens:
       - lblCkV3Usd:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: |-
               =If(
-                  !IsBlank(cboCkV3Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1 = 0),
+                  !IsBlank(cboCkV3Cur.Selected) && (IsBlank(LookUp('Currency Rate', Currency = cboCkV3Cur.Selected.Currency).CurrencyRate) || LookUp('Currency Rate', Currency = cboCkV3Cur.Selected.Currency).CurrencyRate = 0),
                   RGBA(168, 0, 0, 1),
                   RGBA(43, 54, 78, 1)
               )
@@ -522,11 +576,11 @@ Screens:
             Size: =11
             Text: |-
               =With(
-                  { r: LookUp('Currency Rate', Title = cboCkV3Cur.Selected.Title).field_1 },
+                  { r: LookUp('Currency Rate', Currency = cboCkV3Cur.Selected.Currency).CurrencyRate },
                   If(
                       IsBlank(txtCkV3Total.Text) || !IsNumeric(txtCkV3Total.Text), "no total entered yet",
                       IsBlank(cboCkV3Cur.Selected), "pick a currency",
-                      IsBlank(r) || r = 0, "no rate for " & cboCkV3Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV3Cur.Selected.Currency & ". Add it to the Currency Rate list.",
                       Text(Value(txtCkV3Total.Text) * r, "#,##0.00") & " USD"
                   )
               )
@@ -635,10 +689,11 @@ Screens:
       - lblCkV4Usd:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: |-
               =If(
-                  !IsBlank(cboCkV4Cur.Selected) && (IsBlank(LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1) || LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1 = 0),
+                  !IsBlank(cboCkV4Cur.Selected) && (IsBlank(LookUp('Currency Rate', Currency = cboCkV4Cur.Selected.Currency).CurrencyRate) || LookUp('Currency Rate', Currency = cboCkV4Cur.Selected.Currency).CurrencyRate = 0),
                   RGBA(168, 0, 0, 1),
                   RGBA(43, 54, 78, 1)
               )
@@ -647,11 +702,11 @@ Screens:
             Size: =11
             Text: |-
               =With(
-                  { r: LookUp('Currency Rate', Title = cboCkV4Cur.Selected.Title).field_1 },
+                  { r: LookUp('Currency Rate', Currency = cboCkV4Cur.Selected.Currency).CurrencyRate },
                   If(
                       IsBlank(txtCkV4Total.Text) || !IsNumeric(txtCkV4Total.Text), "no total entered yet",
                       IsBlank(cboCkV4Cur.Selected), "pick a currency",
-                      IsBlank(r) || r = 0, "no rate for " & cboCkV4Cur.Selected.Title & ". Add it to the Currency Rate list.",
+                      IsBlank(r) || r = 0, "no rate for " & cboCkV4Cur.Selected.Currency & ". Add it to the Currency Rate list.",
                       Text(Value(txtCkV4Total.Text) * r, "#,##0.00") & " USD"
                   )
               )
@@ -691,10 +746,10 @@ Screens:
             OnSelect: |-
               =ClearCollect(
                   colCompare,
-                  { Vendor: "Vendor 1", VName: varChecklist.Vendor1Name, Cur: If(IsBlank(cboCkV1Cur.Selected), "", cboCkV1Cur.Selected.Title), Raw: If(IsBlank(txtCkV1Total.Text) || !IsNumeric(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)) },
-                  { Vendor: "Vendor 2", VName: varChecklist.Vendor2Name, Cur: If(IsBlank(cboCkV2Cur.Selected), "", cboCkV2Cur.Selected.Title), Raw: If(IsBlank(txtCkV2Total.Text) || !IsNumeric(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)) },
-                  { Vendor: "Vendor 3", VName: varChecklist.Vendor3Name, Cur: If(IsBlank(cboCkV3Cur.Selected), "", cboCkV3Cur.Selected.Title), Raw: If(IsBlank(txtCkV3Total.Text) || !IsNumeric(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)) },
-                  { Vendor: "Vendor 4", VName: varChecklist.Vendor4Name, Cur: If(IsBlank(cboCkV4Cur.Selected), "", cboCkV4Cur.Selected.Title), Raw: If(IsBlank(txtCkV4Total.Text) || !IsNumeric(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)) }
+                  { Vendor: "Vendor 1", VName: varChecklist.Vendor1Name, Cur: If(IsBlank(cboCkV1Cur.Selected), "", cboCkV1Cur.Selected.Currency), Raw: If(IsBlank(txtCkV1Total.Text) || !IsNumeric(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)) },
+                  { Vendor: "Vendor 2", VName: varChecklist.Vendor2Name, Cur: If(IsBlank(cboCkV2Cur.Selected), "", cboCkV2Cur.Selected.Currency), Raw: If(IsBlank(txtCkV2Total.Text) || !IsNumeric(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)) },
+                  { Vendor: "Vendor 3", VName: varChecklist.Vendor3Name, Cur: If(IsBlank(cboCkV3Cur.Selected), "", cboCkV3Cur.Selected.Currency), Raw: If(IsBlank(txtCkV3Total.Text) || !IsNumeric(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)) },
+                  { Vendor: "Vendor 4", VName: varChecklist.Vendor4Name, Cur: If(IsBlank(cboCkV4Cur.Selected), "", cboCkV4Cur.Selected.Currency), Raw: If(IsBlank(txtCkV4Total.Text) || !IsNumeric(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)) }
               );
               ClearCollect(
                   colCompareRated,
@@ -704,7 +759,7 @@ Screens:
                           Vendor: Vendor,
                           Cur: Cur,
                           Raw: Raw,
-                          Rate: LookUp('Currency Rate', Title = Cur).field_1
+                          Rate: LookUp('Currency Rate', Currency = Cur).CurrencyRate
                       }
                   )
               );
@@ -775,7 +830,7 @@ Screens:
             BorderColor: =RGBA(214, 221, 233, 1)
             Default: =PlainText(Coalesce(varChecklist.BuyerNotes, ""))
             Font: =Font.'Open Sans'
-            Height: =120
+            Height: =62
             HintText: ="Why this vendor, price, lead time, quality, existing agreement..."
             HoverBorderColor: =RGBA(56, 96, 178, 1)
             HoverFill: =RGBA(246, 249, 253, 1)
@@ -804,15 +859,15 @@ Screens:
                   RFQ_Checklist,
                   varChecklist,
                   {
-                      Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
-                      Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
-                      Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
-                      Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                      Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Currency }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                      Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Currency }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                      Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Currency }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                      Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Currency }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
 
-                      Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
+                      'Vendor1Status ': If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
                       Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),
-                      Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
-                      Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
+                      'Vendor3Status ': If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
+                      'Vendor4Status ': If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
                       AwardVendor: If(IsBlank(cboCkAward.Selected), Blank(), { Value: cboCkAward.Selected.Slot }),
                       BuyerNotes: txtCkNotes.Text
                   }
@@ -849,25 +904,58 @@ Screens:
                   IsBlank(Trim(txtCkNotes.Text)),
                   Notify("Add a justification, the requestor sees this when deciding.", NotificationType.Error),
 
+                  // The requestor cannot accept an award with no price: scrAwardConfirm
+                  // refuses it. Catch that here rather than sending them a dead end.
+                  IsBlank(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", txtCkV1Total.Text,
+                          "Vendor 2", txtCkV2Total.Text,
+                          "Vendor 3", txtCkV3Total.Text,
+                          "Vendor 4", txtCkV4Total.Text
+                      )
+                  ) || Value(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", txtCkV1Total.Text,
+                          "Vendor 2", txtCkV2Total.Text,
+                          "Vendor 3", txtCkV3Total.Text,
+                          "Vendor 4", txtCkV4Total.Text
+                      )
+                  ) <= 0,
+                  Notify("Enter a total price for " & cboCkAward.Selected.VendorName & " before recommending them. The requestor cannot accept an award with no price.", NotificationType.Error, 7000),
+
+                  IsBlank(
+                      Switch(
+                          cboCkAward.Selected.Slot,
+                          "Vendor 1", cboCkV1Cur.Selected.Currency,
+                          "Vendor 2", cboCkV2Cur.Selected.Currency,
+                          "Vendor 3", cboCkV3Cur.Selected.Currency,
+                          "Vendor 4", cboCkV4Cur.Selected.Currency
+                      )
+                  ),
+                  Notify("Pick the currency for " & cboCkAward.Selected.VendorName & " before recommending them.", NotificationType.Error, 6000),
+
                   Set(varSaving, true);
                   Patch(
                       RFQ_Checklist,
                       varChecklist,
                       {
-                          Vendor1Currency: { Value: cboCkV1Cur.Selected.Title }, Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
-                          Vendor2Currency: { Value: cboCkV2Cur.Selected.Title }, Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
-                          Vendor3Currency: { Value: cboCkV3Cur.Selected.Title }, Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
-                          Vendor4Currency: { Value: cboCkV4Cur.Selected.Title }, Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
+                          Vendor1Currency: If(IsBlank(cboCkV1Cur.Selected), Blank(), { Value: cboCkV1Cur.Selected.Currency }), Vendor1UnitPrice: If(IsBlank(txtCkV1Unit.Text), Blank(), Value(txtCkV1Unit.Text)), Vendor1TotalPrice: If(IsBlank(txtCkV1Total.Text), Blank(), Value(txtCkV1Total.Text)), Vendor1LeadTime: If(IsBlank(txtCkV1Lead.Text), Blank(), Value(txtCkV1Lead.Text)),
+                          Vendor2Currency: If(IsBlank(cboCkV2Cur.Selected), Blank(), { Value: cboCkV2Cur.Selected.Currency }), Vendor2UnitPrice: If(IsBlank(txtCkV2Unit.Text), Blank(), Value(txtCkV2Unit.Text)), Vendor2TotalPrice: If(IsBlank(txtCkV2Total.Text), Blank(), Value(txtCkV2Total.Text)), Vendor2LeadTime: If(IsBlank(txtCkV2Lead.Text), Blank(), Value(txtCkV2Lead.Text)),
+                          Vendor3Currency: If(IsBlank(cboCkV3Cur.Selected), Blank(), { Value: cboCkV3Cur.Selected.Currency }), Vendor3UnitPrice: If(IsBlank(txtCkV3Unit.Text), Blank(), Value(txtCkV3Unit.Text)), Vendor3TotalPrice: If(IsBlank(txtCkV3Total.Text), Blank(), Value(txtCkV3Total.Text)), Vendor3LeadTime: If(IsBlank(txtCkV3Lead.Text), Blank(), Value(txtCkV3Lead.Text)),
+                          Vendor4Currency: If(IsBlank(cboCkV4Cur.Selected), Blank(), { Value: cboCkV4Cur.Selected.Currency }), Vendor4UnitPrice: If(IsBlank(txtCkV4Unit.Text), Blank(), Value(txtCkV4Unit.Text)), Vendor4TotalPrice: If(IsBlank(txtCkV4Total.Text), Blank(), Value(txtCkV4Total.Text)), Vendor4LeadTime: If(IsBlank(txtCkV4Lead.Text), Blank(), Value(txtCkV4Lead.Text)),
 
-                          Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
+                          'Vendor1Status ': If(IsBlank(varChecklist.Vendor1Name), Blank(), If(IsBlank(cboCkV1Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV1Resp.Selected.Value })),
                           Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), If(IsBlank(cboCkV2Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV2Resp.Selected.Value })),
-                          Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
-                          Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
+                          'Vendor3Status ': If(IsBlank(varChecklist.Vendor3Name), Blank(), If(IsBlank(cboCkV3Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV3Resp.Selected.Value })),
+                          'Vendor4Status ': If(IsBlank(varChecklist.Vendor4Name), Blank(), If(IsBlank(cboCkV4Resp.Selected), { Value: "Awaiting reply" }, { Value: cboCkV4Resp.Selected.Value })),
                           AwardVendor: { Value: cboCkAward.Selected.Slot },
                           BuyerNotes: Trim(txtCkNotes.Text)
                       }
                   );
                   Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+                  Set(varCkRequestor, Coalesce(varRFQRecord.'Requestor Email', varRFQRecord.'Created By'.Email, ""));
                   If(
                       IsBlank(varRFQRecord),
                       Notify("This RFQ no longer exists. Somebody may have deleted it. The quotes were not sent.", NotificationType.Error, 6000),
@@ -875,15 +963,38 @@ Screens:
                           RFQ,
                           varRFQRecord,
                           {
-                              RFQstatus: { Value: "RFQ pending" },
+                              'RFQ status': { Value: "RFQ pending" },
                               AwaitingAction: { Value: "Requestor" },
-                              ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                           }
+                      );
+                      // The RFQ is now waiting on the requestor. Tell them, otherwise the
+                      // handover is invisible until they next open the app.
+                      If(
+                          IsBlank(varCkRequestor),
+                          Notify("Saved, but this RFQ has no requestor email address so nobody could be emailed.", NotificationType.Warning, 8000),
+
+                          SendRFQNotification.Run(
+                              varCkRequestor,
+                              varMyMail,
+                              "Action needed: quote recommendation for " & varRFQRecord.Title,
+                              "<p>The buyer has finished sourcing <strong>" & varRFQRecord.Title & "</strong> and needs your decision.</p>
+                              <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                                <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varRFQRecord.Description, "")) & "</td></tr>
+                                <tr><td><strong>Quantity</strong></td><td>" & varRFQRecord.Quantity & " " & Coalesce(varRFQRecord.UOM, "") & "</td></tr>
+                                <tr><td><strong>Recommended vendor</strong></td><td>" & cboCkAward.Selected.VendorName & "</td></tr>
+                                <tr><td><strong>Buyer justification</strong></td><td>" & Trim(txtCkNotes.Text) & "</td></tr>
+                                <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
+                              </table>
+                              <p>Open the RFQ app and use <strong>Review buyer recommendation and respond</strong> to accept the award or ask for a different vendor. Nothing is ordered until you accept.</p>
+                              <p><a href=""https://apps.high.powerapps.us/play/e/default-7a18110d-ef9b-4274-acef-e62ab0fe28ed/a/f10e37a1-8749-4da3-b215-296067d473b9?tenantId=7a18110d-ef9b-4274-acef-e62ab0fe28ed&hint=0a981de1-457b-499f-97a7-69ba1a42b560&sourcetime=1790640842577" & """>Open on Power Apps</a></p>",
+                              varRFQRecord.ID
+                          )
                       )
                   );
                   Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
                   Set(varSaving, false);
-                  Notify("Recommendation sent to the requestor.", NotificationType.Success, 3000);
+                  Notify("Recommendation emailed to the requestor.", NotificationType.Success, 3000);
                   Navigate(scrBuyerQueue, ScreenTransition.Fade)
               )
             PressedColor: =RGBA(56, 96, 178, 1)
@@ -893,21 +1004,198 @@ Screens:
             Width: =298
             X: =1044
             Y: =564
+      - recCkRecCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =108
+            Width: =1000
+            X: =24
+            Y: =632
+      - recCkRecHead:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(11, 33, 84, 1)
+            Height: =26
+            Width: =1000
+            X: =24
+            Y: =632
+      - lblCkRecHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =26
+            PaddingLeft: =8
+            Size: =9
+            Text: ="What the requestor suggested   ·   read only, change the vendor list under Add or remove vendors"
+            Width: =1000
+            X: =24
+            Y: =632
+      - lblCkRecEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(150, 158, 172, 1)
+            Font: =Font.'Open Sans'
+            PaddingLeft: =8
+            Size: =10
+            Text: ="The requestor did not suggest any vendors."
+            Visible: =!(!IsBlank(varSelectedRFQ.'Recommend Vendor') || !IsBlank(varSelectedRFQ.RecVendor2Name) || !IsBlank(varSelectedRFQ.RecVendor3Name))
+            Width: =1000
+            X: =24
+            Y: =664
+      - lblCkRec1Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.'Recommend Vendor', "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =200
+            X: =32
+            Y: =662
+      - lblCkRec1Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorEmail, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =240
+            X: =240
+            Y: =662
+      - lblCkRec1Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecommendVendorRemarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
+            Width: =528
+            X: =488
+            Y: =662
+      - lblCkRec2Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =200
+            X: =32
+            Y: =688
+      - lblCkRec2Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =240
+            X: =240
+            Y: =688
+      - lblCkRec2Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor2Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
+            Width: =528
+            X: =488
+            Y: =688
+      - lblCkRec3Name:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Name, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =200
+            X: =32
+            Y: =714
+      - lblCkRec3Email:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Email, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =240
+            X: =240
+            Y: =714
+      - lblCkRec3Remarks:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =24
+            PaddingLeft: =8
+            Size: =9
+            Text: =Coalesce(varSelectedRFQ.RecVendor3Remarks, "")
+            Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
+            Width: =528
+            X: =488
+            Y: =714
       - lblCkFooter:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =80
-            Size: =10
-            Text: ="Nothing here is final. Save a draft as often as you like, quotes reload exactly as you left them next time you open this RFQ. 'Undo row' restores a single vendor's figures to the last saved values. If the vendor list itself is wrong, use 'Add or remove vendors' at the top; existing quotes for vendors you keep are preserved."
-            Width: =1000
-            X: =24
-            Y: =640
+            Height: =104
+            Size: =9
+            Text: ="Nothing here is final. Save a draft as often as you like. Undo row restores one vendor's figures. To change the vendors themselves use Add or remove vendors, quotes for vendors you keep are preserved."
+            Width: =298
+            X: =1044
+            Y: =636
       - lblCkHResp:
           Control: Label@2.5.1
           Properties:
+            Align: =Align.Center
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(255, 255, 255, 1)
             Font: =Font.'Open Sans'
@@ -944,10 +1232,10 @@ Screens:
                       RFQ_Checklist,
                       varChecklist,
                       {
-                          Vendor1Status: If(IsBlank(varChecklist.Vendor1Name), Blank(), { Value: "No response" }),
+                          'Vendor1Status ': If(IsBlank(varChecklist.Vendor1Name), Blank(), { Value: "No response" }),
                           Vendor2Status: If(IsBlank(varChecklist.Vendor2Name), Blank(), { Value: "No response" }),
-                          Vendor3Status: If(IsBlank(varChecklist.Vendor3Name), Blank(), { Value: "No response" }),
-                          Vendor4Status: If(IsBlank(varChecklist.Vendor4Name), Blank(), { Value: "No response" }),
+                          'Vendor3Status ': If(IsBlank(varChecklist.Vendor3Name), Blank(), { Value: "No response" }),
+                          'Vendor4Status ': If(IsBlank(varChecklist.Vendor4Name), Blank(), { Value: "No response" }),
                           BuyerNotes: Trim(txtCkNotes.Text)
                       }
                   );
@@ -955,15 +1243,37 @@ Screens:
                       RFQ,
                       varRFQRecord,
                       {
-                          RFQstatus: { Value: "RFQ pending" },
+                          'RFQ status': { Value: "RFQ pending" },
                           AwaitingAction: { Value: "Buyer" },
-                          ActivityLog: Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   no usable quotes received, vendor list needs rework" & Char(10) & Coalesce(varRFQRecord.ActivityLog, ""), 30000)
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   no usable quotes received, vendor list needs rework" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
+                  );
+                  // Keep the requestor informed. Their due date is at risk and they have
+                  // heard nothing since the RFQ went out to vendors.
+                  Set(varCkRequestor, Coalesce(varRFQRecord.'Requestor Email', varRFQRecord.'Created By'.Email, ""));
+                  If(
+                      !IsBlank(varCkRequestor),
+                      SendRFQNotification.Run(
+                          varCkRequestor,
+                          varMyMail,
+                          "Update on " & varRFQRecord.Title & ": no usable quotes, re-sourcing",
+                          "<p>No usable quotes came back from the vendors approached for <strong>" & varRFQRecord.Title & "</strong>.</p>
+                          <p>The buyer is now approaching a different set of vendors. There is nothing for you to do right now, and this RFQ has <em>not</em> been cancelled.</p>
+                          <table border=""1"" cellpadding=""8"" cellspacing=""0"" style=""border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:13px;"">
+                            <tr><td><strong>Item</strong></td><td>" & PlainText(Coalesce(varRFQRecord.Description, "")) & "</td></tr>
+                            <tr><td><strong>Originally needed by</strong></td><td>" & Text(varRFQRecord.'RFQ  due date', "dd mmm yyyy") & "</td></tr>
+                            <tr><td><strong>Buyer note</strong></td><td>" & Coalesce(Trim(txtCkNotes.Text), "none") & "</td></tr>
+                            <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
+                          </table>
+                          <p>If your due date can no longer be met, contact the buyer directly.</p>
+                          <p><a href=""https://rtxusers.sharepoint.us/sites/PWS_SHQ-PW/Lists/RFQ/DispForm.aspx?ID=" & varRFQRecord.ID & """>Open this RFQ in SharePoint</a></p>",
+                          varRFQRecord.ID
+                      )
                   );
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varSelectedRFQ.ID));
                   Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
                   Set(varSaving, false);
-                  Notify("Logged. All four slots are marked as no response and the RFQ stays with you. Open Add or remove vendors to try a different vendor list.", NotificationType.Warning, 7000);
+                  Notify("Logged and the requestor has been emailed. All four slots are marked as no response and the RFQ stays with you. Open Add or remove vendors to try a different vendor list.", NotificationType.Warning, 7000);
                   Navigate(scrSendRFQ, ScreenTransition.Fade)
               )
             PressedColor: =RGBA(255, 250, 235, 1)
@@ -981,13 +1291,13 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor1Status), Value = Coalesce(varChecklist.Vendor1Status.Value, "Awaiting reply"))
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.'Vendor1Status '), Value = Coalesce(varChecklist.'Vendor1Status '.Value, "Awaiting reply"))
             DisplayFields: =["Value"]
             Font: =Font.'Open Sans'
             Height: =30
             HoverFill: =RGBA(246, 249, 253, 1)
             InputTextPlaceholder: ="Awaiting reply"
-            Items: =Choices(RFQ_Checklist.Vendor1Status)
+            Items: =Choices(RFQ_Checklist.'Vendor1Status ')
             SearchFields: =["Value"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
@@ -1029,13 +1339,13 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor3Status), Value = Coalesce(varChecklist.Vendor3Status.Value, "Awaiting reply"))
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.'Vendor3Status '), Value = Coalesce(varChecklist.'Vendor3Status '.Value, "Awaiting reply"))
             DisplayFields: =["Value"]
             Font: =Font.'Open Sans'
             Height: =30
             HoverFill: =RGBA(246, 249, 253, 1)
             InputTextPlaceholder: ="Awaiting reply"
-            Items: =Choices(RFQ_Checklist.Vendor3Status)
+            Items: =Choices(RFQ_Checklist.'Vendor3Status ')
             SearchFields: =["Value"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
@@ -1053,13 +1363,13 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.Vendor4Status), Value = Coalesce(varChecklist.Vendor4Status.Value, "Awaiting reply"))
+            DefaultSelectedItems: =Filter(Choices(RFQ_Checklist.'Vendor4Status '), Value = Coalesce(varChecklist.'Vendor4Status '.Value, "Awaiting reply"))
             DisplayFields: =["Value"]
             Font: =Font.'Open Sans'
             Height: =30
             HoverFill: =RGBA(246, 249, 253, 1)
             InputTextPlaceholder: ="Awaiting reply"
-            Items: =Choices(RFQ_Checklist.Vendor4Status)
+            Items: =Choices(RFQ_Checklist.'Vendor4Status ')
             SearchFields: =["Value"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
@@ -1077,7 +1387,7 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor1Currency.Value)
+            DefaultSelectedItems: =LookUp('Currency Rate', Currency = varChecklist.Vendor1Currency.Value)
             DisplayFields: =["Title"]
             Font: =Font.'Open Sans'
             Height: =30
@@ -1101,7 +1411,7 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor2Currency.Value)
+            DefaultSelectedItems: =LookUp('Currency Rate', Currency = varChecklist.Vendor2Currency.Value)
             DisplayFields: =["Title"]
             Font: =Font.'Open Sans'
             Height: =30
@@ -1125,7 +1435,7 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor3Currency.Value)
+            DefaultSelectedItems: =LookUp('Currency Rate', Currency = varChecklist.Vendor3Currency.Value)
             DisplayFields: =["Title"]
             Font: =Font.'Open Sans'
             Height: =30
@@ -1149,7 +1459,7 @@ Screens:
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
             ChevronHoverFill: =RGBA(56, 96, 178, 1)
-            DefaultSelectedItems: =LookUp('Currency Rate', Title = varChecklist.Vendor4Currency.Value)
+            DefaultSelectedItems: =LookUp('Currency Rate', Currency = varChecklist.Vendor4Currency.Value)
             DisplayFields: =["Title"]
             Font: =Font.'Open Sans'
             Height: =30
@@ -1197,7 +1507,7 @@ Screens:
                   ),
                   !IsBlank(VendorName)
               )
-            SearchFields: =["VendorName"]
+            SearchFields: =["Slot"]
             SelectMultiple: =false
             SelectionColor: =RGBA(255, 255, 255, 1)
             SelectionFill: =RGBA(56, 96, 178, 1)
