@@ -586,12 +586,13 @@ Screens:
                 Control: Label@2.5.1
                 Properties:
                   BorderColor: =RGBA(0, 18, 107, 1)
-                  Color: =RGBA(96, 106, 126, 1)
+                  Color: =RGBA(59, 109, 17, 1)
                   Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
                   Height: =24
                   OnSelect: =Select(Parent)
                   Size: =10
-                  Text: ="Review buyer recommendation  •  due " & Text(ThisItem.'RFQ  due date', "dd mmm")
+                  Text: ="★ Review buyer recommendation  •  due " & Text(ThisItem.'RFQ  due date', "dd mmm")
                   Width: =260
                   X: =22
                   Y: =32

@@ -13,7 +13,8 @@ Screens:
         Reset(cboCkV3Cur); Reset(txtCkV3Unit); Reset(txtCkV3Total); Reset(txtCkV3Lead);
         Reset(cboCkV4Cur); Reset(txtCkV4Unit); Reset(txtCkV4Total); Reset(txtCkV4Lead);
         Reset(cboCkV1Resp); Reset(cboCkV2Resp); Reset(cboCkV3Resp); Reset(cboCkV4Resp);
-        Reset(cboCkAward); Reset(txtCkNotes)
+        Reset(cboCkAward); Reset(txtCkNotes);
+        ResetForm(frmCkAttach)
     Children:
       - recCkTopBar:
           Control: Rectangle@2.3.0
@@ -234,9 +235,9 @@ Screens:
       - recCkRow1:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =If(varCheapestVendor = "Vendor 1", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            BorderColor: =If(cboCkAward.Selected.Slot = "Vendor 1", RGBA(255, 191, 0, 1), varCheapestVendor = "Vendor 1", RGBA(59, 109, 17, 1), RGBA(214, 221, 233, 1))
+            BorderThickness: =If(cboCkAward.Selected.Slot = "Vendor 1" || varCheapestVendor = "Vendor 1", 2, 1)
+            Fill: =If(cboCkAward.Selected.Slot = "Vendor 1", RGBA(255, 246, 214, 1), varCheapestVendor = "Vendor 1", RGBA(226, 242, 218, 1), RGBA(255, 255, 255, 1))
             Height: =48
             Width: =1318
             X: =24
@@ -245,13 +246,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(24, 34, 56, 1)
+            Color: =If(varCheapestVendor = "Vendor 1" && cboCkAward.Selected.Slot <> "Vendor 1", RGBA(59, 109, 17, 1), RGBA(24, 34, 56, 1))
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =Coalesce(varChecklist.Vendor1Name, ",") & If(varCheapestVendor = "Vendor 1", "   (lowest)", "")
+            Text: =Coalesce(varChecklist.Vendor1Name, ",") & If(varCheapestVendor = "Vendor 1", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 1", "   ★ recommended", "")
             Width: =232
             X: =24
             Y: =208
@@ -358,9 +359,9 @@ Screens:
       - recCkRow2:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =If(varCheapestVendor = "Vendor 2", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            BorderColor: =If(cboCkAward.Selected.Slot = "Vendor 2", RGBA(255, 191, 0, 1), varCheapestVendor = "Vendor 2", RGBA(59, 109, 17, 1), RGBA(214, 221, 233, 1))
+            BorderThickness: =If(cboCkAward.Selected.Slot = "Vendor 2" || varCheapestVendor = "Vendor 2", 2, 1)
+            Fill: =If(cboCkAward.Selected.Slot = "Vendor 2", RGBA(255, 246, 214, 1), varCheapestVendor = "Vendor 2", RGBA(226, 242, 218, 1), RGBA(255, 255, 255, 1))
             Height: =48
             Visible: =!IsBlank(varChecklist.Vendor2Name)
             Width: =1318
@@ -370,13 +371,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(24, 34, 56, 1)
+            Color: =If(varCheapestVendor = "Vendor 2" && cboCkAward.Selected.Slot <> "Vendor 2", RGBA(59, 109, 17, 1), RGBA(24, 34, 56, 1))
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor2Name & If(varCheapestVendor = "Vendor 2", "   (lowest)", "")
+            Text: =varChecklist.Vendor2Name & If(varCheapestVendor = "Vendor 2", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 2", "   ★ recommended", "")
             Visible: =!IsBlank(varChecklist.Vendor2Name)
             Width: =232
             X: =24
@@ -484,9 +485,9 @@ Screens:
       - recCkRow3:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =If(varCheapestVendor = "Vendor 3", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            BorderColor: =If(cboCkAward.Selected.Slot = "Vendor 3", RGBA(255, 191, 0, 1), varCheapestVendor = "Vendor 3", RGBA(59, 109, 17, 1), RGBA(214, 221, 233, 1))
+            BorderThickness: =If(cboCkAward.Selected.Slot = "Vendor 3" || varCheapestVendor = "Vendor 3", 2, 1)
+            Fill: =If(cboCkAward.Selected.Slot = "Vendor 3", RGBA(255, 246, 214, 1), varCheapestVendor = "Vendor 3", RGBA(226, 242, 218, 1), RGBA(255, 255, 255, 1))
             Height: =48
             Visible: =!IsBlank(varChecklist.Vendor3Name)
             Width: =1318
@@ -496,13 +497,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(24, 34, 56, 1)
+            Color: =If(varCheapestVendor = "Vendor 3" && cboCkAward.Selected.Slot <> "Vendor 3", RGBA(59, 109, 17, 1), RGBA(24, 34, 56, 1))
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor3Name & If(varCheapestVendor = "Vendor 3", "   (lowest)", "")
+            Text: =varChecklist.Vendor3Name & If(varCheapestVendor = "Vendor 3", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 3", "   ★ recommended", "")
             Visible: =!IsBlank(varChecklist.Vendor3Name)
             Width: =232
             X: =24
@@ -610,9 +611,9 @@ Screens:
       - recCkRow4:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =If(varCheapestVendor = "Vendor 4", RGBA(240, 248, 238, 1), RGBA(255, 255, 255, 1))
+            BorderColor: =If(cboCkAward.Selected.Slot = "Vendor 4", RGBA(255, 191, 0, 1), varCheapestVendor = "Vendor 4", RGBA(59, 109, 17, 1), RGBA(214, 221, 233, 1))
+            BorderThickness: =If(cboCkAward.Selected.Slot = "Vendor 4" || varCheapestVendor = "Vendor 4", 2, 1)
+            Fill: =If(cboCkAward.Selected.Slot = "Vendor 4", RGBA(255, 246, 214, 1), varCheapestVendor = "Vendor 4", RGBA(226, 242, 218, 1), RGBA(255, 255, 255, 1))
             Height: =48
             Visible: =!IsBlank(varChecklist.Vendor4Name)
             Width: =1318
@@ -622,13 +623,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(24, 34, 56, 1)
+            Color: =If(varCheapestVendor = "Vendor 4" && cboCkAward.Selected.Slot <> "Vendor 4", RGBA(59, 109, 17, 1), RGBA(24, 34, 56, 1))
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor4Name & If(varCheapestVendor = "Vendor 4", "   (lowest)", "")
+            Text: =varChecklist.Vendor4Name & If(varCheapestVendor = "Vendor 4", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 4", "   ★ recommended", "")
             Visible: =!IsBlank(varChecklist.Vendor4Name)
             Width: =232
             X: =24
@@ -786,16 +787,20 @@ Screens:
       - lblCkCompareHint:
           Control: Label@2.5.1
           Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(96, 106, 126, 1)
+            BorderColor: =RGBA(59, 109, 17, 1)
+            BorderThickness: =If(IsBlank(varCheapestVendor), 0, 1)
+            Color: =If(IsBlank(varCheapestVendor), RGBA(96, 106, 126, 1), RGBA(59, 109, 17, 1))
+            Fill: =If(IsBlank(varCheapestVendor), RGBA(0, 0, 0, 0), RGBA(226, 242, 218, 1))
             Font: =Font.'Open Sans'
+            FontWeight: =If(IsBlank(varCheapestVendor), FontWeight.Normal, FontWeight.Semibold)
             Height: =38
-            Size: =10
+            PaddingLeft: =10
+            Size: =If(IsBlank(varCheapestVendor), 10, 11)
             Text: |-
               =If(
                   IsBlank(varCheapestVendor),
                   "Comparison converts every total to USD using the Currency Rate list. Totals are auto calculated from unit price × quantity, but you can overwrite any of them.",
-                  "Lowest USD total: " & varCheapestVendor & ". You are not obliged to award the cheapest, justify your choice below."
+                  "Suggested: lowest USD total is " & Coalesce(LookUp(colCompare, Vendor = varCheapestVendor).VName, varCheapestVendor) & ". You are not obliged to award the cheapest, justify your choice below."
               )
             Width: =1000
             X: =342
@@ -804,11 +809,12 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(96, 106, 126, 1)
+            Color: =RGBA(11, 33, 84, 1)
             Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
             Height: =24
-            Size: =11
-            Text: ="Recommend a vendor to award *"
+            Size: =12
+            Text: ="★ Recommend a vendor to award *"
             Width: =300
             X: =24
             Y: =474
@@ -965,7 +971,7 @@ Screens:
                           {
                               'RFQ status': { Value: "RFQ pending" },
                               AwaitingAction: { Value: "Requestor" },
-                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & If(CountRows(attCkFiles.Attachments) > 0, " with " & CountRows(attCkFiles.Attachments) & " file(s)", "") & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                           }
                       );
                       // The RFQ is now waiting on the requestor. Tell them, otherwise the
@@ -984,11 +990,15 @@ Screens:
                                 <tr><td><strong>Quantity</strong></td><td>" & varRFQRecord.Quantity & " " & Coalesce(varRFQRecord.UOM, "") & "</td></tr>
                                 <tr><td><strong>Recommended vendor</strong></td><td>" & cboCkAward.Selected.VendorName & "</td></tr>
                                 <tr><td><strong>Buyer justification</strong></td><td>" & Trim(txtCkNotes.Text) & "</td></tr>
+                                <tr><td><strong>Attached files</strong></td><td>" & If(CountRows(attCkFiles.Attachments) = 0, "none", Concat(attCkFiles.Attachments, Name, ", ")) & "</td></tr>
                                 <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                               </table>
                               <p>Open the RFQ app and use <strong>Review buyer recommendation and respond</strong> to accept the award or ask for a different vendor. Nothing is ordered until you accept.</p>
                               <p><a href=""https://apps.high.powerapps.us/play/e/default-7a18110d-ef9b-4274-acef-e62ab0fe28ed/a/f10e37a1-8749-4da3-b215-296067d473b9?tenantId=7a18110d-ef9b-4274-acef-e62ab0fe28ed&hint=0a981de1-457b-499f-97a7-69ba1a42b560&sourcetime=1790640842577" & """>Open on Power Apps</a></p>",
-                              varRFQRecord.ID
+                              varRFQRecord.ID,
+                              // Optional buyer files, "[]" when none. The flow turns each
+                              // entry into an email attachment.
+                              JSON(ForAll(attCkFiles.Attachments, { Name: ThisRecord.Name, ContentBytes: ThisRecord.Value }), JSONFormat.IncludeBinaryData)
                           )
                       )
                   );
@@ -1007,9 +1017,9 @@ Screens:
       - recCkRecCard:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 191, 0, 1)
+            BorderThickness: =2
+            Fill: =RGBA(255, 250, 235, 1)
             Height: =108
             Width: =1000
             X: =24
@@ -1017,8 +1027,8 @@ Screens:
       - recCkRecHead:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Fill: =RGBA(11, 33, 84, 1)
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
             Height: =26
             Width: =1000
             X: =24
@@ -1027,13 +1037,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(255, 255, 255, 1)
+            Color: =RGBA(43, 33, 0, 1)
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =26
             PaddingLeft: =8
-            Size: =9
-            Text: ="What the requestor suggested   ·   read only, change the vendor list under Add or remove vendors"
+            Size: =10
+            Text: ="★ What the requestor suggested   ·   read only, change the vendor list under Add or remove vendors"
             Width: =1000
             X: =24
             Y: =632
@@ -1060,7 +1070,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =24
             PaddingLeft: =8
-            Size: =9
+            Size: =10
             Text: =Coalesce(varSelectedRFQ.'Recommend Vendor', "")
             Visible: =!IsBlank(varSelectedRFQ.'Recommend Vendor')
             Width: =200
@@ -1103,7 +1113,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =24
             PaddingLeft: =8
-            Size: =9
+            Size: =10
             Text: =Coalesce(varSelectedRFQ.RecVendor2Name, "")
             Visible: =!IsBlank(varSelectedRFQ.RecVendor2Name)
             Width: =200
@@ -1146,7 +1156,7 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =24
             PaddingLeft: =8
-            Size: =9
+            Size: =10
             Text: =Coalesce(varSelectedRFQ.RecVendor3Name, "")
             Visible: =!IsBlank(varSelectedRFQ.RecVendor3Name)
             Width: =200
@@ -1478,7 +1488,8 @@ Screens:
       - cboCkAward:
           Control: Classic/ComboBox@2.4.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderColor: =RGBA(255, 191, 0, 1)
+            BorderThickness: =2
             ChevronBackground: =RGBA(255, 255, 255, 1)
             ChevronFill: =RGBA(56, 96, 178, 1)
             ChevronHoverBackground: =RGBA(240, 244, 251, 1)
@@ -1515,6 +1526,84 @@ Screens:
             Width: =300
             X: =24
             Y: =498
+      - frmCkAttach:
+          Control: Form@2.4.4
+          Variant: Classic
+          Layout: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            DataSource: =RFQ_Checklist
+            DefaultMode: =FormMode.New
+            Height: =62
+            Item: =Defaults(RFQ_Checklist)
+            NumberOfColumns: =1
+            Width: =680
+            X: =344
+            Y: =566
+          Children:
+            - Attachments_DataCard_Ck:
+                Control: TypedDataCard@1.0.7
+                Variant: ClassicAttachmentsEdit
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  DataField: ="{Attachments}"
+                  Default: =ThisItem.Attachments
+                  DisplayName: =DataSourceInfo([@RFQ_Checklist],DataSourceInfo.DisplayName,Attachments)
+                  Height: =62
+                  Required: =false
+                  Update: =attCkFiles.Attachments
+                  Width: =680
+                  X: =0
+                  Y: =0
+                Children:
+                  - DataCardKey_CkAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: FieldName
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Height: =1
+                        PaddingLeft: =0
+                        Text: =Parent.DisplayName
+                        Visible: =false
+                        Width: =Parent.Width
+                  - attCkFiles:
+                      Control: Attachments@2.3.0
+                      MetadataKey: FieldValue
+                      Properties:
+                        AddAttachmentText: ="Attach files for the requestor (optional) - quotes, comparison sheet, datasheets..."
+                        BorderColor: =RGBA(214, 221, 233, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =1
+                        Color: =RGBA(56, 96, 178, 1)
+                        DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
+                        Font: =Font.'Open Sans'
+                        Height: =62
+                        ItemColor: =RGBA(255, 255, 255, 1)
+                        ItemFill: =RGBA(56, 96, 178, 1)
+                        ItemHoverFill: =RGBA(186, 202, 226, 1)
+                        Items: =Parent.Default
+                        MaxAttachmentSize: =10
+                        MaxAttachments: =5
+                        NoAttachmentsColor: =RGBA(150, 158, 172, 1)
+                        PaddingLeft: =5
+                        Size: =10
+                        Tooltip: ="Sent with the recommendation email. Up to 5 files, 10 MB each."
+                        Width: =680
+                  - ErrorMessage_CkAttach:
+                      Control: Label@2.5.1
+                      MetadataKey: ErrorMessage
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(168, 0, 0, 1)
+                        Font: =Font.'Open Sans'
+                        Height: =0
+                        Live: =Live.Assertive
+                        Size: =9
+                        Text: =Parent.Error
+                        Visible: =false
+                        Width: =Parent.Width
       - Image1_5:
           Control: Image@2.2.3
           Properties:

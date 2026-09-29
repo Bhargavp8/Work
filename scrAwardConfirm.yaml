@@ -117,7 +117,9 @@ Screens:
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =If(varChecklist.AwardVendor.Value = "Vendor 1", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Fill: =If(varChecklist.AwardVendor.Value = "Vendor 1", RGBA(226, 242, 218, 1), RGBA(0, 0, 0, 0))
             Font: =Font.'Open Sans'
+            FontWeight: =If(varChecklist.AwardVendor.Value = "Vendor 1", FontWeight.Semibold, FontWeight.Normal)
             Height: =38
             PaddingLeft: =16
             Size: =11
@@ -126,7 +128,7 @@ Screens:
                   IsBlank(varChecklist.Vendor1TotalPrice),
                   Coalesce(varChecklist.Vendor1Name, ",") & "   ·   no quote",
                   varChecklist.Vendor1Name & "   ·   " & Text(varChecklist.Vendor1TotalPrice * LookUp('Currency Rate', Currency = varChecklist.Vendor1Currency.Value).CurrencyRate, "#,##0.00") & " USD   ·   " & varChecklist.Vendor1LeadTime & " days"
-              ) & If(varChecklist.AwardVendor.Value = "Vendor 1", "    (recommended)", "")
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 1", "    ★ RECOMMENDED", "")
             Width: =660
             X: =24
             Y: =210
@@ -135,7 +137,9 @@ Screens:
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =If(varChecklist.AwardVendor.Value = "Vendor 2", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Fill: =If(varChecklist.AwardVendor.Value = "Vendor 2", RGBA(226, 242, 218, 1), RGBA(0, 0, 0, 0))
             Font: =Font.'Open Sans'
+            FontWeight: =If(varChecklist.AwardVendor.Value = "Vendor 2", FontWeight.Semibold, FontWeight.Normal)
             Height: =38
             PaddingLeft: =16
             Size: =11
@@ -144,7 +148,7 @@ Screens:
                   IsBlank(varChecklist.Vendor2TotalPrice),
                   varChecklist.Vendor2Name & "   ·   no quote",
                   varChecklist.Vendor2Name & "   ·   " & Text(varChecklist.Vendor2TotalPrice * LookUp('Currency Rate', Currency = varChecklist.Vendor2Currency.Value).CurrencyRate, "#,##0.00") & " USD   ·   " & varChecklist.Vendor2LeadTime & " days"
-              ) & If(varChecklist.AwardVendor.Value = "Vendor 2", "    (recommended)", "")
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 2", "    ★ RECOMMENDED", "")
             Visible: =!IsBlank(varChecklist.Vendor2Name)
             Width: =660
             X: =24
@@ -154,7 +158,9 @@ Screens:
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =If(varChecklist.AwardVendor.Value = "Vendor 3", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Fill: =If(varChecklist.AwardVendor.Value = "Vendor 3", RGBA(226, 242, 218, 1), RGBA(0, 0, 0, 0))
             Font: =Font.'Open Sans'
+            FontWeight: =If(varChecklist.AwardVendor.Value = "Vendor 3", FontWeight.Semibold, FontWeight.Normal)
             Height: =38
             PaddingLeft: =16
             Size: =11
@@ -163,7 +169,7 @@ Screens:
                   IsBlank(varChecklist.Vendor3TotalPrice),
                   varChecklist.Vendor3Name & "   ·   no quote",
                   varChecklist.Vendor3Name & "   ·   " & Text(varChecklist.Vendor3TotalPrice * LookUp('Currency Rate', Currency = varChecklist.Vendor3Currency.Value).CurrencyRate, "#,##0.00") & " USD   ·   " & varChecklist.Vendor3LeadTime & " days"
-              ) & If(varChecklist.AwardVendor.Value = "Vendor 3", "    (recommended)", "")
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 3", "    ★ RECOMMENDED", "")
             Visible: =!IsBlank(varChecklist.Vendor3Name)
             Width: =660
             X: =24
@@ -173,7 +179,9 @@ Screens:
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =If(varChecklist.AwardVendor.Value = "Vendor 4", ColorValue("#3B6D11"), RGBA(43, 54, 78, 1))
+            Fill: =If(varChecklist.AwardVendor.Value = "Vendor 4", RGBA(226, 242, 218, 1), RGBA(0, 0, 0, 0))
             Font: =Font.'Open Sans'
+            FontWeight: =If(varChecklist.AwardVendor.Value = "Vendor 4", FontWeight.Semibold, FontWeight.Normal)
             Height: =38
             PaddingLeft: =16
             Size: =11
@@ -182,7 +190,7 @@ Screens:
                   IsBlank(varChecklist.Vendor4TotalPrice),
                   varChecklist.Vendor4Name & "   ·   no quote",
                   varChecklist.Vendor4Name & "   ·   " & Text(varChecklist.Vendor4TotalPrice * LookUp('Currency Rate', Currency = varChecklist.Vendor4Currency.Value).CurrencyRate, "#,##0.00") & " USD   ·   " & varChecklist.Vendor4LeadTime & " days"
-              ) & If(varChecklist.AwardVendor.Value = "Vendor 4", "    (recommended)", "")
+              ) & If(varChecklist.AwardVendor.Value = "Vendor 4", "    ★ RECOMMENDED", "")
             Visible: =!IsBlank(varChecklist.Vendor4Name)
             Width: =660
             X: =24
@@ -190,8 +198,8 @@ Screens:
       - recAwRecCard:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
+            BorderColor: =RGBA(59, 109, 17, 1)
+            BorderThickness: =2
             Fill: =RGBA(255, 255, 255, 1)
             Height: =200
             Width: =660
@@ -207,8 +215,9 @@ Screens:
             FontWeight: =FontWeight.Semibold
             Height: =38
             PaddingLeft: =16
+            Size: =15
             Text: |-
-              ="Buyer recommends: " & Switch(
+              ="★ Buyer recommends: " & Switch(
                   varChecklist.AwardVendor.Value,
                   "Vendor 1", varChecklist.Vendor1Name,
                   "Vendor 2", varChecklist.Vendor2Name,

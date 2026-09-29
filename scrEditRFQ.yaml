@@ -859,8 +859,9 @@ Screens:
       - recEdRecommendStrip:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Fill: =RGBA(240, 246, 238, 1)
+            BorderColor: =RGBA(59, 109, 17, 1)
+            BorderThickness: =2
+            Fill: =RGBA(226, 242, 218, 1)
             Height: =68
             Visible: =!IsBlank(varChecklist.AwardVendor.Value)
             Width: =642
@@ -877,7 +878,7 @@ Screens:
             PaddingRight: =14
             Size: =11
             Text: |-
-              ="Buyer recommends: " & Switch(
+              ="★ Buyer recommends: " & Switch(
                   varChecklist.AwardVendor.Value,
                   "Vendor 1", varChecklist.Vendor1Name,
                   "Vendor 2", varChecklist.Vendor2Name,

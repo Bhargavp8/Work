@@ -35,9 +35,10 @@ Screens:
         // Requestor files stay as attachments on the RFQ list item. Sensitivity is
         // carried by the real Purview label the requestor applied before uploading,
         // not by a column in this app.
+        // Include starts off: a file only goes to the vendors if the buyer ticks it.
         ClearCollect(
             colSvDocs,
-            ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value })
+            ForAll(varSelectedRFQ.Attachments As Att, { FileName: Att.DisplayName, FileLink: Att.Value, Include: false })
         );
         Reset(tglSvV1Manual); Reset(cboSvV1); Reset(txtSvV1Name); Reset(txtSvV1Email);
         Reset(tglSvV2Manual); Reset(cboSvV2); Reset(txtSvV2Name); Reset(txtSvV2Email);
@@ -372,7 +373,7 @@ Screens:
           Variant: Vertical
           Properties:
             BorderColor: =RGBA(214, 221, 233, 1)
-            Height: =64
+            Height: =96
             Items: =colSvDocs
             TemplatePadding: =0
             TemplateSize: =30
@@ -380,17 +381,57 @@ Screens:
             X: =32
             Y: =620
           Children:
+            - icoSvDocInclude:
+                Control: Classic/Icon@2.5.0
+                Properties:
+                  BorderColor: =RGBA(56, 96, 178, 1)
+                  BorderThickness: =1
+                  Color: =RGBA(255, 255, 255, 1)
+                  Fill: =If(ThisItem.Include, RGBA(56, 96, 178, 1), RGBA(255, 255, 255, 1))
+                  Height: =20
+                  Icon: =Icon.Check
+                  OnSelect: |-
+                    =Patch(colSvDocs, ThisItem, { Include: !ThisItem.Include })
+                  PaddingBottom: =3
+                  PaddingLeft: =3
+                  PaddingRight: =3
+                  PaddingTop: =3
+                  Tooltip: =If(ThisItem.Include, "Attached. Click to leave this file out of the RFQ email", "Not attached. Click to attach this file to the RFQ email")
+                  Width: =20
+                  X: =4
+                  Y: =5
             - lblSvDocName:
                 Control: Label@2.5.1
                 Properties:
                   BorderColor: =RGBA(0, 18, 107, 1)
-                  Color: =RGBA(56, 96, 178, 1)
+                  Color: =If(ThisItem.Include, RGBA(24, 34, 56, 1), RGBA(96, 106, 126, 1))
                   Font: =Font.'Open Sans'
+                  FontWeight: =If(ThisItem.Include, FontWeight.Semibold, FontWeight.Normal)
                   Height: =30
                   OnSelect: =Launch(ThisItem.FileLink)
                   Size: =9
                   Text: =ThisItem.FileName
-                  Width: =308
+                  Width: =206
+                  X: =30
+            - btnSvDocPreview:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  Color: =RGBA(56, 96, 178, 1)
+                  Fill: =RGBA(255, 255, 255, 1)
+                  Font: =Font.'Open Sans'
+                  Height: =24
+                  HoverColor: =RGBA(56, 96, 178, 1)
+                  HoverFill: =RGBA(240, 244, 251, 1)
+                  OnSelect: =Launch(ThisItem.FileLink)
+                  PressedColor: =RGBA(255, 255, 255, 1)
+                  PressedFill: =RGBA(56, 96, 178, 1)
+                  Size: =9
+                  Text: ="Preview"
+                  Tooltip: ="Open the file in a new tab to check it before attaching"
+                  Width: =64
+                  X: =240
+                  Y: =3
       - lblSvDocsEmpty:
           Control: Label@2.5.1
           Properties:
@@ -416,7 +457,7 @@ Screens:
               =If(
                   CountRows(colSvDocs) = 0,
                   "No files to send. The vendors get the email text only.",
-                  CountRows(colSvDocs) & " file(s) go out with the RFQ email. Click a file to open it."
+                  CountRows(Filter(colSvDocs, Include)) & " of " & CountRows(colSvDocs) & " file(s) ticked to go out with the RFQ email. Preview opens a file first."
               )
             Width: =308
             X: =32
@@ -1308,9 +1349,9 @@ Screens:
       - recSvRecCard:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            BorderThickness: =1
-            Fill: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 191, 0, 1)
+            BorderThickness: =2
+            Fill: =RGBA(255, 250, 235, 1)
             Height: =124
             Width: =983
             X: =374
@@ -1332,8 +1373,8 @@ Screens:
       - recSvRecHead:
           Control: Rectangle@2.3.0
           Properties:
-            BorderColor: =RGBA(0, 18, 107, 1)
-            Fill: =RGBA(11, 33, 84, 1)
+            BorderColor: =RGBA(255, 191, 0, 1)
+            Fill: =RGBA(255, 191, 0, 1)
             Height: =30
             Width: =983
             X: =372
@@ -1342,13 +1383,13 @@ Screens:
           Control: Label@2.5.1
           Properties:
             BorderColor: =RGBA(0, 18, 107, 1)
-            Color: =RGBA(255, 255, 255, 1)
+            Color: =RGBA(43, 33, 0, 1)
             Font: =Font.'Open Sans'
             FontWeight: =FontWeight.Semibold
             Height: =30
             PaddingLeft: =8
-            Size: =10
-            Text: ="Vendors the requestor suggested   ·   Use this loads one into the first free slot above"
+            Size: =11
+            Text: ="★ Vendors the requestor suggested   ·   Use this loads one into the first free slot above"
             Width: =983
             X: =373
             Y: =576
@@ -1875,7 +1916,13 @@ Screens:
             Height: =85
             PaddingLeft: =20
             Size: =10
-            Text: ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send. Any files the requestor attached go out with this email automatically."
+            Text: |-
+              ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send." & Char(10) &
+              If(
+                  CountRows(Filter(colSvDocs, Include)) = 0,
+                  "No files attached. Close this and tick files under Attachments from the requestor to include them.",
+                  "Attached (" & CountRows(Filter(colSvDocs, Include)) & "): " & Left(Concat(Filter(colSvDocs, Include), FileName, ", "), 160)
+              )
             Visible: =varShowPreview
             Width: =378
             X: =307
@@ -1935,7 +1982,10 @@ Screens:
                       rtePreview.HtmlText,
                       varMyMail,
                       varRFQRecord.ID,
-                      varRFQRecord.Title
+                      varRFQRecord.Title,
+                      // Only the ticked files. Pipe separated with a pipe at each end so the
+                      // flow can match "|name|" exactly; "||" means attach nothing.
+                      "|" & Concat(Filter(colSvDocs, Include), FileName, "|") & "|"
                   );
                   // Status only moves once the mail has actually gone out.
                   Patch(
@@ -1945,7 +1995,7 @@ Screens:
                           'RFQ status': { Value: "RFQ sent out" },
                           AwaitingAction: { Value: "Vendor" },
                           'Assigned Buyer': varMyMail,
-                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s)" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s) with " & CountRows(Filter(colSvDocs, Include)) & " file(s)" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
                   );
                   Patch(RFQ_Checklist, varChecklist, { RFQSentDate: Coalesce(dteSvSentDate.SelectedDate, Today()) });
