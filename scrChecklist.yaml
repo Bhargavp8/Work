@@ -252,7 +252,7 @@ Screens:
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =Coalesce(varChecklist.Vendor1Name, ",") & If(varCheapestVendor = "Vendor 1", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 1", "   ★ recommended", "")
+            Text: =If(cboCkAward.Selected.Slot = "Vendor 1", "★ ", "") & Coalesce(varChecklist.Vendor1Name, ",") & If(varCheapestVendor = "Vendor 1", "   (lowest)", "")
             Width: =232
             X: =24
             Y: =208
@@ -377,7 +377,7 @@ Screens:
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor2Name & If(varCheapestVendor = "Vendor 2", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 2", "   ★ recommended", "")
+            Text: =If(cboCkAward.Selected.Slot = "Vendor 2", "★ ", "") & varChecklist.Vendor2Name & If(varCheapestVendor = "Vendor 2", "   (lowest)", "")
             Visible: =!IsBlank(varChecklist.Vendor2Name)
             Width: =232
             X: =24
@@ -503,7 +503,7 @@ Screens:
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor3Name & If(varCheapestVendor = "Vendor 3", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 3", "   ★ recommended", "")
+            Text: =If(cboCkAward.Selected.Slot = "Vendor 3", "★ ", "") & varChecklist.Vendor3Name & If(varCheapestVendor = "Vendor 3", "   (lowest)", "")
             Visible: =!IsBlank(varChecklist.Vendor3Name)
             Width: =232
             X: =24
@@ -629,7 +629,7 @@ Screens:
             Height: =48
             PaddingLeft: =10
             Size: =12
-            Text: =varChecklist.Vendor4Name & If(varCheapestVendor = "Vendor 4", "   (lowest)", "") & If(cboCkAward.Selected.Slot = "Vendor 4", "   ★ recommended", "")
+            Text: =If(cboCkAward.Selected.Slot = "Vendor 4", "★ ", "") & varChecklist.Vendor4Name & If(varCheapestVendor = "Vendor 4", "   (lowest)", "")
             Visible: =!IsBlank(varChecklist.Vendor4Name)
             Width: =232
             X: =24
