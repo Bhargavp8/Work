@@ -16,26 +16,20 @@ Screens:
         Reset(cboCkAward); Reset(txtCkNotes);
         // Quote documents: one record per vendor in RFQ_VendorDocs, files attached to it.
         Set(varCkShowDocs, false);
+        Set(varCkD1, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor1Name));
+        Set(varCkD2, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor2Name));
+        Set(varCkD3, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor3Name));
+        Set(varCkD4, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor4Name));
         ClearCollect(
             colCkDocs,
-            ForAll(
-                Filter(
-                    Table(
-                        { Slot: "Vendor 1", VendorName: Coalesce(varChecklist.Vendor1Name, "") },
-                        { Slot: "Vendor 2", VendorName: Coalesce(varChecklist.Vendor2Name, "") },
-                        { Slot: "Vendor 3", VendorName: Coalesce(varChecklist.Vendor3Name, "") },
-                        { Slot: "Vendor 4", VendorName: Coalesce(varChecklist.Vendor4Name, "") }
-                    ),
-                    !IsBlank(VendorName)
-                ) As S,
-                {
-                    Slot: S.Slot,
-                    VendorName: S.VendorName,
-                    Files: With(
-                        { r: LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = S.VendorName) },
-                        If(IsBlank(r), 0, CountRows(r.Attachments))
-                    )
-                }
+            Filter(
+                Table(
+                    { Slot: "Vendor 1", VendorName: Coalesce(varChecklist.Vendor1Name, ""), Files: If(IsBlank(varCkD1), 0, CountRows(varCkD1.Attachments)) },
+                    { Slot: "Vendor 2", VendorName: Coalesce(varChecklist.Vendor2Name, ""), Files: If(IsBlank(varCkD2), 0, CountRows(varCkD2.Attachments)) },
+                    { Slot: "Vendor 3", VendorName: Coalesce(varChecklist.Vendor3Name, ""), Files: If(IsBlank(varCkD3), 0, CountRows(varCkD3.Attachments)) },
+                    { Slot: "Vendor 4", VendorName: Coalesce(varChecklist.Vendor4Name, ""), Files: If(IsBlank(varCkD4), 0, CountRows(varCkD4.Attachments)) }
+                ),
+                !IsBlank(VendorName)
             )
         )
     Children:
@@ -1756,7 +1750,7 @@ Screens:
               Notify("The files could not be saved. " & frmCkDocs.Error, NotificationType.Error, 8000)
             OnSuccess: |-
               =Set(varCkDocRec, frmCkDocs.LastSubmit);
-              Patch(colCkDocs, LookUp(colCkDocs, VendorName = varCkDocName), { Files: CountRows(frmCkDocs.LastSubmit.Attachments) });
+              Patch(colCkDocs, LookUp(colCkDocs, VendorName = varCkDocName), { Files: CountRows(attCkDocFiles.Attachments) });
               Set(varSaving, false);
               Notify("Files saved for " & varCkDocName & ".", NotificationType.Success, 3000)
             Visible: =varCkShowDocs

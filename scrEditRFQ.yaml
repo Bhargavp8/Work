@@ -42,26 +42,20 @@ Screens:
         Reset(txtEdRemarks);
         // Files the buyer attached for each vendor (RFQ_VendorDocs).
         Set(varEdQShowDocs, false);
+        Set(varEdQD1, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor1Name));
+        Set(varEdQD2, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor2Name));
+        Set(varEdQD3, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor3Name));
+        Set(varEdQD4, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varChecklist.Vendor4Name));
         ClearCollect(
             colEdQDocs,
-            ForAll(
-                Filter(
-                    Table(
-                        { Slot: "Vendor 1", VendorName: Coalesce(varChecklist.Vendor1Name, "") },
-                        { Slot: "Vendor 2", VendorName: Coalesce(varChecklist.Vendor2Name, "") },
-                        { Slot: "Vendor 3", VendorName: Coalesce(varChecklist.Vendor3Name, "") },
-                        { Slot: "Vendor 4", VendorName: Coalesce(varChecklist.Vendor4Name, "") }
-                    ),
-                    !IsBlank(VendorName)
-                ) As S,
-                {
-                    Slot: S.Slot,
-                    VendorName: S.VendorName,
-                    Files: With(
-                        { r: LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = S.VendorName) },
-                        If(IsBlank(r), 0, CountRows(r.Attachments))
-                    )
-                }
+            Filter(
+                Table(
+                    { Slot: "Vendor 1", VendorName: Coalesce(varChecklist.Vendor1Name, ""), Files: If(IsBlank(varEdQD1), 0, CountRows(varEdQD1.Attachments)) },
+                    { Slot: "Vendor 2", VendorName: Coalesce(varChecklist.Vendor2Name, ""), Files: If(IsBlank(varEdQD2), 0, CountRows(varEdQD2.Attachments)) },
+                    { Slot: "Vendor 3", VendorName: Coalesce(varChecklist.Vendor3Name, ""), Files: If(IsBlank(varEdQD3), 0, CountRows(varEdQD3.Attachments)) },
+                    { Slot: "Vendor 4", VendorName: Coalesce(varChecklist.Vendor4Name, ""), Files: If(IsBlank(varEdQD4), 0, CountRows(varEdQD4.Attachments)) }
+                ),
+                !IsBlank(VendorName)
             )
         )
     Children:
