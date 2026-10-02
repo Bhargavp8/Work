@@ -13,8 +13,7 @@ Screens:
         Reset(cboCkV3Cur); Reset(txtCkV3Unit); Reset(txtCkV3Total); Reset(txtCkV3Lead);
         Reset(cboCkV4Cur); Reset(txtCkV4Unit); Reset(txtCkV4Total); Reset(txtCkV4Lead);
         Reset(cboCkV1Resp); Reset(cboCkV2Resp); Reset(cboCkV3Resp); Reset(cboCkV4Resp);
-        Reset(cboCkAward); Reset(txtCkNotes);
-        ResetForm(frmCkAttach)
+        Reset(cboCkAward); Reset(txtCkNotes)
     Children:
       - recCkTopBar:
           Control: Rectangle@2.3.0
@@ -971,7 +970,7 @@ Screens:
                           {
                               'RFQ status': { Value: "RFQ pending" },
                               AwaitingAction: { Value: "Requestor" },
-                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & If(CountRows(attCkFiles.Attachments) > 0, " with " & CountRows(attCkFiles.Attachments) & " file(s)", "") & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                              'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   recommended " & cboCkAward.Selected.VendorName & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                           }
                       );
                       // The RFQ is now waiting on the requestor. Tell them, otherwise the
@@ -990,15 +989,11 @@ Screens:
                                 <tr><td><strong>Quantity</strong></td><td>" & varRFQRecord.Quantity & " " & Coalesce(varRFQRecord.UOM, "") & "</td></tr>
                                 <tr><td><strong>Recommended vendor</strong></td><td>" & cboCkAward.Selected.VendorName & "</td></tr>
                                 <tr><td><strong>Buyer justification</strong></td><td>" & Trim(txtCkNotes.Text) & "</td></tr>
-                                <tr><td><strong>Attached files</strong></td><td>" & If(CountRows(attCkFiles.Attachments) = 0, "none", Concat(attCkFiles.Attachments, Name, ", ")) & "</td></tr>
                                 <tr><td><strong>Buyer</strong></td><td>" & User().FullName & " (" & varMyMail & ")</td></tr>
                               </table>
                               <p>Open the RFQ app and use <strong>Review buyer recommendation and respond</strong> to accept the award or ask for a different vendor. Nothing is ordered until you accept.</p>
                               <p><a href=""https://apps.high.powerapps.us/play/e/default-7a18110d-ef9b-4274-acef-e62ab0fe28ed/a/f10e37a1-8749-4da3-b215-296067d473b9?tenantId=7a18110d-ef9b-4274-acef-e62ab0fe28ed&hint=0a981de1-457b-499f-97a7-69ba1a42b560&sourcetime=1790640842577" & """>Open on Power Apps</a></p>",
-                              varRFQRecord.ID,
-                              // Optional flow inputs go in a record keyed by the input name.
-                              // text_4 = buyer files as JSON, "[]" when none.
-                              { text_4: JSON(ForAll(attCkFiles.Attachments As F, { Name: F.Name, ContentBytes: F.Value }), JSONFormat.IncludeBinaryData) }
+                              varRFQRecord.ID
                           )
                       )
                   );
@@ -1526,84 +1521,6 @@ Screens:
             Width: =300
             X: =24
             Y: =498
-      - frmCkAttach:
-          Control: Form@2.4.4
-          Variant: Classic
-          Layout: Vertical
-          Properties:
-            BorderColor: =RGBA(214, 221, 233, 1)
-            DataSource: =RFQ_Checklist
-            DefaultMode: =FormMode.New
-            Height: =62
-            Item: =Defaults(RFQ_Checklist)
-            NumberOfColumns: =1
-            Width: =680
-            X: =344
-            Y: =566
-          Children:
-            - Attachments_DataCard_Ck:
-                Control: TypedDataCard@1.0.7
-                Variant: ClassicAttachmentsEdit
-                Properties:
-                  BorderColor: =RGBA(214, 221, 233, 1)
-                  DataField: ="{Attachments}"
-                  Default: =ThisItem.Attachments
-                  DisplayName: =DataSourceInfo([@RFQ_Checklist],DataSourceInfo.DisplayName,Attachments)
-                  Height: =62
-                  Required: =false
-                  Update: =attCkFiles.Attachments
-                  Width: =680
-                  X: =0
-                  Y: =0
-                Children:
-                  - DataCardKey_CkAttach:
-                      Control: Label@2.5.1
-                      MetadataKey: FieldName
-                      Properties:
-                        BorderColor: =RGBA(0, 0, 0, 0)
-                        BorderStyle: =BorderStyle.None
-                        Height: =1
-                        PaddingLeft: =0
-                        Text: =Parent.DisplayName
-                        Visible: =false
-                        Width: =Parent.Width
-                  - attCkFiles:
-                      Control: Attachments@2.3.0
-                      MetadataKey: FieldValue
-                      Properties:
-                        AddAttachmentText: ="Attach files for the requestor (optional) - quotes, comparison sheet, datasheets..."
-                        BorderColor: =RGBA(214, 221, 233, 1)
-                        BorderStyle: =BorderStyle.Solid
-                        BorderThickness: =1
-                        Color: =RGBA(56, 96, 178, 1)
-                        DisplayMode: =If(varSaving, DisplayMode.Disabled, DisplayMode.Edit)
-                        Font: =Font.'Open Sans'
-                        Height: =62
-                        ItemColor: =RGBA(255, 255, 255, 1)
-                        ItemFill: =RGBA(56, 96, 178, 1)
-                        ItemHoverFill: =RGBA(186, 202, 226, 1)
-                        Items: =Parent.Default
-                        MaxAttachmentSize: =10
-                        MaxAttachments: =5
-                        NoAttachmentsColor: =RGBA(150, 158, 172, 1)
-                        PaddingLeft: =5
-                        Size: =10
-                        Tooltip: ="Sent with the recommendation email. Up to 5 files, 10 MB each."
-                        Width: =680
-                  - ErrorMessage_CkAttach:
-                      Control: Label@2.5.1
-                      MetadataKey: ErrorMessage
-                      Properties:
-                        BorderColor: =RGBA(0, 0, 0, 0)
-                        BorderStyle: =BorderStyle.None
-                        Color: =RGBA(168, 0, 0, 1)
-                        Font: =Font.'Open Sans'
-                        Height: =0
-                        Live: =Live.Assertive
-                        Size: =9
-                        Text: =Parent.Error
-                        Visible: =false
-                        Width: =Parent.Width
       - Image1_5:
           Control: Image@2.2.3
           Properties:
