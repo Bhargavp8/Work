@@ -39,7 +39,31 @@ Screens:
         Reset(tglEdRec1Manual); Reset(cboEdRec1); Reset(txtEdRec1Name); Reset(txtEdRec1Email); Reset(txtEdRec1Remarks);
         Reset(tglEdRec2Manual); Reset(cboEdRec2); Reset(txtEdRec2Name); Reset(txtEdRec2Email); Reset(txtEdRec2Remarks);
         Reset(tglEdRec3Manual); Reset(cboEdRec3); Reset(txtEdRec3Name); Reset(txtEdRec3Email); Reset(txtEdRec3Remarks);
-        Reset(txtEdRemarks)
+        Reset(txtEdRemarks);
+        // Files the buyer attached for each vendor (RFQ_VendorDocs).
+        Set(varEdQShowDocs, false);
+        ClearCollect(
+            colEdQDocs,
+            ForAll(
+                Filter(
+                    Table(
+                        { Slot: "Vendor 1", VendorName: Coalesce(varChecklist.Vendor1Name, "") },
+                        { Slot: "Vendor 2", VendorName: Coalesce(varChecklist.Vendor2Name, "") },
+                        { Slot: "Vendor 3", VendorName: Coalesce(varChecklist.Vendor3Name, "") },
+                        { Slot: "Vendor 4", VendorName: Coalesce(varChecklist.Vendor4Name, "") }
+                    ),
+                    !IsBlank(VendorName)
+                ) As S,
+                {
+                    Slot: S.Slot,
+                    VendorName: S.VendorName,
+                    Files: With(
+                        { r: LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = S.VendorName) },
+                        If(IsBlank(r), 0, CountRows(r.Attachments))
+                    )
+                }
+            )
+        )
     Children:
       - recEdTopBar:
           Control: Rectangle@2.3.0
@@ -1550,3 +1574,256 @@ Screens:
             Width: =200
             X: =889
             Y: =600
+      - btnEdQDocs:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Font: =Font.'Open Sans'
+            Height: =28
+            HoverColor: =RGBA(56, 96, 178, 1)
+            HoverFill: =RGBA(240, 244, 251, 1)
+            OnSelect: |-
+              =Set(varEdQDocName, Coalesce(LookUp(colEdQDocs, Slot = varChecklist.AwardVendor.Value).VendorName, First(colEdQDocs).VendorName));
+              Set(varEdQDocRec, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varEdQDocName));
+              Set(varEdQShowDocs, true)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(56, 96, 178, 1)
+            Size: =10
+            Text: ="📎 Quote documents (" & Sum(colEdQDocs, Files) & ")"
+            Tooltip: ="Files the buyer attached for each vendor"
+            Visible: =Sum(colEdQDocs, Files) > 0
+            Width: =168
+            X: =1166
+            Y: =263
+      - recEdQDocsScrim:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(16, 24, 40, 0.55)
+            Height: =768
+            OnSelect: =Set(varEdQShowDocs, false)
+            Visible: =varEdQShowDocs
+            Width: =1366
+      - recEdQDocsCard:
+          Control: Rectangle@2.3.0
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =580
+            Visible: =varEdQShowDocs
+            Width: =900
+            X: =233
+            Y: =96
+      - lblEdQDocsTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            PaddingLeft: =24
+            Size: =15
+            Text: ="📎 Quote documents   ·   " & varSelectedRFQ.Title
+            Visible: =varEdQShowDocs
+            Width: =900
+            X: =233
+            Y: =108
+      - lblEdQDocsHint:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =40
+            PaddingLeft: =24
+            PaddingRight: =24
+            Size: =10
+            Text: ="Files the buyer attached for each vendor. Pick a vendor on the left, then click a file to open it."
+            Visible: =varEdQShowDocs
+            Width: =900
+            X: =233
+            Y: =148
+      - galEdQDocVendors:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            Height: =300
+            Items: =colEdQDocs
+            TemplatePadding: =0
+            TemplateSize: =72
+            Visible: =varEdQShowDocs
+            Width: =260
+            X: =257
+            Y: =196
+          Children:
+            - recEdQDocTab:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =If(ThisItem.VendorName = varEdQDocName, RGBA(56, 96, 178, 1), RGBA(214, 221, 233, 1))
+                  BorderThickness: =1
+                  Fill: =If(ThisItem.VendorName = varEdQDocName, RGBA(56, 96, 178, 1), RGBA(246, 249, 253, 1))
+                  Height: =64
+                  OnSelect: |-
+                    =Set(varEdQDocName, ThisItem.VendorName);
+                    Set(varEdQDocRec, LookUp(RFQ_VendorDocs, RFQID = varSelectedRFQ.ID && Source = "Buyer" && Title = varEdQDocName))
+                  Width: =260
+                  Y: =4
+            - lblEdQDocTabName:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =If(ThisItem.VendorName = varEdQDocName, RGBA(255, 255, 255, 1), RGBA(24, 34, 56, 1))
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  OnSelect: =Select(recEdQDocTab)
+                  PaddingLeft: =12
+                  Size: =11
+                  Text: =If(ThisItem.Slot = varChecklist.AwardVendor.Value, "★ ", "") & ThisItem.VendorName
+                  Width: =260
+                  Y: =8
+            - lblEdQDocTabCount:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Color: =If(ThisItem.VendorName = varEdQDocName, RGBA(206, 216, 236, 1), RGBA(96, 106, 126, 1))
+                  Font: =Font.'Open Sans'
+                  Height: =24
+                  OnSelect: =Select(recEdQDocTab)
+                  PaddingLeft: =12
+                  Size: =9
+                  Text: =If(ThisItem.Files = 0, "no files yet", ThisItem.Files & If(ThisItem.Files = 1, " file", " files")) & If(ThisItem.Slot = varChecklist.AwardVendor.Value, "   ·   recommended", "")
+                  Width: =260
+                  Y: =36
+      - lblEdQDocsFilesHead:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =RGBA(24, 34, 56, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            Size: =12
+            Text: ="Files for " & varEdQDocName
+            Visible: =varEdQShowDocs
+            Width: =568
+            X: =541
+            Y: =196
+      - frmEdQDocs:
+          Control: Form@2.4.4
+          Variant: Classic
+          Layout: Vertical
+          Properties:
+            BorderColor: =RGBA(214, 221, 233, 1)
+            DataSource: =RFQ_VendorDocs
+            DefaultMode: =FormMode.View
+            Height: =300
+            Item: =varEdQDocRec
+            NumberOfColumns: =1
+            Visible: =varEdQShowDocs && !IsBlank(varEdQDocRec) && CountRows(varEdQDocRec.Attachments) > 0
+            Width: =568
+            X: =541
+            Y: =232
+          Children:
+            - Attachments_DataCard_EdQDocs:
+                Control: TypedDataCard@1.0.7
+                Variant: ClassicAttachmentsEdit
+                Properties:
+                  BorderColor: =RGBA(214, 221, 233, 1)
+                  DataField: ="{Attachments}"
+                  Default: =ThisItem.Attachments
+                  DisplayName: =DataSourceInfo([@RFQ_VendorDocs],DataSourceInfo.DisplayName,Attachments)
+                  Height: =300
+                  Required: =false
+                  Update: =attEdQDocFiles.Attachments
+                  Width: =568
+                  X: =0
+                  Y: =0
+                Children:
+                  - DataCardKey_EdQDocs:
+                      Control: Label@2.5.1
+                      MetadataKey: FieldName
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Height: =1
+                        PaddingLeft: =0
+                        Text: =Parent.DisplayName
+                        Visible: =false
+                        Width: =Parent.Width
+                  - attEdQDocFiles:
+                      Control: Attachments@2.3.0
+                      MetadataKey: FieldValue
+                      Properties:
+                        AddAttachmentText: ="Attach file"
+                        BorderColor: =RGBA(214, 221, 233, 1)
+                        BorderStyle: =BorderStyle.Solid
+                        BorderThickness: =1
+                        Color: =RGBA(56, 96, 178, 1)
+                        DisplayMode: =Parent.DisplayMode
+                        Font: =Font.'Open Sans'
+                        Height: =296
+                        ItemColor: =RGBA(255, 255, 255, 1)
+                        ItemFill: =RGBA(56, 96, 178, 1)
+                        ItemHoverFill: =RGBA(186, 202, 226, 1)
+                        Items: =Parent.Default
+                        MaxAttachmentSize: =20
+                        MaxAttachments: =10
+                        NoAttachmentsColor: =RGBA(150, 158, 172, 1)
+                        NoAttachmentsText: ="No files for this vendor yet. Click Attach file to add their quote, datasheet or emails."
+                        PaddingLeft: =8
+                        Size: =11
+                        Width: =568
+                  - ErrorMessage_EdQDocs:
+                      Control: Label@2.5.1
+                      MetadataKey: ErrorMessage
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        BorderStyle: =BorderStyle.None
+                        Color: =RGBA(168, 0, 0, 1)
+                        Font: =Font.'Open Sans'
+                        Height: =0
+                        Live: =Live.Assertive
+                        Size: =9
+                        Text: =Parent.Error
+                        Visible: =false
+                        Width: =Parent.Width
+      - lblEdQDocsEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(214, 221, 233, 1)
+            BorderThickness: =1
+            Color: =RGBA(96, 106, 126, 1)
+            Font: =Font.'Open Sans'
+            Height: =300
+            Size: =11
+            Text: ="The buyer has not attached any files for " & varEdQDocName & "."
+            Visible: =varEdQShowDocs && !(!IsBlank(varEdQDocRec) && CountRows(varEdQDocRec.Attachments) > 0)
+            Width: =568
+            X: =541
+            Y: =232
+      - btnEdQDocsClose:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(56, 96, 178, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =44
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Set(varEdQShowDocs, false)
+            PressedColor: =RGBA(56, 96, 178, 1)
+            PressedFill: =RGBA(255, 255, 255, 1)
+            Size: =12
+            Text: ="Close"
+            Visible: =varEdQShowDocs
+            Width: =200
+            X: =909
+            Y: =604
