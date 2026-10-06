@@ -2005,12 +2005,14 @@ Screens:
                       Set(varSaving, false),
 
                       // Draft created: open it in Outlook on the web in a new tab so the buyer
-                      // only has to press Send. Falls back to the Drafts folder if no id came back.
+                      // only has to press Send. The flow returns the id in web-safe form
+                      // ("-" and "_"); Outlook's links need the original "/" and "+".
+                      // Falls back to the Drafts folder if no id came back.
                       Launch(
                           If(
                               IsBlank(varSvDraft.draftid),
                               "https://outlook.office365.us/mail/drafts",
-                              "https://outlook.office365.us/mail/drafts/id/" & EncodeUrl(varSvDraft.draftid)
+                              "https://outlook.office365.us/mail/deeplink/compose/" & EncodeUrl(Substitute(Substitute(varSvDraft.draftid, "-", "/"), "_", "+"))
                           ),
                           {},
                           LaunchTarget.New
