@@ -1988,7 +1988,8 @@ Screens:
                   // addresses, so the flow only builds a DRAFT in the buyer's own Outlook
                   // (same text, recipients and files) and the buyer presses Send there.
                   IfError(
-                      SendRFQToVendors.Run(
+                      // The flow answers with the new draft's id (Respond to a Power App: draftid).
+                      Set(varSvDraft, SendRFQToVendors.Run(
                           Concat(colSvMailTo, E, ";"),
                           varSvRequestor,
                           "RFQ " & varRFQRecord.Title & " . Reply by " & Text(varRFQRecord.'RFQ  due date', "dd mmm yyyy"),
@@ -1999,12 +2000,21 @@ Screens:
                           // Optional flow input text_6: only the ticked files, pipe separated with a
                           // pipe at each end so the flow can match "|name|" exactly; "||" means none.
                           { text_6: "|" & Concat(Filter(colSvDocs, Include), FileName, "|") & "|" }
-                      ),
+                      )),
                       Notify("The Outlook draft could not be created, nothing was sent. " & FirstError.Message, NotificationType.Error, 10000);
                       Set(varSaving, false),
 
-                      // Draft created: open the buyer's Drafts folder so they can press Send.
-                      Launch("https://outlook.office365.us/mail/drafts");
+                      // Draft created: open it in Outlook on the web in a new tab so the buyer
+                      // only has to press Send. Falls back to the Drafts folder if no id came back.
+                      Launch(
+                          If(
+                              IsBlank(varSvDraft.draftid),
+                              "https://outlook.office365.us/mail/drafts",
+                              "https://outlook.office365.us/mail/drafts/id/" & EncodeUrl(varSvDraft.draftid)
+                          ),
+                          {},
+                          LaunchTarget.New
+                      );
                       Patch(
                           RFQ,
                           varRFQRecord,
@@ -2019,7 +2029,7 @@ Screens:
                       Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
                       Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
                       Set(varSaving, false);
-                      Notify("Draft is in your Outlook Drafts with " & CountRows(colSvMailTo) & " vendor(s) on BCC. Open it and press Send.", NotificationType.Success, 10000);
+                      Notify("Your RFQ email is open in Outlook with " & CountRows(colSvMailTo) & " vendor(s) on BCC. Check it and press Send.", NotificationType.Success, 10000);
                       Set(varShowPreview, false);
                       Navigate(scrChecklist, ScreenTransition.Fade)
                   )
