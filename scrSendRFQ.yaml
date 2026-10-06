@@ -31,7 +31,6 @@ Screens:
         Set(varSvV4Manual, !IsBlank(varSvV4Name) && CountRows(Filter(colVendorList, VendorName = varSvV4Name)) = 0);
         Set(varSaving, false);
         Set(varShowPreview, false);
-        Set(varSvOpened, false);
         Set(varSvConfirmLeave, false);
         // Requestor files stay as attachments on the RFQ list item. Sensitivity is
         // carried by the real Purview label the requestor applied before uploading,
@@ -467,7 +466,7 @@ Screens:
               =If(
                   CountRows(colSvDocs) = 0,
                   "No files to send. The vendors get the email text only.",
-                  CountRows(Filter(colSvDocs, Include)) & " of " & CountRows(colSvDocs) & " file(s) ticked to attach to the RFQ email in Outlook. Preview opens a file."
+                  CountRows(Filter(colSvDocs, Include)) & " of " & CountRows(colSvDocs) & " file(s) ticked to go out with the RFQ email. Preview opens a file first."
               )
             Width: =308
             X: =32
@@ -1309,7 +1308,6 @@ Screens:
                       CountRows(colSvMailTo) = 0,
                       Notify("Save the vendor list first. There are no vendor email addresses stored yet.", NotificationType.Warning, 4000),
                       Reset(rtePreview);
-                      Set(varSvOpened, false);
                       Set(varShowPreview, true)
                   )
               )
@@ -1882,20 +1880,21 @@ Screens:
             DisabledBorderColor: =RGBA(166, 166, 166, 1)
             Fill: =RGBA(255, 191, 0, 1)
             Font: =Font.'Open Sans'
-            Height: =40
+            Height: =55
             HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
-            OnSelect: =Set(varSvOpened, false); Set(varShowPreview, false)
+            OnSelect: =Set(varShowPreview, false)
             PressedBorderColor: =Self.Fill
             PressedColor: =Self.Fill
             PressedFill: =Self.Color
-            Size: =11
-            Text: ="Close (nothing marked as sent)"
+            Text: |-
+              ="Close
+              (Do not send)"
             Visible: =varShowPreview
-            Width: =353
-            X: =725
-            Y: =644
+            Width: =150
+            X: =703
+            Y: =597
       - btnSvLeaveGo:
           Control: Classic/Button@2.2.0
           Properties:
@@ -1923,23 +1922,20 @@ Screens:
             BorderColor: =RGBA(0, 18, 107, 1)
             Color: =RGBA(96, 106, 126, 1)
             Font: =Font.'Open Sans'
-            Height: =112
+            Height: =85
             PaddingLeft: =20
-            Size: =9
+            Size: =10
             Text: |-
-              ="Company policy blocks automated emails to outside addresses, so you send this from your own Outlook:" & Char(10) &
-              "1. Open email in Outlook. Vendors are on BCC, the requestor on CC, subject filled in." & Char(10) &
-              "2. Click inside the email below, press Ctrl+A then Ctrl+C, and paste it into Outlook with Ctrl+V." & Char(10) &
-              "3. " & If(
+              ="Vendors are on BCC and cannot see each other. The requestor is on CC. Edit anything below, then send." & Char(10) &
+              If(
                   CountRows(Filter(colSvDocs, Include)) = 0,
-                  "No files ticked. Attach any files you want vendors to have.",
-                  "Attach: " & Left(Concat(Filter(colSvDocs, Include), FileName, ", "), 110)
-              ) & Char(10) &
-              "4. Press Send in Outlook, then click I've sent it."
+                  "No files attached. Close this and tick files under Attachments from the requestor to include them.",
+                  "Attached (" & CountRows(Filter(colSvDocs, Include)) & "): " & Left(Concat(Filter(colSvDocs, Include), FileName, ", "), 160)
+              )
             Visible: =varShowPreview
-            Width: =432
-            X: =285
-            Y: =588
+            Width: =378
+            X: =307
+            Y: =595
       - SendEmail:
           Control: Classic/Button@2.2.0
           Properties:
@@ -1947,14 +1943,15 @@ Screens:
             Color: =RGBA(255, 255, 255, 1)
             DisabledBorderColor: =RGBA(166, 166, 166, 1)
             DisplayMode: =If(IsBlank(Trim(PlainText(rtePreview.HtmlText))) || varSaving, DisplayMode.Disabled, DisplayMode.Edit)
-            Fill: =RGBA(56, 96, 178, 1)
+            Fill: =RGBA(59, 109, 17, 1)
             Font: =Font.'Open Sans'
             Height: =44
             HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
             HoverColor: =RGBA(255, 255, 255, 1)
-            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
             OnSelect: |-
-              =Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
+              =Set(varSaving, true);
+              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
               Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
               // Rebuild the recipient list here, from the checklist row of THIS RFQ, at the
               // moment of sending. A collection left behind by another button can still hold
@@ -1974,61 +1971,32 @@ Screens:
               Set(varSvRequestor, Coalesce(varRFQRecord.'Requestor Email', varRFQRecord.'Created By'.Email, ""));
               If(
                   IsBlank(varRFQRecord),
-                  Notify("This RFQ no longer exists. Somebody may have deleted it.", NotificationType.Error, 6000),
-
-                  CountRows(colSvMailTo) = 0,
-                  Notify("No vendor email addresses are saved on this RFQ. Save the vendor list first.", NotificationType.Error, 8000),
-
-                  IsBlank(varSvRequestor),
-                  Notify("This RFQ has no requestor email address, so the requestor cannot be copied. Fix the RFQ record first.", NotificationType.Error, 8000),
-
-                  // Company mail rules reject emails that Power Automate sends to outside
-                  // addresses, so the buyer sends this one from their own Outlook. The link
-                  // fills in recipients and subject; the formatted body is copied from the
-                  // preview, and the RFQ is only marked as sent from btnSvMarkSent.
-                  Launch(
-                      "mailto:" & varMyMail &
-                      "?cc=" & EncodeUrl(varSvRequestor) &
-                      "&bcc=" & EncodeUrl(Substitute(Concat(colSvMailTo, E, ";"), " ", "")) &
-                      "&subject=" & EncodeUrl("RFQ " & varRFQRecord.Title & " . Reply by " & Text(varRFQRecord.'RFQ  due date', "dd mmm yyyy"))
-                  );
-                  Set(varSvOpened, true);
-                  Notify("Outlook is opening. Paste the email text, attach the files and press Send, then click I've sent it.", NotificationType.Information, 8000)
-              )
-            PressedBorderColor: =Self.Fill
-            PressedColor: =Self.Fill
-            PressedFill: =Self.Color
-            Size: =11
-            Text: ="1.  Open email in Outlook"
-            Visible: =varShowPreview
-            Width: =170
-            X: =725
-            Y: =592
-      - btnSvMarkSent:
-          Control: Classic/Button@2.2.0
-          Properties:
-            BorderColor: =ColorFade(Self.Fill, -15%)
-            Color: =RGBA(255, 255, 255, 1)
-            DisabledBorderColor: =RGBA(214, 221, 233, 1)
-            DisabledColor: =RGBA(150, 158, 172, 1)
-            DisabledFill: =RGBA(232, 236, 243, 1)
-            DisplayMode: =If(varSvOpened && !varSaving, DisplayMode.Edit, DisplayMode.Disabled)
-            Fill: =RGBA(59, 109, 17, 1)
-            Font: =Font.'Open Sans'
-            Height: =44
-            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
-            HoverColor: =RGBA(255, 255, 255, 1)
-            HoverFill: =ColorFade(RGBA(59, 109, 17, 1), -20%)
-            OnSelect: |-
-              =Set(varSaving, true);
-              Set(varRFQRecord, LookUp(RFQ, ID = varSelectedRFQ.ID));
-              Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varSelectedRFQ.ID));
-              If(
-                  IsBlank(varRFQRecord),
-                  Notify("This RFQ no longer exists. Somebody may have deleted it.", NotificationType.Error, 6000);
+                  Notify("This RFQ no longer exists. Somebody may have deleted it. Nothing was sent.", NotificationType.Error, 6000);
                   Set(varSaving, false),
 
-                  // The buyer has sent the email from Outlook, so the RFQ now waits on the vendors.
+                  CountRows(colSvMailTo) = 0,
+                  Notify("No vendor email addresses are saved on this RFQ, so there is nobody to send to. Nothing was sent. Save the vendor list first.", NotificationType.Error, 8000);
+                  Set(varSaving, false);
+                  Set(varShowPreview, false),
+
+                  IsBlank(varSvRequestor),
+                  Notify("This RFQ has no requestor email address, so the requestor cannot be copied. Nothing was sent. Fix the RFQ record first.", NotificationType.Error, 8000);
+                  Set(varSaving, false);
+                  Set(varShowPreview, false),
+
+                  SendRFQToVendors.Run(
+                      Concat(colSvMailTo, E, ";"),
+                      varSvRequestor,
+                      "RFQ " & varRFQRecord.Title & " . Reply by " & Text(varRFQRecord.'RFQ  due date', "dd mmm yyyy"),
+                      rtePreview.HtmlText,
+                      varMyMail,
+                      varRFQRecord.ID,
+                      varRFQRecord.Title,
+                      // Optional flow input text_6: only the ticked files, pipe separated with a
+                      // pipe at each end so the flow can match "|name|" exactly; "||" means none.
+                      { text_6: "|" & Concat(Filter(colSvDocs, Include), FileName, "|") & "|" }
+                  );
+                  // Status only moves once the mail has actually gone out.
                   Patch(
                       RFQ,
                       varRFQRecord,
@@ -2036,24 +2004,23 @@ Screens:
                           'RFQ status': { Value: "RFQ sent out" },
                           AwaitingAction: { Value: "Vendor" },
                           'Assigned Buyer': varMyMail,
-                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed from Outlook to " & CountRows(colSvMailTo) & " vendor(s), " & CountRows(Filter(colSvDocs, Include)) & " file(s) ticked to attach" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
+                          'ActivityLog ': Left(Text(Now(), "dd mmm yyyy hh:mm") & "   " & User().FullName & "   RFQ emailed to " & CountRows(colSvMailTo) & " vendor(s) with " & CountRows(Filter(colSvDocs, Include)) & " file(s)" & Char(10) & Coalesce(varRFQRecord.'ActivityLog ', ""), 30000)
                       }
                   );
                   Patch(RFQ_Checklist, varChecklist, { RFQSentDate: Coalesce(dteSvSentDate.SelectedDate, Today()) });
                   Set(varSelectedRFQ, LookUp(RFQ, ID = varRFQRecord.ID));
                   Set(varChecklist, LookUp(RFQ_Checklist, RFQID = varRFQRecord.ID));
                   Set(varSaving, false);
-                  Set(varSvOpened, false);
-                  Notify("Marked as sent to " & CountRows(colSvMailTo) & " vendor(s).", NotificationType.Success, 5000);
+                  Notify("RFQ sent to " & CountRows(colSvMailTo) & " vendor(s). Vendors are on BCC and cannot see each other.", NotificationType.Success, 5000);
                   Set(varShowPreview, false);
                   Navigate(scrChecklist, ScreenTransition.Fade)
               )
             PressedBorderColor: =Self.Fill
             PressedColor: =Self.Fill
             PressedFill: =Self.Color
-            Size: =11
-            Text: ="2.  I've sent it"
+            Size: =12
+            Text: ="Send to vendors"
             Visible: =varShowPreview
-            Width: =175
-            X: =903
-            Y: =592
+            Width: =200
+            X: =869
+            Y: =608
